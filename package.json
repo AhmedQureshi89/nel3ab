@@ -8,7 +8,7 @@
   "scripts": {
     "build": "pnpm -r --filter=./apps/* build",
     "typecheck": "tsc --build --pretty",
-    "test": "vitest run",
+    "test": "node scripts/check-collected-tests.mjs",
     "lint": "pnpm lint:js && pnpm lint:css && pnpm format:check",
     "lint:js": "eslint .",
     "lint:css": "stylelint \"**/*.css\"",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "24.13.3",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
   }
 }
