@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/game" },
+    { "path": "./packages/protocol" },
+    { "path": "./packages/content" },
+    { "path": "./packages/ui" },
+    { "path": "./apps/game" },
+    { "path": "./apps/web" }
+  ]
+}

@@ -13,5 +13,9 @@
     "lint:js": "eslint .",
     "lint:css": "stylelint \"**/*.css\"",
     "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3"
   }
 }
