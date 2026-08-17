@@ -15,7 +15,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 
 | Phase | Name                                      | Duration | Status         |
 |-------|-------------------------------------------|----------|----------------|
-| 1     | Repo, toolchain & CI                      | 1 day    | 🔲 Not Started |
+| 1     | Repo, toolchain & CI                      | 1 day    | 🛠️ In Progress |
 | 2     | Arcade design system                      | 1 day    | 🔲 Not Started |
 | 3     | Rules engine — state & clock              | 1 day    | 🔲 Not Started |
 | 4     | Rules engine — round & match flow          | 1 day    | 🔲 Not Started |
