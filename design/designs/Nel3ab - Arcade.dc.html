@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نلعب — لعبة المعلومات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&amp;family=Archivo:wght@600;800&amp;display=swap">
+<style>
+  :root{
+    --bg:#fff3df; --panel:#fffaf0; --sunken:#f0e2c8;
+    --ink:#241c17; --muted:#8a7a6a; --stroke:#241c17;
+    --red:#ec3013; --yellow:#ffc93c; --sky:#2fa3e8; --leaf:#3dbe6e;
+    --drop:4px; --r:20px;
+    --font:"Baloo Bhaijaan 2",system-ui,sans-serif;
+    --font-en:"Archivo",system-ui,sans-serif;
+  }
+  [data-theme="dark"]{
+    --bg:#1c1a25; --panel:#272433; --sunken:#171521;
+    --ink:#fff3df; --muted:#a79bb5; --stroke:#0d0c13;
+    --red:#ff5a3c;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  body{margin:0;background:#fff3df;font-family:"Baloo Bhaijaan 2",system-ui,sans-serif;}
+  input,button{font-family:inherit;}
+  :focus{outline:none;}
+  :focus-visible{outline:3px solid var(--red);outline-offset:3px;}
+  ::selection{background:rgba(255,201,60,.55);}
+  a{color:var(--red);text-underline-offset:3px;}
+  a:hover{opacity:.75;}
+  @keyframes pop{from{transform:scale(.72);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(255,201,60,.75)}50%{box-shadow:0 0 0 10px rgba(255,201,60,0)}}
+  @keyframes slidein{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</helmet>
+<div data-theme="{{ theme }}" dir="rtl" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font);padding:0 0 60px;">
+
+  <div style="display:flex;align-items:center;gap:14px;padding:10px 18px;flex-wrap:wrap;">
+    <div style="font-family:var(--font-en);font-weight:800;font-size:11px;letter-spacing:.14em;color:var(--muted);white-space:nowrap;">Nel3ab trivia</div>
+    <div style="display:flex;gap:6px;">
+      <button onClick="{{ setHost }}" style="padding:5px 14px;border-radius:999px;border:2.5px solid var(--stroke);background:{{ hostBg }};color:{{ hostFg }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">شاشة الحكم</button>
+      <button onClick="{{ setPlayer }}" style="padding:5px 14px;border-radius:999px;border:2.5px solid var(--stroke);background:{{ playerBg }};color:{{ playerFg }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">شاشة لاعب</button>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button onClick="{{ setLight }}" style="padding:5px 14px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--panel);color:var(--ink);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;" style-hover="background:var(--yellow)">نهاري</button>
+      <button onClick="{{ setDark }}" style="padding:5px 14px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--panel);color:var(--ink);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;" style-hover="background:var(--yellow)">ليلي</button>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;padding:6px 14px;">
+    <div style="width:100%;max-width:440px;">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;white-space:nowrap;">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--red);border:2.5px solid var(--stroke);display:inline-block;"></span>
+          نلعب
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;">{{ roundLabel }}</div>
+      </div>
+
+      <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="margin:0 0 2px;font-size:34px;font-weight:800;line-height:1.15;">يلا نلعب</h1>
+        <p style="margin:0 0 16px;font-size:14.5px;color:var(--muted);font-weight:600;">فريقان، حكم واحد، وأسئلة معلومات — كل شي جاهز، عدّل اللي تبيه بس.</p>
+
+        <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:14px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+            <span style="font-size:15px;font-weight:800;white-space:nowrap;">الفرق</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">{{ playerCountLabel }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="background:var(--red);border:2.5px solid var(--stroke);border-radius:16px;padding:11px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8);">فريق ١</span>
+                <button onClick="{{ shuffleA }}" title="اسم ثاني" style="background:rgba(0,0,0,.18);border:none;border-radius:8px;color:#fff;font-size:13px;cursor:pointer;padding:3px 7px;">↺</button>
+              </div>
+              <input value="{{ teamAName }}" onChange="{{ onTeamA }}" style="width:100%;background:transparent;border:none;outline:none;color:#fff;font-size:17px;font-weight:800;padding:2px 0;">
+              <div style="font-size:11.5px;color:rgba(255,255,255,.85);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ membersA }}</div>
+            </div>
+            <div style="background:var(--sky);border:2.5px solid var(--stroke);border-radius:16px;padding:11px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8);">فريق ٢</span>
+                <button onClick="{{ shuffleB }}" title="اسم ثاني" style="background:rgba(0,0,0,.18);border:none;border-radius:8px;color:#fff;font-size:13px;cursor:pointer;padding:3px 7px;">↺</button>
+              </div>
+              <input value="{{ teamBName }}" onChange="{{ onTeamB }}" style="width:100%;background:transparent;border:none;outline:none;color:#fff;font-size:17px;font-weight:800;padding:2px 0;">
+              <div style="font-size:11.5px;color:rgba(255,255,255,.85);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ membersB }}</div>
+            </div>
+          </div>
+          
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;">
+            <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+              <span style="display:inline-flex;align-items:center;gap:7px;background:{{ c.bg }};color:{{ c.fg }};border:2.5px solid var(--stroke);border-radius:999px;padding:4px 8px 4px 12px;font-size:13.5px;font-weight:700;white-space:nowrap;">
+                {{ c.name }}
+                <button onClick="{{ c.onSwap }}" title="بدّل الفريق" style="background:rgba(0,0,0,.2);border:none;border-radius:999px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;padding:2px 7px;">↔</button>
+                <button onClick="{{ c.onRemove }}" title="حذف" style="background:rgba(0,0,0,.2);border:none;border-radius:999px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;padding:2px 7px;">✕</button>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:14px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+            <span style="font-size:15px;font-weight:800;white-space:nowrap;">الحكم</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">{{ judgeHint }}</span>
+          </div>
+          <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted);font-weight:600;">الحكم يشوف الإجابة الصحيحة — بقية الشاشات لا.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;">
+            <sc-for list="{{ judgeOptions }}" as="j" hint-placeholder-count="3">
+              <button onClick="{{ j.onPick }}" style="border:2.5px solid var(--stroke);border-radius:999px;background:{{ j.bg }};color:{{ j.fg }};box-shadow:{{ j.shadow }};padding:6px 14px;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;">{{ j.name }}</button>
+            </sc-for>
+          </div>
+          <button onClick="{{ toggleRotate }}" style="margin-top:11px;width:100%;border:2.5px solid var(--stroke);border-radius:14px;background:{{ rotateBg }};color:{{ rotateFg }};padding:10px;font-size:13.5px;font-weight:700;cursor:pointer;text-align:right;">{{ rotateLabel }}</button>
+        </div>
+
+        <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:14px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+            <span style="font-size:15px;font-weight:800;white-space:nowrap;">الفئات</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">{{ pickedLabel }}</span>
+          </div>
+          <div style="display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin:0 -14px;padding-inline:14px;scrollbar-width:none;">
+            <sc-for list="{{ catGrid }}" as="c" hint-placeholder-count="9">
+              <button onClick="{{ c.onPick }}" style="position:relative;flex:0 0 auto;width:92px;scroll-snap-align:start;border:2.5px solid var(--stroke);border-radius:16px;background:{{ c.bg }};color:{{ c.fg }};opacity:{{ c.opacity }};box-shadow:{{ c.shadow }};padding:12px 5px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:{{ c.cursor }};">
+                <span style="font-size:22px;">{{ c.emoji }}</span>
+                <span style="font-size:11.5px;font-weight:700;text-align:center;line-height:1.2;">{{ c.name }}</span>
+                <span style="font-size:10px;font-weight:800;color:{{ c.tagFg }};white-space:nowrap;">{{ c.tag }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <button onClick="{{ startGame }}" style="width:100%;border:3px solid var(--stroke);border-radius:18px;padding:17px 20px;background:var(--yellow);color:#241c17;font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);display:flex;align-items:center;justify-content:space-between;" style-hover="filter:brightness(1.04)" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)">
+          <span>ابدأ اللعبة</span><span>▶</span>
+        </button>
+        <p style="text-align:center;color:var(--muted);font-size:12.5px;font-weight:600;margin:10px 0 0;">{{ setupNote }}</p>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isReady }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:40px 10px 0;">
+        <div style="font-size:54px;animation:bob 1s ease-in-out infinite;">🎉</div>
+        <h2 style="margin:14px 0 4px;font-size:26px;font-weight:800;">الغرفة جاهزة!</h2>
+        <div style="margin-top:16px;font-size:13px;color:var(--muted);font-weight:600;">كود الانضمام — شاركه مع اللاعبين</div>
+        <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:10px;">
+          <div style="font-family:var(--font-en);font-weight:800;font-size:26px;letter-spacing:.2em;background:var(--panel);border:3px solid var(--stroke);border-radius:16px;box-shadow:0 4px 0 var(--stroke);padding:12px 18px;white-space:nowrap;">{{ roomCode }}</div>
+          <button onClick="{{ shareRoom }}" style="display:flex;align-items:center;gap:7px;border:3px solid var(--stroke);border-radius:16px;box-shadow:0 4px 0 var(--stroke);background:{{ copyBg }};color:{{ copyFg }};font-size:14px;font-weight:800;padding:14px 16px;cursor:pointer;white-space:nowrap;" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--stroke)"><span style="font-size:16px;">⤴</span>{{ copyLabel }}</button>
+        </div>
+        <div style="margin-top:20px;background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:14px;text-align:right;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+            <span style="font-size:14px;font-weight:800;white-space:nowrap;">في الغرفة</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">الحكم: {{ judgeName }}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;">
+            <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+              <span style="display:inline-flex;align-items:center;gap:6px;background:{{ c.bg }};color:{{ c.fg }};border:2.5px solid var(--stroke);border-radius:999px;padding:4px 12px;font-size:13.5px;font-weight:700;white-space:nowrap;">{{ c.name }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <button onClick="{{ goWheel }}" style="margin-top:18px;width:100%;border:3px solid var(--stroke);border-radius:18px;padding:17px 20px;background:var(--yellow);color:#241c17;font-size:19px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);display:flex;align-items:center;justify-content:space-between;" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)"><span>ابدأ الجولة الأولى</span><span>▶</span></button>
+        <button onClick="{{ backToSetup }}" style="margin-top:12px;width:100%;border:2.5px solid var(--stroke);border-radius:16px;padding:13px;background:var(--panel);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;">رجوع للإعداد</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isPlay }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <div style="flex:1;min-width:0;border:2.5px solid var(--stroke);border-radius:14px;background:{{ timerABg }};color:{{ timerAFg }};box-shadow:{{ timerAShadow }};padding:9px 11px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <span style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamAName }}</span>
+              <span style="font-family:var(--font-en);font-size:22px;font-weight:800;">{{ clockA }}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px;">
+              <div style="display:flex;gap:4px;">
+                <sc-for list="{{ dotsA }}" as="d" hint-placeholder-count="3">
+                  <span style="width:9px;height:9px;border-radius:50%;border:2px solid var(--stroke);background:{{ d.bg }};display:inline-block;"></span>
+                </sc-for>
+              </div>
+              <span style="font-size:10.5px;font-weight:700;opacity:.75;white-space:nowrap;">{{ statusA }}</span>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0;border:2.5px solid var(--stroke);border-radius:14px;background:{{ timerBBg }};color:{{ timerBFg }};box-shadow:{{ timerBShadow }};padding:9px 11px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <span style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamBName }}</span>
+              <span style="font-family:var(--font-en);font-size:22px;font-weight:800;">{{ clockB }}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px;">
+              <div style="display:flex;gap:4px;">
+                <sc-for list="{{ dotsB }}" as="d" hint-placeholder-count="3">
+                  <span style="width:9px;height:9px;border-radius:50%;border:2px solid var(--stroke);background:{{ d.bg }};display:inline-block;"></span>
+                </sc-for>
+              </div>
+              <span style="font-size:10.5px;font-weight:700;opacity:.75;white-space:nowrap;">{{ statusB }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+          <div style="flex:none;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--panel);font-weight:700;font-size:12.5px;white-space:nowrap;">{{ catEmoji }} {{ catName }}</div>
+          <div style="flex:1;min-width:0;height:10px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--sunken);overflow:hidden;">
+            <div style="height:100%;background:{{ activeColor }};width:{{ bankPct }};transition:width .1s linear;"></div>
+          </div>
+        </div>
+
+        <div style="position:relative;border-radius:24px;border:3px solid var(--stroke);box-shadow:0 6px 0 var(--stroke);background:var(--panel);overflow:hidden;margin-bottom:12px;">
+          <div style="background:{{ activeColor }};color:#fff;padding:8px 16px;font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">دور {{ activeName }}</span>
+            <span style="white-space:nowrap;opacity:.85;">سؤال {{ qNumber }}</span>
+          </div>
+          <div style="padding:26px 20px;min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;">
+            <div style="font-size:24px;font-weight:800;line-height:1.45;text-wrap:pretty;">{{ questionText }}</div>
+          </div>
+          <div style="border-top:2.5px solid var(--stroke);background:var(--sunken);padding:12px 16px;min-height:56px;display:flex;align-items:center;gap:9px;">
+            <span style="flex:none;font-size:18px;">💡</span>
+            <div style="flex:1;min-width:0;font-size:14px;font-weight:700;color:{{ hintColor }};line-height:1.4;animation:{{ hintAnim }};">{{ hintText }}</div>
+          </div>
+
+          <sc-if value="{{ revealOn }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;z-index:5;background:var(--leaf);color:#0d2b1b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:22px;animation:pop .18s ease-out;">
+              <div style="font-size:13px;font-weight:800;letter-spacing:.1em;opacity:.7;">الإجابة</div>
+              <div style="font-size:30px;font-weight:800;line-height:1.25;">{{ revealAnswer }}</div>
+              <div style="font-size:13.5px;font-weight:600;opacity:.8;">{{ revealFact }}</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="background:var(--panel);border:3px dashed var(--red);border-radius:18px;padding:12px 14px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+            <span style="font-size:11.5px;font-weight:800;color:var(--red);letter-spacing:.06em;white-space:nowrap;">للحكم فقط 👁</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap;">{{ judgeName }}</span>
+          </div>
+          <div style="font-size:19px;font-weight:800;line-height:1.3;">{{ answerText }}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-top:2px;">يُقبل أيضاً: {{ altText }}</div>
+        </div>
+
+        <div style="display:flex;gap:9px;">
+          <button onClick="{{ markSkip }}" style="flex:1;border:3px solid var(--stroke);border-radius:18px;padding:15px 8px;background:var(--panel);color:var(--ink);font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 5px 0 var(--stroke);white-space:nowrap;" style-active="transform:translateY(3px);box-shadow:0 2px 0 var(--stroke)">تخطي ⏭<br><span style="font-size:11px;font-weight:700;opacity:.6;">−٣ ثوانٍ</span></button>
+          <button onClick="{{ giveHint }}" style="flex:1;border:3px solid var(--stroke);border-radius:18px;padding:15px 8px;background:{{ hintBtnBg }};color:{{ hintBtnFg }};opacity:{{ hintBtnOpacity }};font-size:15.5px;font-weight:800;cursor:{{ hintBtnCursor }};box-shadow:0 5px 0 var(--stroke);white-space:nowrap;" style-active="transform:translateY(3px);box-shadow:0 2px 0 var(--stroke)">تلميح 💡<br><span style="font-size:11px;font-weight:700;opacity:.6;">{{ hintBtnNote }}</span></button>
+          <button onClick="{{ markCorrect }}" style="flex:1;border:3px solid var(--stroke);border-radius:18px;padding:15px 8px;background:var(--leaf);color:#0d2b1b;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 5px 0 var(--stroke);white-space:nowrap;" style-active="transform:translateY(3px);box-shadow:0 2px 0 var(--stroke)">صحيح ✔<br><span style="font-size:11px;font-weight:700;opacity:.6;">يمرّ الدور</span></button>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isRoundEnd }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:26px 0 0;">
+        <div style="font-size:54px;animation:bob 1.1s ease-in-out infinite;">🏆</div>
+        <h2 style="margin:12px 0 6px;font-size:24px;font-weight:800;">{{ roundTitle }}</h2>
+        <p style="margin:0 0 18px;font-size:13.5px;color:var(--muted);font-weight:600;">{{ roundReason }}</p>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;border:3px solid var(--stroke);border-radius:18px;box-shadow:0 5px 0 var(--stroke);background:{{ winABg }};color:{{ winAFg }};padding:16px 10px;">
+            <div style="font-family:var(--font-en);font-size:30px;font-weight:800;">{{ tallyA }}</div>
+            <div style="font-size:13px;font-weight:700;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamAName }}</div>
+            <div style="display:flex;gap:5px;justify-content:center;margin-top:8px;">
+              <sc-for list="{{ dotsA }}" as="d" hint-placeholder-count="3">
+                <span style="width:11px;height:11px;border-radius:50%;border:2.5px solid var(--stroke);background:{{ d.bg }};display:inline-block;"></span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1;border:3px solid var(--stroke);border-radius:18px;box-shadow:0 5px 0 var(--stroke);background:{{ winBBg }};color:{{ winBFg }};padding:16px 10px;">
+            <div style="font-family:var(--font-en);font-size:30px;font-weight:800;">{{ tallyB }}</div>
+            <div style="font-size:13px;font-weight:700;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamBName }}</div>
+            <div style="display:flex;gap:5px;justify-content:center;margin-top:8px;">
+              <sc-for list="{{ dotsB }}" as="d" hint-placeholder-count="3">
+                <span style="width:11px;height:11px;border-radius:50%;border:2.5px solid var(--stroke);background:{{ d.bg }};display:inline-block;"></span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="margin:16px 0 18px;font-size:13px;color:var(--muted);font-weight:600;">{{ matchProgress }}</div>
+        <button onClick="{{ nextRound }}" style="width:100%;border:3px solid var(--stroke);border-radius:18px;padding:17px 20px;background:var(--yellow);color:#241c17;font-size:19px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);display:flex;align-items:center;justify-content:space-between;" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)"><span>الجولة التالية</span><span>▶</span></button>
+        <button onClick="{{ resetAll }}" style="margin-top:12px;width:100%;border:2.5px solid var(--stroke);border-radius:16px;padding:13px;background:var(--panel);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;">رجوع للإعداد</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isMatch }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:20px 0 0;">
+        <div style="font-size:60px;animation:bob 1.1s ease-in-out infinite;">👑</div>
+        <div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--muted);margin-top:10px;">نهاية المباراة</div>
+        <h2 style="margin:6px 0 8px;font-size:28px;font-weight:800;line-height:1.2;">{{ matchTitle }}</h2>
+        <p style="margin:0 0 16px;font-size:14px;font-weight:700;color:var(--muted);">{{ winnersList }}</p>
+        <div style="display:flex;gap:10px;margin-bottom:18px;">
+          <div style="flex:1;border:3px solid var(--stroke);border-radius:18px;box-shadow:0 5px 0 var(--stroke);background:{{ matchABg }};color:{{ matchAFg }};padding:16px 10px;">
+            <div style="font-family:var(--font-en);font-size:34px;font-weight:800;">{{ tallyA }}</div>
+            <div style="font-size:13px;font-weight:700;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamAName }}</div>
+          </div>
+          <div style="flex:1;border:3px solid var(--stroke);border-radius:18px;box-shadow:0 5px 0 var(--stroke);background:{{ matchBBg }};color:{{ matchBFg }};padding:16px 10px;">
+            <div style="font-family:var(--font-en);font-size:34px;font-weight:800;">{{ tallyB }}</div>
+            <div style="font-size:13px;font-weight:700;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamBName }}</div>
+          </div>
+        </div>
+        <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);overflow:hidden;text-align:right;margin-bottom:18px;">
+          <sc-for list="{{ matchLog }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:2px solid var(--sunken);font-size:13.5px;font-weight:700;">
+              <span style="color:var(--muted);white-space:nowrap;">{{ r.label }}</span>
+              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.result }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ rematch }}" style="width:100%;border:3px solid var(--stroke);border-radius:18px;padding:17px 20px;background:var(--yellow);color:#241c17;font-size:19px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);display:flex;align-items:center;justify-content:space-between;" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)"><span>نفس الفرق — مباراة جديدة</span><span>▶</span></button>
+        <button onClick="{{ resetAll }}" style="margin-top:12px;width:100%;border:2.5px solid var(--stroke);border-radius:16px;padding:13px;background:var(--panel);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;">غيّر اللاعبين والفئات</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isJoin }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="JoinRoom" room-code="{{ roomCode }}" theme="{{ theme }}" on-join="{{ onJoinSubmit }}" hint-size="100%,540px"></dc-import>
+      </sc-if>
+
+      <sc-if value="{{ isJoined }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:10px 0 0;">
+        <sc-if value="{{ iAmJudge }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--yellow);border:3px solid var(--stroke);border-radius:16px;box-shadow:0 4px 0 var(--stroke);padding:12px 14px;margin-bottom:12px;font-size:14px;font-weight:800;color:#241c17;">أنت الحكم هذي الجولة — افتح شاشة الحكم</div>
+        </sc-if>
+        <div style="background:{{ myTeamColor }};border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:18px;color:#fff;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:700;opacity:.85;">أهلاً {{ myName }} — أنت مع</div>
+          <div style="font-size:28px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ myTeamName }}</div>
+          <sc-if value="{{ canSwapTeam }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ swapMyTeam }}" style="margin-top:12px;border:2.5px solid var(--stroke);border-radius:12px;background:rgba(0,0,0,.2);color:#fff;font-size:13px;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;">بدّل فريقي ↺</button>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ liveForPlayer }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+              <div style="flex:1;min-width:0;border:2.5px solid var(--stroke);border-radius:14px;background:{{ timerABg }};color:{{ timerAFg }};padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamAName }}</span>
+                <span style="font-family:var(--font-en);font-size:20px;font-weight:800;">{{ clockA }}</span>
+              </div>
+              <div style="flex:1;min-width:0;border:2.5px solid var(--stroke);border-radius:14px;background:{{ timerBBg }};color:{{ timerBFg }};padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ teamBName }}</span>
+                <span style="font-family:var(--font-en);font-size:20px;font-weight:800;">{{ clockB }}</span>
+              </div>
+            </div>
+            <div style="border-radius:24px;border:3px solid var(--stroke);box-shadow:0 6px 0 var(--stroke);background:var(--panel);overflow:hidden;">
+              <div style="background:{{ activeColor }};color:#fff;padding:8px 16px;font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">دور {{ activeName }}</span>
+                <span style="white-space:nowrap;opacity:.85;">{{ catEmoji }} {{ catName }}</span>
+              </div>
+              <div style="padding:24px 20px;min-height:130px;display:flex;align-items:center;justify-content:center;text-align:center;">
+                <div style="font-size:22px;font-weight:800;line-height:1.45;text-wrap:pretty;">{{ playerQuestion }}</div>
+              </div>
+              <div style="border-top:2.5px solid var(--stroke);background:var(--sunken);padding:12px 16px;min-height:56px;display:flex;align-items:center;gap:9px;">
+                <span style="flex:none;font-size:18px;">💡</span>
+                <div style="flex:1;min-width:0;font-size:14px;font-weight:700;color:{{ hintColor }};line-height:1.4;animation:{{ hintAnim }};">{{ hintText }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ waitingForPlayer }}" hint-placeholder-val="{{ true }}">
+          <div style="text-align:center;background:var(--sunken);border:2.5px dashed var(--stroke);border-radius:var(--r);padding:20px;">
+            <div style="font-size:30px;animation:bob 1.2s ease-in-out infinite;">{{ waitIcon }}</div>
+            <div style="margin-top:10px;font-size:15px;font-weight:800;">{{ waitTitle }}</div>
+            <div style="margin-top:4px;font-size:13px;color:var(--muted);font-weight:600;">{{ waitBody }}</div>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:1040},&quot;roundSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:45,&quot;min&quot;:20,&quot;max&quot;:90,&quot;step&quot;:5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Game&quot;},&quot;winsNeeded&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;2&quot;,&quot;3&quot;,&quot;4&quot;],&quot;default&quot;:&quot;3&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Game&quot;},&quot;roomCode&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;SKZJ62&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Game&quot;}}">
+const CATS = [
+  {name:'صناعة', emoji:'🏭', desc:'شركات، طاقة، وأرقام تحرّك العالم', chips:['نفط وطاقة','شركات عملاقة','تجارة'], qs:[
+    {q:'ما هي الدولة الأكثر إنتاجاً للنفط الخام في العالم؟', a:'الولايات المتحدة', alts:['أمريكا'], h:['ليست في الشرق الأوسط.','تقع في أمريكا الشمالية.'], f:'تجاوزت السعودية وروسيا في الإنتاج اليومي.'},
+    {q:'ماذا تعني كلمة "أوبك"؟', a:'منظمة الدول المصدّرة للنفط', alts:['OPEC'], h:['تحالف بين دول منتجة للنفط.','السعودية من الأعضاء المؤسسين.'], f:'تأسست عام ١٩٦٠ في بغداد.'},
+    {q:'أول شركة تصل قيمتها السوقية إلى تريليون دولار؟', a:'آبل', alts:['Apple'], h:['شركة تقنية.','تصنع الآيفون.'], f:'حققت ذلك في أغسطس ٢٠١٨.'}
+  ]},
+  {name:'حيوانات', emoji:'🦁', desc:'أسرع، أضخم، وأغرب المخلوقات', chips:['حيوانات برية','بحار','طيور'], qs:[
+    {q:'ما هو أسرع حيوان بري؟', a:'الفهد الصياد (الشيتا)', alts:['فهد','شيتا'], h:['من فصيلة القطط الكبيرة.','يتجاوز ١٠٠ كم/س.'], f:'يصل لسرعته القصوى خلال ٣ ثوانٍ.'},
+    {q:'أي كائن بحري ينام بنصف دماغه فقط؟', a:'الدولفين', alts:['الدلفين'], h:['مشهور بذكائه.','نصف دماغه يبقى مستيقظاً.'], f:'يفعل ذلك ليواصل التنفس على السطح.'},
+    {q:'ماذا يُسمّى صغير الكنغر؟', a:'جوي', alts:['Joey'], h:['اسمه يشبه اسم شخص.','يعيش في جراب أمه.'], f:'يولد بحجم حبة الفاصولياء.'}
+  ]},
+  {name:'طبيعة', emoji:'🌋', desc:'جبال وصحاري وظواهر الأرض', chips:['جبال','صحاري','ظواهر'], qs:[
+    {q:'ما هو أعلى جبل في العالم؟', a:'إيفرست', alts:['جبل إيفرست'], h:['في سلسلة الهيمالايا.','على حدود نيبال والتبت.'], f:'يرتفع نحو ٨٨٤٩ متراً.'},
+    {q:'ما هي أكبر صحراء في العالم؟', a:'القارة القطبية الجنوبية', alts:['أنتاركتيكا'], h:['أغلب الناس يقولون الصحراء الكبرى — وهي ليست الأكبر.','مغطّاة بالجليد.'], f:'الصحراء تُعرّف بقلة الهطول لا بالحرارة.'},
+    {q:'أي ظاهرة طبيعية تُقاس بمقياس ريختر؟', a:'الزلازل', alts:['الزلزال'], h:['تقيس اهتزاز الأرض.','مرتبطة بالصفائح التكتونية.'], f:'المقياس لوغاريتمي — كل درجة تعادل ٣٢ ضعف الطاقة.'}
+  ]},
+  {name:'إنسان ومجتمع', emoji:'🌍', desc:'لغات، منظمات، ونُظم الحكم', chips:['لغات','منظمات دولية','سياسة'], qs:[
+    {q:'ما هي اللغة الأم الأكثر انتشاراً في العالم؟', a:'الصينية (المندرين)', alts:['المندرين'], h:['تُتحدَّث في دولة شديدة الاكتظاظ.','تُكتب برموز لا بحروف أبجدية.'], f:'يتحدثها أكثر من ٩٠٠ مليون شخص كلغة أم.'},
+    {q:'أي منظمة أممية مختصة برعاية الأطفال؟', a:'اليونيسف', alts:['UNICEF'], h:['اسمها اختصار مشهور.','تعني صندوق الطوارئ للأطفال.'], f:'تأسست عام ١٩٤٦.'},
+    {q:'ما اسم نظام الحكم الذي يحكم فيه الشعب نفسه مباشرة أو عبر ممثلين؟', a:'الديمقراطية', alts:['ديمقراطية'], h:['الكلمة يونانية الأصل.','تعني حكم الشعب.'], f:'أصلها "ديموس" أي الشعب.'}
+  ]},
+  {name:'ثقافة', emoji:'🎎', desc:'فنون شعبية وعادات من كل مكان', chips:['فنون شعبية','رقصات','آلات'], locked:true, qs:[
+    {q:'ما اسم فن طي الورق الياباني؟', a:'أوريغامي', alts:['Origami'], h:['كلمة يابانية.','أشهر أشكاله طائر الكركي.'], f:'"أوري" تعني طي و"غامي" ورق.'},
+    {q:'ما اسم الرقصة السعودية التقليدية بالسيوف؟', a:'العرضة', alts:['العرضة النجدية'], h:['تُؤدّى بالسيوف أو العصي.','حاضرة في الاحتفالات الوطنية.'], f:'أُدرجت ضمن التراث الثقافي غير المادي.'},
+    {q:'ما الآلة الأساسية في موسيقى الفلامنكو؟', a:'الجيتار', alts:['القيثارة'], h:['آلة وترية.','الفلامنكو أصله من إسبانيا.'], f:'يرافقه التصفيق والنقر بالقدم.'}
+  ]},
+  {name:'أمثال', emoji:'💬', desc:'حكمة مختصرة في جملة', chips:['أمثال عربية','حكم','كمّل المثل'], qs:[
+    {q:'كمّل المثل: "الطيور على أشكالها ___"', a:'تقع', alts:[], h:['فعل من ثلاثة حروف.','يعني تجتمع مع بعضها.'], f:'مثل يُضرب في تشابه الأصحاب.'},
+    {q:'ما معنى المثل "لا تبع جلد الدب قبل صيده"؟', a:'لا تفترض النجاح قبل حدوثه', alts:['التسرع بالفرح'], h:['يحذّر من الثقة المبكرة.','فيه حيوان مفترس.'], f:'له نظير إنجليزي عن الدجاج والبيض.'},
+    {q:'كمّل: "الأفعال أبلغ من ___"', a:'الأقوال', alts:['الكلام'], h:['عن التواصل.','عكس الصمت.'], f:'مثل عالمي بصيغ متقاربة.'}
+  ]},
+  {name:'تاريخ', emoji:'🏛️', desc:'أشخاص وتواريخ وأحداث صنعت العالم', chips:['حضارات','حروب','تواريخ مشهورة'], qs:[
+    {q:'في أي عام انتهت الحرب العالمية الثانية؟', a:'١٩٤٥', alts:['1945'], h:['في منتصف الأربعينيات.','نفس عام تأسيس الأمم المتحدة.'], f:'استمرت ست سنوات.'},
+    {q:'من هو أول رئيس للولايات المتحدة؟', a:'جورج واشنطن', alts:['واشنطن'], h:['صورته على ورقة الدولار.','ولاية أمريكية تحمل اسمه.'], f:'تولّى الرئاسة عام ١٧٨٩.'},
+    {q:'أي إمبراطورية بنت الكولوسيوم؟', a:'الإمبراطورية الرومانية', alts:['الرومان'], h:['المبنى في إيطاليا.','كان مسرحاً للمصارعين.'], f:'كان يتسع لنحو ٥٠ ألف متفرج.'}
+  ]},
+  {name:'دين', emoji:'🕌', desc:'مدن وكتب ومعالم دينية', chips:['سيرة','كتب','عبادات'], qs:[
+    {q:'في أي مدينة وُلد النبي محمد ﷺ؟', a:'مكة المكرمة', alts:['مكة'], h:['في شبه الجزيرة العربية.','قِبلة المسلمين في الصلاة.'], f:'وُلد في عام الفيل.'},
+    {q:'كم عدد سور القرآن الكريم؟', a:'١١٤ سورة', alts:['114'], h:['أكثر من مئة.','أطولها البقرة.'], f:'أقصرها سورة الكوثر.'},
+    {q:'ما اسم يوم الراحة عند اليهود؟', a:'السبت (شابات)', alts:['شابات','السبت'], h:['من مساء الجمعة إلى مساء السبت.','الكلمة تعني الراحة بالعبرية.'], f:'من أقدم التقاليد الأسبوعية.'}
+  ]},
+  {name:'فن', emoji:'🎨', desc:'لوحات ومدارس وتقنيات', chips:['لوحات','مدارس فنية','تقنيات'], locked:true, qs:[
+    {q:'من رسم لوحة الموناليزا؟', a:'ليوناردو دافنشي', alts:['دافنشي'], h:['كان عالماً ومخترعاً أيضاً.','إيطالي من عصر النهضة.'], f:'اللوحة معروضة في متحف اللوفر.'},
+    {q:'بأي مدرسة فنية يرتبط سلفادور دالي؟', a:'السريالية', alts:['السوريالية'], h:['تعتمد صوراً حُلمية غير منطقية.','الساعات الذائبة مثال شهير.'], f:'لوحته "إصرار الذاكرة" أشهر مثال.'},
+    {q:'ما اسم فن تكوين الصور من قطع صغيرة ملوّنة؟', a:'الفسيفساء', alts:['الموزاييك'], h:['تقنية زخرفية قديمة.','تراها في المساجد والكنائس القديمة.'], f:'استُخدمت منذ الحضارات الرافدية.'}
+  ]},
+  {name:'أفلام', emoji:'🎬', desc:'شخصيات ومشاهد لا تُنسى', chips:['سلاسل','ممثلون','مشاهد شهيرة'], locked:true, qs:[
+    {q:'أي سلسلة أفلام تضم شخصية جاك سبارو؟', a:'قراصنة الكاريبي', alts:['Pirates of the Caribbean'], h:['من إنتاج ديزني.','جوني ديب في دور البطولة.'], f:'انطلقت عام ٢٠٠٣.'},
+    {q:'ما أعلى فيلم رسوم متحركة تحقيقاً للإيرادات؟', a:'إنسايد آوت ٢', alts:['Inside Out 2'], h:['جزء ثانٍ من إنتاج بيكسار.','عن المشاعر داخل عقل مراهقة.'], f:'تجاوز مليار ونصف دولار.'},
+    {q:'أي فيلم من عام ١٩٩٤ يشتهر بعبارة علبة الشوكولاتة؟', a:'فورست غامب', alts:['Forrest Gump'], h:['بطله يتكلّم بطريقة مميزة.','توم هانكس في دور البطولة.'], f:'حصد ٦ جوائز أوسكار.'}
+  ]},
+  {name:'علوم', emoji:'🔬', desc:'اختراعات وعناصر وكواكب', chips:['اختراعات','كيمياء','فضاء'], qs:[
+    {q:'من اخترع المصباح الكهربائي؟', a:'توماس إديسون', alts:['إديسون'], h:['مخترع أمريكي بأكثر من ١٠٠٠ براءة اختراع.','اسمه يبدأ بحرف الإلف… الأول E.'], f:'طوّر مصباحاً عملياً طويل العمر عام ١٨٧٩.'},
+    {q:'ما الرمز الكيميائي للذهب؟', a:'Au', alts:['ذهب'], h:['من الكلمة اللاتينية aurum.','ليس Go ولا Gd.'], f:'الذهب من أقل المعادن تفاعلاً.'},
+    {q:'أي كوكب يُعرف بالكوكب الأحمر؟', a:'المريخ', alts:['Mars'], h:['الكوكب الرابع من الشمس.','لونه من أكسيد الحديد.'], f:'يملك أعلى بركان في المجموعة الشمسية.'}
+  ]}
+];
+const NAMES_A = ['النمور','الأسود','الذئاب','النسور'];
+const NAMES_B = ['الصقور','الفهود','الأبطال','النجوم'];
+const shuffle = (arr) => arr.slice().sort(() => Math.random() - .5);
+
+class Component extends DCLogic {
+  state = {
+    theme:'light', device:'host', screen:'setup',
+    players:[{name:'ريم', team:'a'}, {name:'سعد', team:'b'}, {name:'نورة', team:'a'}, {name:'خالد', team:'b'}, {name:'ماجد', team:'a'}],
+    draft:'', teamA:'النمور', teamB:'الصقور',
+    judgeIdx:4, rotateJudge:false,
+    picked:[0,1,2,3,5,6,7,10], usedCats:[],
+    round:1, tallyA:0, tallyB:0, log:[],
+    catIdx:null, spinning:false, spinPos:0,
+    a:{time:45, started:false}, b:{time:45, started:false}, active:'a',
+    pool:[], qi:0, hintIdx:0, reveal:null, copied:false,
+    pscreen:'join', joinCode:'', joinName:'', joinError:'', myIdx:null
+  };
+
+  componentWillUnmount(){ clearInterval(this.clockId); clearTimeout(this.revealId); clearTimeout(this.spinId); }
+
+  get roundTime(){ return this.props.roundSeconds ?? 45; }
+  get winsNeeded(){ return Number(this.props.winsNeeded ?? 3); }
+  get cat(){ return this.state.catIdx == null ? CATS[0] : CATS[this.state.catIdx]; }
+  get question(){ const p = this.state.pool; return p.length ? p[this.state.qi % p.length] : CATS[0].qs[0]; }
+  get judge(){ const p = this.state.players; if(!p.length) return null; return p[this.state.judgeIdx % p.length] || p[0]; }
+
+  addPlayer = () => {
+    const n = this.state.draft.trim();
+    if(!n) return;
+    this.setState(s => ({players:[...s.players, {name:n, team: s.players.filter(p => p.team === 'a').length <= s.players.filter(p => p.team === 'b').length ? 'a' : 'b'}], draft:''}));
+  };
+  swapTeam = (i) => this.setState(s => ({players: s.players.map((p,idx) => idx === i ? {...p, team: p.team === 'a' ? 'b' : 'a'} : p)}));
+  removePlayer = (i) => this.setState(s => ({
+    players: s.players.filter((_,idx) => idx !== i),
+    judgeIdx: s.judgeIdx >= i && s.judgeIdx > 0 ? s.judgeIdx - 1 : s.judgeIdx
+  }));
+  shuffleName = (team) => {
+    const list = team === 'a' ? NAMES_A : NAMES_B;
+    const cur = team === 'a' ? this.state.teamA : this.state.teamB;
+    let next = cur;
+    while(next === cur) next = list[Math.floor(Math.random() * list.length)];
+    this.setState(team === 'a' ? {teamA: next} : {teamB: next});
+  };
+  toggleCat = (i) => this.setState(s => ({
+    picked: s.picked.includes(i) ? s.picked.filter(x => x !== i) : [...s.picked, i]
+  }));
+
+  startGame = () => {
+    let players = this.state.players.slice();
+    if(players.length < 2) players = [{name:'لاعب ١', team:'a'}, {name:'لاعب ٢', team:'b'}];
+    ['a','b'].forEach(t => {
+      if(players.some(p => p.team === t)) return;
+      players = [...players, {name: t === 'a' ? 'لاعب ١' : 'لاعب ٢', team:t}];
+    });
+    const picked = this.state.picked.length ? this.state.picked : [0,1,2];
+    this.setState({players, picked, screen:'ready', copied:false});
+  };
+
+  shareRoom = () => {
+    const code = this.props.roomCode ?? 'SKZJ62';
+    const link = 'https://nel3ab.game/j/' + code;
+    const flash = (label) => {
+      this.setState({shareMsg: label});
+      clearTimeout(this.copyId);
+      this.copyId = setTimeout(() => this.setState({shareMsg:''}), 1800);
+    };
+    const copy = () => {
+      if(navigator.clipboard && navigator.clipboard.writeText)
+        navigator.clipboard.writeText(link).then(() => flash('نُسخ الرابط ✔'), () => flash('الكود: ' + code));
+      else flash('الكود: ' + code);
+    };
+    // navigator.share surfaces the OS sheet — AirDrop, WhatsApp, Messages, copy.
+    if(navigator.share){
+      navigator.share({title:'نلعب', text:'انضم لغرفتنا بالكود ' + code, url:link})
+        .then(() => flash('تمت المشاركة ✔'), (e) => { if(!e || e.name !== 'AbortError') copy(); });
+    } else copy();
+  };
+
+  get remaining(){ return this.state.picked.filter(i => !this.state.usedCats.includes(i)); }
+
+  drawCategory = (extra) => {
+    const pool = this.remaining.length ? this.remaining : this.state.picked;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    this.setState(Object.assign({catIdx: pick}, extra || {}), () => this.startRound());
+  };
+  goWheel = () => this.drawCategory();
+
+  get startingTeam(){ return this.state.round % 2 === 1 ? 'a' : 'b'; }
+
+  startRound = () => {
+    const start = this.startingTeam, other = start === 'a' ? 'b' : 'a';
+    this.setState(s => ({
+      screen:'play',
+      usedCats: s.usedCats.includes(s.catIdx) ? s.usedCats : [...s.usedCats, s.catIdx],
+      pool: shuffle(CATS[s.catIdx].qs), qi:0, hintIdx:0, reveal:null,
+      active: start,
+      [start]: {time:this.roundTime, started:true},
+      [other]: {time:this.roundTime, started:false}
+    }), () => this.startClock());
+  };
+
+  startClock(){
+    clearInterval(this.clockId);
+    this.clockId = setInterval(() => {
+      if(this.state.reveal) return;
+      const key = this.state.active, cur = this.state[key];
+      const time = Math.max(0, cur.time - 0.1);
+      this.setState({[key]: {...cur, time}}, () => { if(time <= 0) this.endRound(key); });
+    }, 100);
+  }
+  stopClock(){ clearInterval(this.clockId); this.clockId = null; }
+
+  spend(sec){
+    const key = this.state.active, cur = this.state[key];
+    const time = Math.max(0, cur.time - sec);
+    this.setState({[key]: {...cur, time}});
+    if(time <= 0){ this.endRound(key); return true; }
+    return false;
+  }
+
+  nextQuestion(extra){
+    this.setState(s => Object.assign({qi: s.qi + 1, hintIdx:0, reveal:null}, extra || {}));
+  }
+
+  markCorrect = () => {
+    if(!this.clockId || this.state.reveal) return;
+    const q = this.question;
+    this.stopClock();
+    this.setState({reveal:{answer:q.a, fact:q.f || ''}});
+    clearTimeout(this.revealId);
+    this.revealId = setTimeout(() => this.passTurn(), 1000);
+  };
+
+  passTurn(){
+    const cur = this.state.active, next = cur === 'a' ? 'b' : 'a';
+    const nx = this.state[next];
+    this.setState({
+      active: next,
+      [next]: nx.started ? nx : {time:this.roundTime, started:true},
+      qi: this.state.qi + 1, hintIdx:0, reveal:null
+    }, () => this.startClock());
+  }
+
+  markSkip = () => {
+    if(!this.clockId || this.state.reveal) return;
+    if(this.spend(3)) return;
+    this.nextQuestion();
+  };
+
+  giveHint = () => {
+    if(!this.clockId || this.state.reveal) return;
+    if(this.state.hintIdx >= (this.question.h || []).length) return;
+    if(this.spend(2)) return;
+    this.setState(s => ({hintIdx: s.hintIdx + 1}));
+  };
+
+  endRound(loserKey){
+    if(this.state.screen !== 'play') return;
+    this.stopClock();
+    clearTimeout(this.revealId);
+    const winner = loserKey === 'a' ? 'b' : 'a';
+    this.setState(s => {
+      const tallyA = s.tallyA + (winner === 'a' ? 1 : 0);
+      const tallyB = s.tallyB + (winner === 'b' ? 1 : 0);
+      const done = tallyA >= this.winsNeeded || tallyB >= this.winsNeeded || this.remaining.length === 0;
+      return {
+        screen: done ? 'match' : 'roundEnd', tallyA, tallyB, reveal:null,
+        roundWinner: winner,
+        log: [...s.log, {n: s.round, cat: CATS[s.catIdx].name, winner: winner === 'a' ? s.teamA : s.teamB}]
+      };
+    });
+  }
+
+  nextRound = () => {
+    const s = this.state;
+    this.drawCategory({
+      round: s.round + 1,
+      judgeIdx: s.rotateJudge ? (s.judgeIdx + 1) % Math.max(1, s.players.length) : s.judgeIdx
+    });
+  };
+
+  rematch = () => this.setState({round:1, tallyA:0, tallyB:0, log:[], usedCats:[]}, () => this.drawCategory());
+
+  resetAll = () => {
+    this.stopClock();
+    this.setState({screen:'setup', round:1, tallyA:0, tallyB:0, log:[], usedCats:[], catIdx:null, reveal:null});
+  };
+  backToSetup = () => this.setState({screen:'setup'});
+
+  onJoinSubmit = ({name}) => {
+    this.setState(s => {
+      const team = s.players.filter(p => p.team === 'a').length <= s.players.filter(p => p.team === 'b').length ? 'a' : 'b';
+      return {players: [...s.players, {name, team}], myIdx: s.players.length, pscreen:'lobby', joinError:''};
+    });
+  };
+  swapMyTeam = () => { if(this.state.myIdx != null) this.swapTeam(this.state.myIdx); };
+
+  renderVals(){
+    const s = this.state;
+    const dark = s.theme === 'dark';
+    const ink = dark ? '#fff3df' : '#241c17';
+    const panel = dark ? '#272433' : '#fffaf0';
+    const red = dark ? '#ff5a3c' : '#ec3013';
+    const sky = '#2fa3e8', yellow = '#ffc93c', leaf = '#3dbe6e', muted = dark ? '#a79bb5' : '#8a7a6a';
+    const stroke = dark ? '#0d0c13' : '#241c17';
+    const host = s.device === 'host';
+    const cat = this.cat;
+    const q = this.question;
+    const act = s[s.active];
+    const judge = this.judge;
+    const live = s.screen === 'play';
+    const me = s.myIdx != null ? s.players[s.myIdx] : null;
+    const hints = q.h || [];
+    const hintsLeft = hints.length - s.hintIdx;
+    const remaining = this.remaining;
+    const dots = (n) => Array.from({length: this.winsNeeded}, (_, i) => ({bg: i < n ? yellow : (dark ? '#171521' : '#f0e2c8')}));
+
+    return {
+      theme: s.theme,
+      setLight: () => this.setState({theme:'light'}),
+      setDark: () => this.setState({theme:'dark'}),
+      setHost: () => this.setState({device:'host'}),
+      setPlayer: () => this.setState({device:'player'}),
+      hostBg: host ? yellow : panel, hostFg: host ? '#241c17' : ink,
+      playerBg: host ? panel : yellow, playerFg: host ? ink : '#241c17',
+
+      isSetup: host && s.screen === 'setup',
+      isReady: host && s.screen === 'ready',
+      isPlay: host && s.screen === 'play',
+      isRoundEnd: host && s.screen === 'roundEnd',
+      isMatch: host && s.screen === 'match',
+      isJoin: !host && s.pscreen === 'join',
+      isJoined: !host && s.pscreen === 'lobby',
+
+      roundLabel: s.screen === 'setup' || s.screen === 'ready' ? 'إعداد' : 'جولة ' + s.round + ' — أول ' + this.winsNeeded + ' جولات',
+
+      teamAName: s.teamA, teamBName: s.teamB,
+      onTeamA: (e) => this.setState({teamA: e.target.value}),
+      onTeamB: (e) => this.setState({teamB: e.target.value}),
+      shuffleA: () => this.shuffleName('a'), shuffleB: () => this.shuffleName('b'),
+      membersA: s.players.filter(p => p.team === 'a').map(p => p.name).join('، ') || 'بدون لاعبين',
+      membersB: s.players.filter(p => p.team === 'b').map(p => p.name).join('، ') || 'بدون لاعبين',
+      draftName: s.draft,
+      onDraft: (e) => this.setState({draft: e.target.value}),
+      onDraftKey: (e) => { if(e.key === 'Enter') this.addPlayer(); },
+      addPlayer: this.addPlayer,
+      chips: s.players.map((p,i) => ({
+        name: p.name, bg: p.team === 'a' ? red : sky, fg: '#fff',
+        onSwap: () => this.swapTeam(i), onRemove: () => this.removePlayer(i)
+      })),
+      playerCountLabel: s.players.length + ' لاعبين',
+
+      judgeName: judge ? judge.name : '—',
+      judgeHint: s.players.length % 2 === 1 ? 'العدد فردي — يفضّل التبديل' : 'ثابت طول المباراة',
+      judgeOptions: s.players.map((p,i) => ({
+        name: p.name,
+        bg: i === s.judgeIdx ? yellow : panel,
+        fg: i === s.judgeIdx ? '#241c17' : ink,
+        shadow: i === s.judgeIdx ? '0 3px 0 ' + stroke : 'none',
+        onPick: () => this.setState({judgeIdx: i})
+      })),
+      rotateLabel: (s.rotateJudge ? '✔ ' : '○ ') + 'بدّل الحكم كل جولة',
+      rotateBg: s.rotateJudge ? leaf : (dark ? '#171521' : '#f0e2c8'),
+      rotateFg: s.rotateJudge ? '#0d2b1b' : ink,
+      toggleRotate: () => this.setState(st => ({rotateJudge: !st.rotateJudge})),
+
+      pickedLabel: s.picked.length + ' من ' + CATS.length + ' مختارة',
+      catGrid: CATS.map((c,i) => {
+        const on = s.picked.includes(i);
+        return {
+          name: c.name, emoji: c.emoji,
+          bg: on ? yellow : panel, fg: on ? '#241c17' : ink,
+          opacity: c.locked ? .5 : 1,
+          shadow: on ? '0 3px 0 ' + stroke : 'none',
+          cursor: c.locked ? 'not-allowed' : 'pointer',
+          tag: c.locked ? '🔒 مدفوعة' : (on ? 'مختارة' : ''),
+          tagFg: c.locked ? red : muted,
+          onPick: () => { if(!c.locked) this.toggleCat(i); }
+        };
+      }),
+      startGame: this.startGame,
+      setupNote: 'الحكم يشوف الإجابات · ' + this.roundTime + ' ثانية لكل فريق · ما تحتاج تسجّل دخول',
+
+      roomCode: this.props.roomCode ?? 'SKZJ62',
+      shareRoom: this.shareRoom,
+      copyLabel: s.shareMsg ? s.shareMsg : 'مشاركة',
+      copyBg: s.shareMsg ? leaf : panel, copyFg: s.shareMsg ? '#0d2b1b' : ink,
+      goWheel: this.goWheel, backToSetup: this.backToSetup,
+
+      remainingLabel: remaining.length + ' فئة متبقية',
+      startABg: this.startingTeam === 'a' ? red : panel,
+      startAFg: this.startingTeam === 'a' ? '#fff' : ink,
+      startBBg: this.startingTeam === 'b' ? sky : panel,
+      startBFg: this.startingTeam === 'b' ? '#fff' : ink,
+      startingTeamName: this.startingTeam === 'a' ? s.teamA : s.teamB,
+
+      catName: cat.name, catEmoji: cat.emoji, catDesc: cat.desc,
+      catChips: (cat.chips || []).map(c => ({name: c})),
+      startRound: this.startRound,
+
+      dotsA: dots(s.tallyA), dotsB: dots(s.tallyB),
+      clockA: String(Math.ceil(s.a.time)), clockB: String(Math.ceil(s.b.time)),
+      timerABg: s.active === 'a' && live ? red : panel,
+      timerAFg: s.active === 'a' && live ? '#fff' : ink,
+      timerBBg: s.active === 'b' && live ? sky : panel,
+      timerBFg: s.active === 'b' && live ? '#fff' : ink,
+      timerAShadow: s.active === 'a' ? '0 3px 0 ' + stroke : 'none',
+      timerBShadow: s.active === 'b' ? '0 3px 0 ' + stroke : 'none',
+      statusA: s.active === 'a' ? 'دورهم الآن' : (s.a.started ? 'مجمّد' : 'بالانتظار'),
+      statusB: s.active === 'b' ? 'دورهم الآن' : (s.b.started ? 'مجمّد' : 'بالانتظار'),
+      activeColor: s.active === 'a' ? red : sky,
+      activeName: s.active === 'a' ? s.teamA : s.teamB,
+      bankPct: Math.max(0, Math.min(100, (act.time / this.roundTime) * 100)) + '%',
+      qNumber: String(s.qi + 1),
+      questionText: q.q,
+      answerText: q.a,
+      altText: (q.alts && q.alts.length ? q.alts.join('، ') : 'لا توجد بدائل'),
+      hintText: s.hintIdx > 0 ? hints[s.hintIdx - 1] : (hints.length ? 'لا يوجد تلميح بعد — اضغط تلميح إذا احتاجوا' : 'ما فيه تلميحات لهذا السؤال'),
+      hintColor: s.hintIdx > 0 ? ink : muted,
+      hintAnim: s.hintIdx > 0 ? 'slidein .22s ease-out' : 'none',
+      hintBtnBg: hintsLeft > 0 ? yellow : panel,
+      hintBtnFg: hintsLeft > 0 ? '#241c17' : muted,
+      hintBtnOpacity: hintsLeft > 0 ? 1 : .45,
+      hintBtnCursor: hintsLeft > 0 ? 'pointer' : 'not-allowed',
+      hintBtnNote: hintsLeft > 0 ? '−٢ ثانية · باقي ' + hintsLeft : 'انتهت التلميحات',
+      markCorrect: this.markCorrect, markSkip: this.markSkip, giveHint: this.giveHint,
+      revealOn: !!s.reveal,
+      revealAnswer: s.reveal ? s.reveal.answer : '',
+      revealFact: s.reveal ? s.reveal.fact : '',
+
+      roundTitle: (s.roundWinner === 'a' ? s.teamA : s.teamB) + ' كسبوا الجولة!',
+      roundReason: 'انتهى وقت ' + (s.roundWinner === 'a' ? s.teamB : s.teamA) + ' — الفئة: ' + cat.name,
+      winABg: s.roundWinner === 'a' ? leaf : panel, winAFg: s.roundWinner === 'a' ? '#0d2b1b' : ink,
+      winBBg: s.roundWinner === 'b' ? leaf : panel, winBFg: s.roundWinner === 'b' ? '#0d2b1b' : ink,
+      tallyA: s.tallyA, tallyB: s.tallyB,
+      matchProgress: 'أول فريق يوصل ' + this.winsNeeded + ' جولات يكسب المباراة · ' + remaining.length + ' فئة متبقية',
+      nextRound: this.nextRound, resetAll: this.resetAll, rematch: this.rematch,
+      matchTitle: s.tallyA > s.tallyB ? s.teamA + ' كسبوا المباراة!' : s.tallyB > s.tallyA ? s.teamB + ' كسبوا المباراة!' : 'تعادل بالمباراة',
+      winnersList: s.players.filter(p => p.team === (s.tallyA >= s.tallyB ? 'a' : 'b')).map(p => p.name).join(' · '),
+      matchABg: s.tallyA > s.tallyB ? leaf : panel, matchAFg: s.tallyA > s.tallyB ? '#0d2b1b' : ink,
+      matchBBg: s.tallyB > s.tallyA ? leaf : panel, matchBFg: s.tallyB > s.tallyA ? '#0d2b1b' : ink,
+      matchLog: s.log.map(r => ({label: 'جولة ' + r.n + ' · ' + r.cat, result: r.winner})),
+
+      onJoinSubmit: this.onJoinSubmit, swapMyTeam: this.swapMyTeam,
+      canSwapTeam: !live,
+      iAmJudge: me != null && s.myIdx === s.judgeIdx,
+      myName: me ? me.name : '',
+      myTeamName: me ? (me.team === 'a' ? s.teamA : s.teamB) : '',
+      myTeamColor: me && me.team === 'b' ? sky : red,
+      liveForPlayer: live,
+      waitingForPlayer: !live,
+      playerQuestion: q.q,
+      waitIcon: s.screen === 'match' ? '👑' : '⏳',
+      waitTitle: s.screen === 'match' ? 'انتهت المباراة' : 'بانتظار الحكم يبدأ',
+      waitBody: s.screen === 'match' ? 'شوف النتيجة على شاشة الحكم' : 'خلّ جوالك معك — السؤال بيطلع هنا لما تبدأ الجولة'
+    };
+  }
+}
+</script>
+</body>
+</html>

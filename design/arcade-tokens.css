@@ -1,0 +1,96 @@
+/* Nel3ab "Arcade" design system — tokens
+   Extracted verbatim from the HTML prototypes. Map these onto the target
+   codebase's own token layer; do not ship this file as-is. */
+
+:root {
+  /* Ground & surfaces */
+  --bg:      #fff3df; /* page ground, warm cream */
+  --panel:   #fffaf0; /* cards, pills, input shells */
+  --sunken:  #f0e2c8; /* input fills, hint strip, progress tracks */
+
+  /* Ink */
+  --ink:     #241c17; /* primary text */
+  --muted:   #8a7a6a; /* secondary text */
+  --stroke:  #241c17; /* every border AND every drop shadow */
+
+  /* Roles */
+  --red:     #ec3013; /* team A, accent, judge-only box, errors */
+  --sky:     #2fa3e8; /* team B */
+  --yellow:  #ffc93c; /* primary CTA, selected state, win dots */
+  --leaf:    #3dbe6e; /* correct / success / winner */
+  --on-leaf: #0d2b1b; /* text over --leaf */
+  --on-yellow: #241c17;
+
+  /* Type */
+  --font:    "Baloo Bhaijaan 2", system-ui, sans-serif; /* Arabic UI, 500/600/700/800 */
+  --font-en: "Archivo", system-ui, sans-serif;           /* Latin, numerals, clocks, room code, 600/800 */
+
+  /* Type scale (px) — 64 46 40 34 32 30 28 26 24 23 22 20 19 17 16 15.5 15 14.5 13.5 12.5 11.5 11 10.5 */
+  --lh-display: 1.06;
+  --lh-heading: 1.2;
+  --lh-question: 1.45;
+  --lh-body: 1.6;
+
+  /* Radii — no radius is ever 0 in this system */
+  --r-pill:  999px;
+  --r-xs:    8px;
+  --r-sm:    12px;
+  --r-input: 14px;  /* inputs, timer cards, toggles */
+  --r-tile:  16px;  /* team tiles, category tiles, secondary buttons */
+  --r-btn:   18px;  /* primary + action buttons, dashed box */
+  --r:       20px;  /* standard card */
+  --r-lg:    24px;  /* question card */
+  --r-xl:    28px;  /* pricing panel */
+
+  /* Borders (always --stroke unless noted) */
+  --bd-thick: 3px;   /* cards, primary buttons */
+  --bd:       2.5px; /* pills, inputs, tiles, secondary buttons */
+  --bd-thin:  2px;   /* inner dots, log dividers */
+
+  /* Shadows — hard offset, ZERO blur, always --stroke */
+  --drop:    4px;                    /* legacy alias used in markup: 0 var(--drop) 0 */
+  --sh-card: 0 4px 0 var(--stroke);  /* standard card */
+  --sh-sel:  0 3px 0 var(--stroke);  /* selected pill, active timer card */
+  --sh-act:  0 5px 0 var(--stroke);  /* action buttons, score cards */
+  --sh-cta:  0 6px 0 var(--stroke);  /* primary CTA, question card, landing cards */
+  --sh-hero: 0 8px 0 var(--stroke);  /* pricing panel */
+
+  /* Spacing — 4-based: 4 6 7 8 9 10 11 12 14 16 18 20 22 26 */
+  --pad-card: 14px;   /* phone */
+  --pad-card-lg: 22px; /* landing */
+
+  /* Motion */
+  --t-tick:   100ms;  /* clock tick / bar width */
+  --t-pop:    180ms;  /* reveal overlay */
+  --t-slide:  220ms;  /* new hint */
+  --t-reveal: 1000ms; /* answer hold before turn passes */
+  --t-toast:  1800ms; /* share confirmation */
+  --t-bob:    1100ms; /* celebration loop */
+}
+
+[data-theme="dark"] {
+  --bg:     #1c1a25;
+  --panel:  #272433;
+  --sunken: #171521;
+  --ink:    #fff3df;
+  --muted:  #a79bb5;
+  --stroke: #0d0c13;
+  --red:    #ff5a3c;
+  /* --sky, --yellow, --leaf are unchanged across themes */
+}
+
+/* Global states — themed, never browser defaults */
+:focus { outline: none; }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+::selection { background: rgba(255, 201, 60, .55); }
+[aria-disabled="true"], :disabled { opacity: .45; cursor: not-allowed; }
+
+/* Keyframes */
+@keyframes pop  { from { transform: scale(.72); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+@keyframes bob  { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+@keyframes ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,201,60,.75) } 50% { box-shadow: 0 0 0 10px rgba(255,201,60,0) } }
+@keyframes slidein { from { transform: translateY(10px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+/* Press behavior for every raised control: move down, shrink the offset by the
+   same amount. Never a scale, never an opacity fade. */
+.press:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--stroke); }

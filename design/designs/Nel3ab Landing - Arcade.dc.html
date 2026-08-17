@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نلعب — الجلسة يبيلها لعبة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&amp;family=Archivo:wght@600;800&amp;display=swap">
+<script src="./image-slot.js"></script>
+<style>
+  :root{
+    --bg:#fff3df; --panel:#fffaf0; --sunken:#f0e2c8;
+    --ink:#241c17; --muted:#8a7a6a; --stroke:#241c17;
+    --red:#ec3013; --yellow:#ffc93c; --sky:#2fa3e8; --leaf:#3dbe6e;
+    --drop:4px; --r:20px;
+    --font:"Baloo Bhaijaan 2",system-ui,sans-serif;
+    --font-en:"Archivo",system-ui,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  body{margin:0;background:#fff3df;font-family:"Baloo Bhaijaan 2",system-ui,sans-serif;}
+  input,button{font-family:inherit;}
+  :focus{outline:none;}
+  :focus-visible{outline:3px solid var(--red);outline-offset:3px;}
+  ::selection{background:rgba(255,201,60,.55);}
+  a{color:var(--red);text-underline-offset:3px;}
+  a:hover{opacity:.75;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes spinSlow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes bulbA{0%,45%{opacity:1}55%,100%{opacity:.22}}
+  @keyframes bulbB{0%,45%{opacity:.22}55%,100%{opacity:1}}
+  @keyframes wordIn{from{transform:translateY(14px) rotate(-3deg);opacity:0}to{transform:none;opacity:1}}
+</style>
+</helmet>
+<div dir="rtl" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font);">
+
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 26px;flex-wrap:wrap;position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:3px solid var(--stroke);">
+    <div style="display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;">
+      <span style="width:22px;height:22px;border-radius:50%;background:var(--red);border:3px solid var(--stroke);display:inline-block;"></span>
+      نلعب
+    </div>
+    <nav style="display:flex;align-items:center;gap:22px;font-size:15px;font-weight:700;">
+      <a href="#games" style="color:var(--ink);text-decoration:none;">الألعاب</a>
+      <a href="#how" style="color:var(--ink);text-decoration:none;">كيف تلعب</a>
+      <a href="#plans" style="color:var(--ink);text-decoration:none;">الاشتراك</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button style="padding:9px 18px;border-radius:999px;border:3px solid var(--stroke);background:var(--panel);color:var(--ink);font-size:14px;font-weight:800;cursor:pointer;" style-hover="background:var(--yellow)">تسجيل الدخول</button>
+      <button style="padding:9px 20px;border-radius:999px;border:3px solid var(--stroke);background:var(--yellow);color:var(--ink);font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 var(--stroke);" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--stroke)">ابدأ الحين</button>
+    </div>
+  </header>
+
+  <div style="position:relative;overflow:hidden;border-bottom:3px solid var(--stroke);background:linear-gradient(180deg,#ffe7c9 0%,var(--bg) 58%);">
+
+    <div style="position:relative;height:26px;border-bottom:3px solid var(--stroke);background:var(--red);">
+      <div style="position:absolute;inset:0;background-image:radial-gradient(circle 5px at 13px 13px,var(--yellow) 96%,transparent 100%);background-size:34px 26px;animation:bulbA 1.1s steps(1,end) infinite;"></div>
+      <div style="position:absolute;inset:0;background-image:radial-gradient(circle 5px at 30px 13px,#fffaf0 96%,transparent 100%);background-size:34px 26px;animation:bulbB 1.1s steps(1,end) infinite;"></div>
+    </div>
+
+    <div style="position:absolute;top:26px;left:0;width:44%;height:520px;background:radial-gradient(ellipse 60% 70% at 50% 0%,rgba(255,201,60,.55),rgba(255,201,60,0) 70%);pointer-events:none;"></div>
+
+  <section style="position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:center;padding:52px 26px 52px;max-width:1180px;margin:0 auto;">
+    <div>
+        <div>
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--sky);color:#fff;font-size:13px;font-weight:800;">
+            <span style="width:9px;height:9px;border-radius:50%;background:var(--yellow);border:2px solid var(--stroke);"></span>
+            الليلة على المسرح
+          </div>
+
+          <h1 style="margin:14px 0 0;font-size:64px;line-height:1.06;font-weight:800;letter-spacing:-.01em;">
+            الجلسة يبيلها
+            <span style="display:block;color:var(--red);">
+              <span key="{{ wordKey }}" style="display:inline-block;animation:wordIn .45s cubic-bezier(.2,1.4,.4,1) both;">{{ hotWord }}</span>
+              <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--yellow);border:3px solid var(--stroke);vertical-align:middle;margin-inline-start:8px;"></span>
+            </span>
+          </h1>
+
+          <p style="margin:14px 0 0;font-size:18px;font-weight:600;color:var(--muted);line-height:1.6;max-width:40ch;">فريق ضد فريق، جوال واحد، وضحك لآخر الليل.</p>
+
+          <div style="display:flex;align-items:stretch;gap:12px;margin-top:26px;flex-wrap:wrap;">
+            <button style="display:flex;align-items:center;gap:14px;padding:14px 22px;border-radius:18px;border:3px solid var(--stroke);background:var(--yellow);color:var(--ink);cursor:pointer;box-shadow:0 6px 0 var(--stroke);text-align:right;" style-hover="filter:brightness(1.05)" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)">
+              <span style="display:flex;flex-direction:column;">
+                <span style="font-size:11.5px;font-weight:800;color:#6b5a3f;letter-spacing:.06em;">تذكرة دخول · مجاناً</span>
+                <span style="font-size:21px;font-weight:800;">ارفع الستارة</span>
+              </span>
+              <span style="width:3px;align-self:stretch;background:repeating-linear-gradient(180deg,var(--stroke) 0 5px,transparent 5px 10px);"></span>
+              <span style="font-family:var(--font-en);font-size:22px;font-weight:800;">←</span>
+            </button>
+            <button style="padding:14px 22px;border-radius:18px;border:3px solid var(--stroke);background:var(--panel);color:var(--ink);font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)">شوف الألعاب</button>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:18px;border-top:3px dashed var(--sunken);flex-wrap:wrap;">
+            <div style="display:flex;">
+              <span style="width:30px;height:30px;border-radius:50%;background:var(--red);border:3px solid var(--stroke);margin-left:-8px;"></span>
+              <span style="width:30px;height:30px;border-radius:50%;background:var(--yellow);border:3px solid var(--stroke);margin-left:-8px;"></span>
+              <span style="width:30px;height:30px;border-radius:50%;background:var(--sky);border:3px solid var(--stroke);margin-left:-8px;"></span>
+              <span style="width:30px;height:30px;border-radius:50%;background:var(--leaf);border:3px solid var(--stroke);"></span>
+            </div>
+            <span style="font-size:14px;font-weight:800;color:var(--muted);">١٢٤ جلسة شعلّت هذا الأسبوع</span>
+          </div>
+        </div>
+    </div>
+    <div style="display:flex;justify-content:center;position:relative;padding:26px 10px 18px;">
+      <div style="position:absolute;bottom:0;left:8%;right:8%;height:26px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(36,28,23,.16),rgba(36,28,23,0) 70%);pointer-events:none;"></div>
+      <div style="position:absolute;top:-8px;right:-16px;width:52px;height:52px;border-radius:50%;background:var(--sky);border:3px solid var(--stroke);box-shadow:0 5px 0 var(--stroke);z-index:3;animation:bob 3.4s ease-in-out infinite;"></div>
+      <div style="position:absolute;top:120px;left:-14px;width:38px;height:38px;border-radius:50%;background:var(--leaf);border:3px solid var(--stroke);box-shadow:0 4px 0 var(--stroke);z-index:3;animation:bob 4.1s ease-in-out infinite;"></div>
+      <div style="position:absolute;bottom:6px;left:26px;width:30px;height:30px;border-radius:50%;background:var(--yellow);border:3px solid var(--stroke);box-shadow:0 4px 0 var(--stroke);z-index:3;animation:bob 3.8s ease-in-out infinite;"></div>
+
+      <div style="width:100%;max-width:430px;border:3px solid var(--stroke);border-radius:26px;box-shadow:0 9px 0 var(--stroke);background:var(--panel);overflow:hidden;transform:rotate(-1.4deg);">
+        <div style="background:var(--red);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font-size:15.5px;font-weight:800;white-space:nowrap;">فريق ضد فريق</span>
+            <span style="font-size:12.5px;font-weight:700;opacity:.9;white-space:nowrap;">جوال واحد · بدون تسجيل</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:#fffaf0;border:3px solid var(--stroke);display:grid;grid-template-columns:repeat(2,1fr);gap:4px;padding:6px;transform:rotate(-8deg);">
+              <span style="width:100%;aspect-ratio:1;border-radius:50%;background:var(--stroke);display:block;"></span>
+              <span style="width:100%;aspect-ratio:1;border-radius:50%;background:var(--stroke);display:block;"></span>
+              <span style="width:100%;aspect-ratio:1;border-radius:50%;background:var(--stroke);display:block;"></span>
+              <span style="width:100%;aspect-ratio:1;border-radius:50%;background:var(--stroke);display:block;"></span>
+            </div>
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--yellow);border:3px solid var(--stroke);display:flex;align-items:center;justify-content:center;padding:6px;transform:rotate(7deg);">
+              <span style="width:11px;height:11px;border-radius:50%;background:var(--stroke);display:block;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:20px;">
+          <div style="position:relative;display:grid;grid-template-columns:1fr 3px 1fr;background:var(--stroke);border:3px solid var(--stroke);">
+            <div style="background:#ffe2db;padding:16px 14px 18px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+              <span style="padding:4px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--red);color:#fff;font-size:13px;font-weight:800;">الفريق الأحمر</span>
+              <div style="display:flex;justify-content:center;">
+                <span style="width:34px;height:34px;border-radius:50%;background:var(--red);border:3px solid var(--stroke);margin-left:-9px;"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:var(--red);border:3px solid var(--stroke);margin-left:-9px;"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:var(--red);border:3px solid var(--stroke);"></span>
+              </div>
+              <span style="font-family:var(--font-en);font-size:40px;font-weight:800;line-height:1;">7</span>
+              <span style="font-size:12.5px;font-weight:800;color:var(--muted);">٣ لاعبين</span>
+            </div>
+
+            <div></div>
+
+            <div style="background:#d8ecfb;padding:16px 14px 18px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+              <span style="padding:4px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--sky);color:#fff;font-size:13px;font-weight:800;">الفريق الأزرق</span>
+              <div style="display:flex;justify-content:center;">
+                <span style="width:34px;height:34px;border-radius:50%;background:var(--sky);border:3px solid var(--stroke);margin-left:-9px;"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:var(--sky);border:3px solid var(--stroke);margin-left:-9px;"></span>
+                <span style="width:34px;height:34px;border-radius:50%;background:var(--sky);border:3px solid var(--stroke);"></span>
+              </div>
+              <span style="font-family:var(--font-en);font-size:40px;font-weight:800;line-height:1;">5</span>
+              <span style="font-size:12.5px;font-weight:800;color:var(--muted);">٣ لاعبين</span>
+            </div>
+
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:var(--yellow);border:3px solid var(--stroke);box-shadow:0 4px 0 var(--stroke);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;">ضد</div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding:10px 14px;border:3px solid var(--stroke);border-radius:14px;background:var(--sunken);">
+            <span style="font-size:14.5px;font-weight:800;">دور الأحمر الآن</span>
+            <span style="font-family:var(--font-en);font-size:15px;font-weight:800;">00:45</span>
+          </div>
+
+          <button style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 22px;border-radius:18px;border:3px solid var(--stroke);background:var(--yellow);color:var(--ink);font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);" style-hover="filter:brightness(1.04)" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)">
+            <span>افتح غرفة وشارك الكود</span>
+            <span>▶</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <section id="how" style="max-width:1180px;margin:0 auto;padding:0 26px 56px;">
+    <h2 style="margin:0 0 20px;font-size:40px;font-weight:800;">ثلاث خطوات وتبدأ</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+      <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 6px 0 var(--stroke);padding:22px;">
+        <div style="width:44px;height:44px;border-radius:50%;border:3px solid var(--stroke);background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);font-size:18px;font-weight:800;">1</div>
+        <h3 style="margin:14px 0 6px;font-size:23px;font-weight:800;">افتح غرفة</h3>
+        <p style="margin:0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--muted);">كود من ستة حروف يطلع على الشاشة، وكل واحد يدخله من جواله.</p>
+      </div>
+      <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 6px 0 var(--stroke);padding:22px;">
+        <div style="width:44px;height:44px;border-radius:50%;border:3px solid var(--stroke);background:var(--sky);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);font-size:18px;font-weight:800;">2</div>
+        <h3 style="margin:14px 0 6px;font-size:23px;font-weight:800;">وزّع الفرق واختر الحكم</h3>
+        <p style="margin:0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--muted);">بدّل الأسماء بين الفريقين، حدّد الحكم، وعلّم الفئات اللي تبيها بضغطة.</p>
+      </div>
+      <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 6px 0 var(--stroke);padding:22px;">
+        <div style="width:44px;height:44px;border-radius:50%;border:3px solid var(--stroke);background:var(--leaf);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);font-size:18px;font-weight:800;">3</div>
+        <h3 style="margin:14px 0 6px;font-size:23px;font-weight:800;">اضغط ابدأ — والجولة تشتغل</h3>
+        <p style="margin:0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--muted);">الفئة تُسحب تلقائياً والساعة تمشي على طول: ٤٥ ثانية لكل فريق، والحكم يضغط صحيح أو تخطي أو تلميح.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="games" style="max-width:1180px;margin:0 auto;padding:0 26px 56px;">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+      <h2 style="margin:0;font-size:40px;font-weight:800;">مكتبة الألعاب</h2>
+      <span style="font-size:14px;font-weight:700;color:var(--muted);">اختر وحدة وابدأ خلال دقيقة</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <sc-for list="{{ games }}" as="g" hint-placeholder-count="4">
+        <article style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 6px 0 var(--stroke);overflow:hidden;display:flex;flex-direction:column;">
+          <div style="position:relative;height:250px;background:{{ g.tint }};border-bottom:3px solid var(--stroke);">
+            <image-slot id="{{ g.slotId }}" shape="rect" placeholder="{{ g.slotHint }}"></image-slot>
+            <div style="position:absolute;top:12px;left:12px;padding:4px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--panel);font-family:var(--font-en);font-size:14px;font-weight:800;pointer-events:none;">{{ g.no }}</div>
+            <div style="position:absolute;top:12px;right:12px;display:{{ g.soonDisplay }};align-items:center;gap:6px;padding:4px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--yellow);color:#241c17;font-size:12.5px;font-weight:800;pointer-events:none;white-space:nowrap;">⏳ قريباً</div>
+          </div>
+          <div style="padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px;flex:1;">
+            <h3 style="margin:0;font-size:26px;font-weight:800;">{{ g.title }}</h3>
+            <p style="margin:0;font-size:14.5px;font-weight:600;line-height:1.6;color:var(--muted);">{{ g.blurb }}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="padding:5px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--sunken);font-size:12.5px;font-weight:800;">{{ g.players }}</span>
+              <span style="padding:5px 12px;border-radius:999px;border:2.5px solid var(--stroke);background:var(--sunken);font-size:12.5px;font-weight:800;">{{ g.device }}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px;">
+              <button style="display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:16px;border:3px solid var(--stroke);background:{{ g.cta_bg }};color:{{ g.cta_fg }};font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 var(--stroke);" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--stroke)">
+                {{ g.cta }} <span style="font-family:var(--font-en);">←</span>
+              </button>
+              <a href="#how" style="font-size:13.5px;font-weight:800;">وش سالفتها؟</a>
+            </div>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </section>
+
+  
+
+  <section id="plans" style="max-width:1180px;margin:0 auto;padding:0 26px 60px;">
+    <div style="background:var(--red);border:3px solid var(--stroke);border-radius:28px;box-shadow:0 8px 0 var(--stroke);padding:46px 40px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;">
+      <div>
+        <h2 style="margin:0;font-size:46px;font-weight:800;line-height:1.12;max-width:16ch;">سجّل مرة وحدة، والباقي جلسات</h2>
+        <p style="margin:12px 0 0;font-size:16px;font-weight:600;opacity:.9;">بدون بطاقة · إلغاء في أي وقت</p>
+      </div>
+      <button style="padding:18px 30px;border-radius:20px;border:3px solid var(--stroke);background:var(--yellow);color:var(--ink);font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);white-space:nowrap;" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)">سجّل مجاناً</button>
+    </div>
+  </section>
+
+  <footer style="border-top:3px solid var(--stroke);padding:22px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;">
+      <span style="width:16px;height:16px;border-radius:50%;background:var(--red);border:2.5px solid var(--stroke);display:inline-block;"></span>
+      نلعب
+    </div>
+    <div style="display:flex;gap:20px;font-size:13.5px;font-weight:700;color:var(--muted);">
+      <a href="#games" style="color:var(--muted);text-decoration:none;">الألعاب</a>
+      <a href="#how" style="color:var(--muted);text-decoration:none;">كيف تلعب</a>
+      <a href="#plans" style="color:var(--muted);text-decoration:none;">الاشتراك</a>
+      <span>© 2026</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;gamesShown&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:1,&quot;max&quot;:5,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Content&quot;},&quot;ctaColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#ffc93c&quot;,&quot;options&quot;:[&quot;#ffc93c&quot;,&quot;#ec3013&quot;,&quot;#3dbe6e&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Style&quot;}}">
+const GAMES = [
+  {no:'01', title:'حكم المعلومات', blurb:'أسئلة معلومات بـ١١ فئة، حكم يشوف الإجابة، وتلميح مقابل ثانيتين — أول فريق ينتهي وقته يخسر الجولة.', players:'2–10 لاعبين', device:'فريقين + حكم', cta:'العب مجاناً', tint:'#ffd6cf', slotId:'arc-game-00', slotHint:'لقطة من حكم المعلومات'},
+  {no:'02', title:'تحدي الصور', blurb:'صورة تطلع على الشاشة، وفريقك يخمّن قبل ما تخلص الساعة.', players:'2–10 لاعبين', device:'فريقين', cta:'العب مجاناً', tint:'#ffe8b8', slotId:'arc-game-01', slotHint:'لقطة من تحدي الصور'},
+  {no:'03', title:'سهرة نلعب', blurb:'جدول كامل للسهرة: جولات متغيرة، وكل لاعب بجواله.', players:'4–10 لاعبين', device:'كل لاعب بجواله', cta:'سجّل وأنشئ سهرة', tint:'#cfe9fb', slotId:'arc-game-02', slotHint:'لقطة من سهرة نلعب'},
+  {no:'04', title:'من الأسرع', blurb:'سؤال واحد، وأول ضغطة تاخذ النقطة. لا مجال للتردد.', players:'3–8 لاعبين', device:'فردي', cta:'العب مجاناً', tint:'#d3f2df', slotId:'arc-game-03', slotHint:'لقطة من من الأسرع'},
+  {no:'05', title:'كلمة وموقف', blurb:'وصف الكلمة بدون ما تقولها — والباقي على براعة فريقك.', players:'4–12 لاعب', device:'فريقين', cta:'العب مجاناً', tint:'#ffd8cf', slotId:'arc-game-04', slotHint:'لقطة من كلمة وموقف'}
+];
+
+const WORDS = ['لعبة','تحدي','ضحكة','سهرة','نلعب'];
+
+class Component extends DCLogic {
+  state = {w: 0};
+
+  componentDidMount(){
+    this._t = setInterval(() => this.setState(s => ({w: (s.w + 1) % WORDS.length})), 2200);
+  }
+  componentWillUnmount(){ clearInterval(this._t); }
+
+  renderVals(){
+    const count = Math.max(1, Math.min(5, this.props.gamesShown ?? 5));
+    const primary = this.props.ctaColor ?? '#ffc93c';
+    return {
+      hotWord: WORDS[this.state.w],
+      wordKey: 'w' + this.state.w,
+      games: GAMES.slice(0, count).map((g, i) => ({
+        ...g,
+        cta_bg: i === 0 ? primary : '#f0e2c8',
+        cta_fg: '#241c17',
+        cta: i === 0 ? g.cta : 'قريباً',
+        soonDisplay: i === 0 ? 'none' : 'flex'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

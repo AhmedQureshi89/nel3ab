@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&amp;family=Archivo:wght@600;800&amp;display=swap">
+<style>
+  .join-scope{
+    --bg:#fff3df; --panel:#fffaf0; --sunken:#f0e2c8;
+    --ink:#241c17; --muted:#8a7a6a; --stroke:#241c17;
+    --red:#ec3013; --yellow:#ffc93c; --drop:4px; --r:20px;
+    --font:"Baloo Bhaijaan 2",system-ui,sans-serif;
+    --font-en:"Archivo",system-ui,sans-serif;
+  }
+  .join-scope[data-theme="dark"]{
+    --bg:#1c1a25; --panel:#272433; --sunken:#171521;
+    --ink:#fff3df; --muted:#a79bb5; --stroke:#0d0c13; --red:#ff5a3c;
+  }
+  .join-scope *,.join-scope *::before,.join-scope *::after{box-sizing:border-box;}
+  .join-scope input,.join-scope button{font-family:inherit;}
+  .join-scope :focus-visible{outline:3px solid var(--red);outline-offset:3px;}
+</style>
+</helmet>
+<div class="join-scope" data-theme="{{ theme }}" dir="rtl" style="background:var(--bg);color:var(--ink);font-family:var(--font);padding:14px;">
+  <div style="width:100%;max-width:440px;margin:0 auto;">
+    <h1 style="margin:0 0 2px;font-size:32px;font-weight:800;line-height:1.15;">{{ heading }}</h1>
+    <p style="margin:0 0 18px;font-size:15px;color:var(--muted);font-weight:600;">{{ subheading }}</p>
+
+    <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:16px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px;">كود الغرفة</div>
+      <input value="{{ code }}" onChange="{{ onCode }}" placeholder="SKZJ62" style="width:100%;background:var(--sunken);border:2.5px solid var(--stroke);border-radius:14px;padding:14px;color:var(--ink);font-family:var(--font-en);font-size:26px;font-weight:800;letter-spacing:.24em;text-align:center;outline:none;text-transform:uppercase;">
+    </div>
+
+    <div style="background:var(--panel);border:3px solid var(--stroke);border-radius:var(--r);box-shadow:0 var(--drop) 0 var(--stroke);padding:16px;margin-bottom:18px;">
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px;">اسمك</div>
+      <input value="{{ name }}" onChange="{{ onName }}" onKeyDown="{{ onKey }}" placeholder="مثلاً: ريم" style="width:100%;background:var(--sunken);border:2.5px solid var(--stroke);border-radius:14px;padding:13px;color:var(--ink);font-size:16px;font-weight:700;outline:none;">
+    </div>
+
+    <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--red);color:#fff;border:2.5px solid var(--stroke);border-radius:14px;padding:11px 14px;font-size:13.5px;font-weight:700;margin-bottom:14px;">{{ errorText }}</div>
+    </sc-if>
+
+    <button onClick="{{ submit }}" style="width:100%;border:3px solid var(--stroke);border-radius:18px;padding:17px 20px;background:var(--yellow);color:#241c17;font-size:19px;font-weight:800;cursor:pointer;box-shadow:0 6px 0 var(--stroke);display:flex;align-items:center;justify-content:space-between;" style-active="transform:translateY(4px);box-shadow:0 2px 0 var(--stroke)"><span>{{ ctaLabel }}</span><span>▶</span></button>
+    <p style="text-align:center;color:var(--muted);font-size:12.5px;font-weight:600;margin:10px 0 0;">{{ footnote }}</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:470,&quot;height&quot;:540},&quot;roomCode&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;SKZJ62&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;heading&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;انضم للعبة&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;subheading&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;اطلب الكود من صاحب الغرفة&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;ctaLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;انضم&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;footnote&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;بدون تحميل تطبيق — بس افتح الرابط&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onJoin&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(v: {code: string, name: string}) =&gt; void&quot;}}">
+class Component extends DCLogic {
+  state = {code:'', name:'', error:''};
+
+  submit = () => {
+    const code = (this.state.code || '').trim().toUpperCase();
+    const name = this.state.name.trim();
+    const expected = (this.props.roomCode ?? '').toUpperCase();
+    if(!name) return this.setState({error:'اكتب اسمك عشان فريقك يعرفك'});
+    if(expected && code && code !== expected) return this.setState({error:'الكود غير صحيح — تأكد من صاحب الغرفة'});
+    this.setState({error:''});
+    if(this.props.onJoin) this.props.onJoin({code, name});
+  };
+
+  renderVals(){
+    const s = this.state;
+    return {
+      theme: this.props.theme ?? 'light',
+      heading: this.props.heading ?? 'انضم للعبة',
+      subheading: this.props.subheading ?? 'اطلب الكود من صاحب الغرفة',
+      ctaLabel: this.props.ctaLabel ?? 'انضم',
+      footnote: this.props.footnote ?? 'بدون تحميل تطبيق — بس افتح الرابط',
+      code: s.code, name: s.name,
+      onCode: (e) => this.setState({code: e.target.value.toUpperCase(), error:''}),
+      onName: (e) => this.setState({name: e.target.value, error:''}),
+      onKey: (e) => { if(e.key === 'Enter') this.submit(); },
+      hasError: !!s.error, errorText: s.error,
+      submit: this.submit
+    };
+  }
+}
+</script>
+</body>
+</html>
