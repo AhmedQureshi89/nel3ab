@@ -23,9 +23,12 @@ A verdict gate's failure is a finding, not a bug. `/spec-next` and `/spec-run` a
 
 Must pass **before** any `package.json` or source file is committed. Failing this later means renormalising history instead of setting a flag.
 
-- [ ] **REQ-1.3 (LF in the index):** `git ls-files --eol` reports `i/lf` for every text file in the repo — including the two `specs/*.md` files Git warned about, and the `design/**` files. Record the count of files checked and the count of non-`i/lf` text files (must be 0).
-- [ ] **REQ-1.3 (Binaries excluded):** no `*.woff2`/`*.png`/`*.ttf` path appears with a text eol attribute. (None exist yet; the check is that the attribute pattern is right, verified with `git check-attr text -- some/path.woff2`.)
-- [ ] **REQ-1.3 (Editor agreement):** `.editorconfig` exists with `end_of_line = lf`, and does not set `trim_trailing_whitespace` on `*.md`.
+- [x] **REQ-1.3 (LF in the index):** `git ls-files --eol` reports `i/lf` for every text file in the repo — including the two `specs/*.md` files Git warned about, and the `design/**` files. Record the count of files checked and the count of non-`i/lf` text files (must be 0).
+  **Measured 2026-08-17: 17 tracked text files, all `i/lf w/lf attr/text=auto eol=lf`; non-LF text files = 0.** `git add --renormalize .` produced **no content changes** — `core.autocrlf=true` had already stored LF for all 15 pre-existing files, so `.gitattributes` makes the guarantee explicit rather than repairing it. Consequence worth noting: `design/**` was not rewritten, so Gate 4's `git diff ca16ff5..HEAD -- design/` remains empty.
+- [x] **REQ-1.3 (Binaries excluded):** no `*.woff2`/`*.png`/`*.ttf` path appears with a text eol attribute. (None exist yet; the check is that the attribute pattern is right, verified with `git check-attr text -- some/path.woff2`.)
+  **Measured 2026-08-17:** `text: unset` for all four future paths tested — `packages/ui/fonts/example.woff2`, `.../example.ttf`, `public/example.png`, `apps/web/app/favicon.ico`. Contrast case `specs/mission.md` → `text: auto`, `eol: lf`.
+- [x] **REQ-1.3 (Editor agreement):** `.editorconfig` exists with `end_of_line = lf`, and does not set `trim_trailing_whitespace` on `*.md`.
+  **Measured 2026-08-17:** `end_of_line = lf` at `.editorconfig:5`; `[*.md]` section sets `trim_trailing_whitespace = false`.
 
 ## 2. Gate 2 — Workspace integrity & a non-vacuous harness (blocks Gates 3–7)
 
