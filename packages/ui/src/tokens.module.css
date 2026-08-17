@@ -1,0 +1,20 @@
+/*
+ * REQ-1.8 / REQ-1.9 — a real CSS Module for the RTL guardrail to match.
+ * See specs/phase-1/specs.md §2.8.
+ *
+ * This is NOT the Phase 2 token port. arcade-tokens.css, colours, radii,
+ * shadows and the press behaviour are owned by Phase 2 (requirements.md §4);
+ * duplicating a subset here would create two sources of truth for a product
+ * pillar. Logical properties only — this file is also the thing REQ-1.9's
+ * negative test is run against.
+ */
+
+.panel {
+  padding-inline: 1rem;
+  padding-block: 0.75rem;
+  margin-block: 0.5rem;
+  border-inline-start-width: 4px;
+  border-inline-start-style: solid;
+  inset-inline-start: 0;
+  text-align: start;
+}

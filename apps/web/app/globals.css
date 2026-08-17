@@ -1,0 +1,27 @@
+/*
+ * REQ-1.4 / REQ-1.8 — minimal reset, logical properties only.
+ * See specs/phase-1/specs.md §2.10.
+ *
+ * No fonts, no tokens, no theme switching, no `.ltr-num` — all Phase 2
+ * (requirements.md §4). The document is `lang="ar" dir="rtl"` from its first
+ * render (app/layout.tsx), so every rule here is written on the inline axis.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin-block: 0;
+  margin-inline: 0;
+  padding-block: 0;
+  padding-inline: 0;
+}
+
+body {
+  line-height: 1.5;
+  text-align: start;
+}
