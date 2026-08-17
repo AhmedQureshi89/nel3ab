@@ -30,7 +30,15 @@ export default defineConfig({
       project('@nel3ab/content', './packages/content'),
       project('@nel3ab/ui', './packages/ui'),
       project('nel3ab-game', './apps/game'),
-      project('nel3ab-web', './apps/web'),
+      {
+        ...project('nel3ab-web', './apps/web'),
+        // apps/web/tsconfig.json sets `jsx: "preserve"` because Next compiles
+        // the JSX itself (specs.md §2.10). Vite honours that tsconfig, so
+        // without this override it hands untransformed JSX to import analysis
+        // and rtl-root.test.ts fails to parse app/layout.tsx. Scoped to this
+        // one project: nothing else in the workspace contains JSX.
+        oxc: { jsx: { runtime: 'automatic' as const } },
+      },
     ],
   },
 })

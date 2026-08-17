@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev"
+    "dev": "next dev",
+    "start": "next start"
   },
   "dependencies": {
     "@nel3ab/game": "workspace:*",
