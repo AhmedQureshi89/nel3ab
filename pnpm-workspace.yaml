@@ -1,6 +1,6 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 allowBuilds:
   # Next.js image optimisation binary; prebuilt, no compiler required.
   sharp: true

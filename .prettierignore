@@ -1,0 +1,18 @@
+# The design handoff is the reference of record (REQ-1.13, mission.md §5.3).
+# Reformatting it would destroy the only thing it is for: meaningful diffs.
+design/
+
+# The spec triad is prose of record and is read-only during implementation
+# (verification.md §10, its own footer, and specs.md §3 which marks
+# mission.md / tech-specs.md UNTOUCHED). Prettier reflows every markdown table
+# in these files — 799 changed lines across the six — and its column alignment
+# is computed on code points, so it mis-pads the Arabic/em-dash cells anyway.
+# Formatting them is forbidden by the phase, so they are not offered to the
+# formatter rather than left as a permanent `--check` failure.
+specs/
+
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+pnpm-lock.yaml
