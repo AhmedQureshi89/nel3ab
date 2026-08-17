@@ -71,7 +71,17 @@ This gate is where the vacuous-green trap is defused. Every check below is a *co
 - [x] **REQ-1.6 (A failing test fails the command):** temporarily invert one assertion; `pnpm test` exits non-zero. Restore it.
   **Measured 2026-08-17:** inverted `packages/protocol/src/index.test.ts` line 6 to `expect(PLACEHOLDER).toBe(false)`. `pnpm test` → exit **1**:
   `FAIL |@nel3ab/protocol| src/index.test.ts > @nel3ab/protocol exposes its shell export` / `AssertionError: expected true to be false // Object.is equality` / `- Expected false + Received true` / `❯ src/index.test.ts:6:23` / `Test Files 1 failed | 5 passed (6)` / `Tests 1 failed | 6 passed (7)`. The wrapper propagated it (`[check-collected-tests] vitest exited 1`) rather than swallowing the code — the failure path was measured, not assumed. Assertion restored to `toBe(true)`; re-run exit **0**, 6 files / 7 passing.
-- [ ] **REQ-1.1 / NFR-4 (Pinned and locked):** `pnpm-lock.yaml` is committed; root `package.json` has a `packageManager` field pinned to an exact pnpm version; no `^`/`~` on `next`, `vitest`, `eslint`, `stylelint`, `typescript`.
+- [x] **REQ-1.1 / NFR-4 (Pinned and locked):** `pnpm-lock.yaml` is committed; root `package.json` has a `packageManager` field pinned to an exact pnpm version; no `^`/`~` on `next`, `vitest`, `eslint`, `stylelint`, `typescript`.
+  **Measured 2026-08-17:** `pnpm-lock.yaml` is **tracked and committed**, not merely present — `git ls-files --error-unmatch pnpm-lock.yaml` exits 0, `git ls-tree HEAD -- pnpm-lock.yaml` lists it, last touched in `204180b`. It is **current with the manifests**: `pnpm install --frozen-lockfile --lockfile-only --offline` exits **0** ("Scope: all 7 workspace projects", no rewrite) and `git status --porcelain` is empty afterwards, so the committed lockfile is the one the manifests resolve to. `lockfileVersion: '9.0'`, 7 importers, all 14 specifiers exact or `workspace:*`.
+  **`packageManager` — exact string: `"pnpm@11.22.0"`** (`package.json:4`). No range character, no `>=`/`x`; matches the pnpm actually running (`pnpm --version` → `11.22.0`) and Node v24.14.0.
+  **Range scan across every tracked manifest** (root + all six projects, 7 files): `git grep -nE '":\s*"[\^~]' -- '*package.json'` returns **no output, exit 1** — zero `^` and zero `~` on *any* dependency anywhere, not just the five named ones.
+  **The five named packages — three exist, two do not, recorded honestly:**
+  · `next` → **`"15.5.23"`** (`apps/web/package.json:13`) — exact
+  · `vitest` → **`"4.1.10"`** (`package.json:20`) — exact
+  · `typescript` → **`"5.9.3"`** (`package.json:19`) — exact
+  · `eslint` → **ABSENT.** Declared in no manifest; **0** case-insensitive occurrences in `pnpm-lock.yaml` (not even transitively)
+  · `stylelint` → **ABSENT.** Declared in no manifest; **0** case-insensitive occurrences in `pnpm-lock.yaml`
+  **This box is therefore a partial measurement, and is recorded as partial.** `eslint` and `stylelint` are introduced by REQ-1.7 and REQ-1.8, which live in **Gate 3 — after this gate**. Installing them here to make the check meaningful would be scope creep into a later requirement, so the no-`^`/`~` condition is **vacuously true** for those two right now: it was tested against nothing. **The eslint/stylelint half of this box must be re-confirmed once Gate 3 installs them** — Gate 3 is the first point at which the check has any content. The three packages that existed at measurement time were all genuinely checked and all pass.
 - [ ] **NFR-5 (No secrets):** no `.env*` file is tracked; `git grep -iE "connection ?string|BEGIN .*PRIVATE KEY|iban|client_secret"` over tracked files returns nothing outside `specs/` prose.
 
 ## 3. Gate 3 — The RTL guardrail fires (blocks Gates 4–7)
