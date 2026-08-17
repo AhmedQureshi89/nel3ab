@@ -1,0 +1,45 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/game:
+    dependencies:
+      '@nel3ab/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@nel3ab/game':
+        specifier: workspace:*
+        version: link:../../packages/game
+      '@nel3ab/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+
+  apps/web:
+    dependencies:
+      '@nel3ab/game':
+        specifier: workspace:*
+        version: link:../../packages/game
+      '@nel3ab/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@nel3ab/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  packages/content: {}
+
+  packages/game: {}
+
+  packages/protocol:
+    dependencies:
+      '@nel3ab/game':
+        specifier: workspace:*
+        version: link:../game
+
+  packages/ui: {}

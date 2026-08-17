@@ -34,8 +34,11 @@ Must pass **before** any `package.json` or source file is committed. Failing thi
 
 This gate is where the vacuous-green trap is defused. Every check below is a *count* or an *artifact*, never an exit code alone.
 
-- [ ] **REQ-1.1 (Six projects resolve):** `pnpm ls -r --depth -1` lists exactly six workspace projects: `nel3ab-web`, `nel3ab-game`, `@nel3ab/game`, `@nel3ab/protocol`, `@nel3ab/content`, `@nel3ab/ui`. Record the list.
-- [ ] **REQ-1.1 (Content path):** `packages/content/categories/` exists and is tracked; no root-level `content/` directory exists.
+- [x] **REQ-1.1 (Six projects resolve):** `pnpm ls -r --depth -1` lists exactly six workspace projects: `nel3ab-web`, `nel3ab-game`, `@nel3ab/game`, `@nel3ab/protocol`, `@nel3ab/content`, `@nel3ab/ui`. Record the list.
+  **Measured 2026-08-17** (pnpm 11.22.0, Node v24.14.0) — all six present, none missing, none extra:
+  `nel3ab-game@0.0.0 → apps/game` · `nel3ab-web@0.0.0 → apps/web` · `@nel3ab/content@0.0.0 → packages/content` · `@nel3ab/game@0.0.0 → packages/game` · `@nel3ab/protocol@0.0.0 → packages/protocol` · `@nel3ab/ui@0.0.0 → packages/ui`. A seventh line, `nel3ab C:\Users\aalsh\Projects\nel3ab (PRIVATE)`, is the **root manifest**, not a workspace member (`pnpm-workspace.yaml` globs only `apps/*` and `packages/*`); pnpm's own banner correspondingly reads "Scope: all 7 workspace projects". Workspace edges resolved to symlinks, not registry fetches: `apps/web → {game,protocol,ui}`, `apps/game → {content,game,protocol}`, `packages/protocol → game`.
+- [x] **REQ-1.1 (Content path):** `packages/content/categories/` exists and is tracked; no root-level `content/` directory exists.
+  **Measured 2026-08-17:** `packages/content/categories/.gitkeep` tracked (27 tracked files total, up from 17). `ls -d content` → `No such file or directory`. `categories/` is data inside `@nel3ab/content`, matched by no workspace glob.
 - [ ] **REQ-1.2 (Strict, once):** `strict: true` appears in `tsconfig.base.json` and in **no** other tsconfig. Every project tsconfig extends the base. Record the six extends lines.
 - [ ] **REQ-1.2 (References are real):** `pnpm typecheck` (`tsc --build`) succeeds **and** emits a `.tsbuildinfo` for each of the six projects. Six files, not five — a missing one means a project is outside the solution graph and is not being typechecked at all.
 - [ ] **REQ-1.2 (Strictness actually bites):** temporarily add `const x: number = 'nope'` to `packages/game/src/index.ts`; `pnpm typecheck` fails. Remove it. Without this, a passing typecheck proves only that no files were read.

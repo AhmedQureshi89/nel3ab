@@ -1,0 +1,17 @@
+{
+  "name": "nel3ab",
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter=./apps/* build",
+    "typecheck": "tsc --build --pretty",
+    "test": "vitest run",
+    "lint": "pnpm lint:js && pnpm lint:css && pnpm format:check",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint \"**/*.css\"",
+    "format:check": "prettier --check ."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "nel3ab-web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev"
+  },
+  "dependencies": {
+    "@nel3ab/game": "workspace:*",
+    "@nel3ab/protocol": "workspace:*",
+    "@nel3ab/ui": "workspace:*"
+  }
+}
