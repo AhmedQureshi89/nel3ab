@@ -58,15 +58,18 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 
 > **Goal:** A monorepo that builds, lints, tests and deploys nothing — correctly.
 
-- [ ] Initialise pnpm workspace: `apps/web`, `apps/game`, `packages/{game,protocol,content,ui}`
+- [ ] Initialise pnpm workspace: `apps/web`, `apps/game`, `packages/{game,protocol,content,ui}` — question JSON lives at `packages/content/categories/`, not at the repo root
 - [ ] TypeScript strict across all packages, shared `tsconfig.base.json`, project references
 - [ ] Next.js 15 App Router scaffold in `apps/web` with `dir="rtl"` and `lang="ar"` on the root layout
 - [ ] Vitest configured; one trivial passing test per package
-- [ ] ESLint + Prettier, with an RTL-safe rule set (no `left`/`right` where logical properties exist)
-- [ ] GitHub repo created, `main` protected, CI running lint + typecheck + test on PR
+- [ ] ESLint + Prettier across all packages
+- [ ] Stylelint on all CSS / CSS Modules with a logical-properties rule — physical `left`/`right`/`margin-left`/`padding-right` fail lint wherever an inline-start/end equivalent exists. This is the RTL guardrail; ESLint cannot lint `.css`, so it cannot enforce it. `pnpm lint` runs ESLint and Stylelint together
+- [ ] GitHub repo created — **private, under the personal account** (`a.alshareef.89@gmail.com`)
+- [ ] `main` protected: no direct pushes, CI required to pass before merge. Use a ruleset if classic branch protection is unavailable on the plan
+- [ ] CI running lint + typecheck + test + build on every PR
 - [ ] `design/` handoff committed as the reference of record
 
-**Exit criteria:** `pnpm build && pnpm test && pnpm lint` passes clean from a fresh clone, and CI is green on a PR.
+**Exit criteria:** `pnpm build && pnpm typecheck && pnpm test && pnpm lint` passes clean from a fresh clone, and CI is green on a PR running the same four commands.
 
 ---
 
@@ -173,7 +176,7 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 > **Goal:** Questions become a reviewable, validated asset rather than a hardcoded array.
 
 - [ ] Formalise the content schema in `packages/content`: `{name, emoji, desc, chips[], paid?, qs[{q,a,alts[],h[],f}]}`
-- [ ] Migrate all 11 existing categories out of the prototype HTML into `content/categories/*.json`
+- [ ] Migrate all 11 existing categories out of the prototype HTML into `packages/content/categories/*.json`
 - [ ] Zod validation + a CI check: schema conformance, duplicate detection, minimum question count per category
 - [ ] Resolve the locked-category discrepancy — the README says 2, the prototype has 3 (ثقافة، فن، أفلام)
 - [ ] Write the authoring guide: what a good hint is (narrows without giving it away), what a good fact is, house voice

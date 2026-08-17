@@ -109,7 +109,7 @@
 
 | Package             | Purpose                                                                                          |
 |---------------------|--------------------------------------------------------------------------------------------------|
-| `@nel3ab/game`      | Pure, dependency-free rules engine: reducer over room state, clock maths, round/match flow, category draw. **Fully unit-testable with no server, no sockets, no React.** Built first, in Phase 1 |
+| `@nel3ab/game`      | Pure, dependency-free rules engine: reducer over room state, clock maths, round/match flow, category draw. **Fully unit-testable with no server, no sockets, no React.** Built in Phases 3–4 — Phase 1 creates the package shell only |
 | `@nel3ab/protocol`  | Zod schemas + TypeScript types for every WS message in both directions. Single source of truth for the wire format |
 | `@nel3ab/content`   | The question bank as typed, versioned JSON + loader and validation. Ships in the game server image |
 | `@nel3ab/ui`        | Arcade primitives — tokens, Panel, Button (with press behaviour), Pill, TimerCard, dots. Shared by landing, judge and player |
@@ -125,7 +125,7 @@
 
 ### 2.5 Content pipeline
 
-Questions are **not** database rows. They are versioned JSON under `content/categories/*.json`, compiled into `@nel3ab/content` at build time.
+Questions are **not** database rows. They are versioned JSON under `packages/content/categories/*.json`, compiled into `@nel3ab/content` at build time. The JSON lives inside the package so `@nel3ab/content` is self-contained and the workspace needs no special-case glob for a root `content/` directory.
 
 | Stage      | Process                                                                                                  |
 |------------|----------------------------------------------------------------------------------------------------------|
@@ -293,7 +293,7 @@ Greenfield, so this is a register of decisions taken with known costs rather tha
 |----------------------------------------------------------------------|----------|----------------------------------------------------|
 | **Single game-server replica; rooms in memory** — any deploy or crash kills every live room mid-match | High | Accepted for launch. Needs Redis-backed snapshots or sticky sharding before meaningful concurrency |
 | **No judge-disconnect handling** — an open question in the handoff, still unanswered | High | Must be resolved before public launch. A dropped judge currently freezes a room permanently |
-| **Question bank is 33 questions** (11 categories × 3) — a single gathering exhausts it | High | Phase 5 expands it; public launch is blocked on this |
+| **Question bank is 33 questions** (11 categories × 3) — a single gathering exhausts it | High | Phase 8 moves it into validated JSON; Phase 22 expands it to launch depth. Public launch is blocked on this |
 | **README says 2 locked categories, the prototype has 3** (ثقافة، فن، أفلام) | Medium | Discrepancy found during handoff review. Product decision needed; treating 3 as correct |
 | **Landing artwork does not exist** — five `<image-slot>` placeholders at 250px | Medium | Blocks the landing page shipping. Needs a designer or commissioned art |
 | **West Europe region** — ~100ms from Riyadh, EU data residency for Saudi users | Medium | Deliberate. Revisit on PDPL pressure or Gulf region availability |
