@@ -331,8 +331,80 @@ The most important gate in the phase, and the only one whose failure would other
 
 ## 6. Gate 6 — The full gate, green, from a fresh clone in CI
 
-- [ ] **REQ-1.12 (Four commands in CI):** the workflow runs `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` — the same four as locally, lint first — on `ubuntu-latest`, Node 24, `--frozen-lockfile`.
-- [ ] **REQ-1.12 (Green on a PR):** a real PR against `main` shows the check green, and the merge button is blocked until it is. Record the PR number and run URL.
+- [x] **REQ-1.12 (Four commands in CI):** the workflow runs `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` — the same four as locally, lint first — on `ubuntu-latest`, Node 24, `--frozen-lockfile`.
+  **Measured 2026-08-18 — the file was read *and* the run logs were read, because a step that is present in YAML but skipped by an `if:` passes a file inspection and proves nothing.**
+  **The workflow's steps, verbatim and in order** — `.github/workflows/ci.yml` (sha256 `6f135e927748de06ee84523b4a652337c2e1e7c6e8f39d0c0193a55a389734a2`), workflow `name: CI` at line 13, job id `ci` at line 25 with `name: ci` at line 26, `runs-on: ubuntu-latest` at line 27, triggers `pull_request: branches: [main]` and `push: branches: [main]`:
+  ```yaml
+  - name: Checkout
+    uses: actions/checkout@v7.0.1
+  - name: Install pnpm
+    uses: pnpm/action-setup@v6.0.10
+  - name: Install Node 24
+    uses: actions/setup-node@v7.0.0
+    with:
+      node-version: 24
+      cache: pnpm
+  - name: Install dependencies
+    run: pnpm install --frozen-lockfile
+  - name: Lint
+    run: pnpm lint
+  - name: Typecheck
+    run: pnpm typecheck
+  - name: Test
+    run: pnpm test
+  - name: Build
+    run: pnpm build
+  ```
+  **Eight steps, one job, no escape hatches:** `grep -nE "if:|continue-on-error|matrix|strategy"` over the file returns **one line — line 9, inside a comment** (*"One job, one workflow, no matrix"*). There is no `if:` key, no `continue-on-error:`, and no `strategy:`/`matrix:` anywhere, so no step can be conditionally skipped or allowed to fail. **Lint is step 6, before Typecheck (7), Test (8) and Build (9)** — the order in the file is the order in the run.
+  **The four commands did not merely exist — they executed and passed. Quoted from the actual log of the PR run** (`gh run view 32144768616 --log`, event `pull_request`, head `02f07cb`, checkout of `refs/remotes/pull/1/merge` = `61766a8adbba16be91aec8250044289fa90861d3`):
+  · **install** — `##[group]Run pnpm install --frozen-lockfile` · `Scope: all 7 workspace projects` · `Lockfile is up to date, resolution step is skipped` · `Done in 3.6s using pnpm v11.22.0`
+  · **lint** — `$ pnpm lint:js && pnpm lint:css && pnpm format:check` · `$ eslint .` · `$ stylelint "**/*.css"` · `$ prettier --check .` · `Checking formatting...` · `All matched files use Prettier code style!` — all three linters visibly ran, so the `&&` chain of §2.3 was not short-circuited.
+  · **typecheck** — `$ tsc --build --pretty` (exit 0, no diagnostics printed).
+  · **test** — `$ node scripts/check-collected-tests.mjs` · `RUN v4.1.10 /home/runner/work/nel3ab/nel3ab` · `Test Files 7 passed (7)` · `Tests 8 passed (8)` · `[check-collected-tests] 7 test file(s) across 6 workspace project(s); 8 assertion(s) passed, 0 failed.` · `[check-collected-tests] OK` — the non-vacuity check of REQ-1.6 ran on Ubuntu too, not only on Windows.
+  · **build** — `$ pnpm -r --filter=./apps/* build` · `Scope: 2 of 7 workspace projects` · `apps/game build$ tsc --build` · `apps/web build$ next build` · `▲ Next.js 15.5.23` · `✓ Compiled successfully in 4.0s` · `✓ Generating static pages (4/4)` · `apps/web build: Done`
+  **Corroborated by the step API rather than by reading prose out of a log**: `gh run view 32144768616 --json jobs` lists **13 steps, every one `"conclusion":"success"`, none `skipped` and none `cancelled`** — `Lint` 13:51:29→13:51:33, `Typecheck` 13:51:33→13:51:35, `Test` 13:51:35→13:51:37, `Build` 13:51:37→13:51:56. Job `ci` (`databaseId` 95735761328) `success` in **50s**.
+  **Node version as reported by the runner, not as written in the YAML** — the YAML says `node-version: 24`, which is a range; what actually ran was:
+  ```
+  Found in cache @ /opt/hostedtoolcache/node/24.19.0/x64
+  node: v24.19.0
+  npm: 11.17.0
+  ```
+  **`v24.19.0` — inside `engines: { "node": ">=24 <25" }`.** pnpm was **11.22.0**, self-installed by `pnpm/action-setup` from the `packageManager: "pnpm@11.22.0"` pin (`Switching pnpm from v11.19.0 to v11.22.0...` · `Successfully updated pnpm to v11.22.0`), so the CI pnpm is the same build as the local one — NFR-4 in practice, not just in the manifest.
+  **Runner OS and image, from `Set up job`:** `Ubuntu` `24.04.4` `LTS` · `Image: ubuntu-24.04` · `Version: 20260810.271.1` · runner `2.336.0` · Azure region `westus2` · `GITHUB_TOKEN Permissions: Contents: read, Metadata: read` (the `permissions: contents: read` block at `ci.yml:21` is in force — the workflow cannot write to the repo).
+  **CACHE ANALYSIS — §10's "CI green from cache rather than from the lockfile" trap, addressed on both of its halves.**
+  *What is cached:* `cache: pnpm` on `actions/setup-node` caches **the pnpm content-addressable store only** — the log shows setup-node resolving it with `[command] … pnpm store path --silent` → `/home/runner/setup-pnpm/node_modules/.bin/store/v11`. It does **not** cache `node_modules`, the virtual store, `.next`, or `*.tsbuildinfo`. Every run still builds `node_modules` from nothing: the PR run prints `Packages: +259` and `added 259`.
+  *Why it cannot mask a lockfile mismatch — three independent reasons:*
+  · **The key is the lockfile.** Both runs used `node-cache-Linux-x64-pnpm-ef57344fdd037b8aeccbeb1deaab130e6c5711928e0684f97f731e8d6dc861d4`, derived by setup-node from `pnpm-lock.yaml`. A changed lockfile is a changed key, hence a miss and a registry fetch — the cache can never be *stale relative to* the lockfile it is named after.
+  · **The graph is read from the lockfile every run.** The store holds tarball content addressed by integrity hash; which packages get linked is decided by `pnpm-lock.yaml`, and `--frozen-lockfile` compares that lockfile to the seven manifests *before* linking. `Lockfile is up to date, resolution step is skipped` is pnpm's own statement that the comparison passed.
+  · **Negative control, run locally on the identical pnpm build (11.22.0):** a throwaway project whose `package.json` was put one dependency ahead of its lockfile → `pnpm install --frozen-lockfile` exited **1** with `[ERR_PNPM_OUTDATED_LOCKFILE] Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date` / `specifiers in the lockfile don't match specifiers in package.json: * 1 dependencies were added: is-odd@3.0.1`. The flag has teeth on this exact version; it is not decorative.
+  *The cold-cache run settles it outright.* The **first** run this repo ever had — <https://github.com/AhmedQureshi89/nel3ab/actions/runs/32140653299>, `push` on `main`, head `9f972fb`, `success`, 1m8s — printed **`pnpm cache is not found`**, then `Progress: resolved 259, reused 0, downloaded 259, added 259, done` (**every package fetched from the registry against the committed lockfile, none reused**), then `Cache saved with the key: node-cache-Linux-x64-pnpm-ef57344f…`. The PR run then printed `Cache hit for: node-cache-Linux-x64-pnpm-ef57344f…` and `reused 259, downloaded 0` — *the same key*, because it is the same lockfile. Green has been demonstrated from a genuinely empty store.
+  *The other half of the trap — "run once before the lockfile was committed" — is excluded by ancestry, not by memory.* `pnpm-lock.yaml` was first committed in `1807207` (REQ-1.1) and last modified in `56695b1` (REQ-1.8/1.9); `.github/workflows/ci.yml` has exactly **one** commit in its history, `9f972fb`, which is *later*. `git merge-base --is-ancestor` confirms `56695b1` is an ancestor of both `9f972fb` and `02f07cb`. **Every CI run that has ever executed in this repo ran against a committed, current lockfile** — all four of them (`gh run list --workflow=ci.yml`: `32140653299`, `32141190495`, `32144768616`, `32144896566`), all `success`, no failures and no re-runs.
+- [x] **REQ-1.12 (Green on a PR):** a real PR against `main` shows the check green, and the merge button is blocked until it is. Record the PR number and run URL.
+  **Measured 2026-08-18.**
+  **PR #1** — <https://github.com/AhmedQureshi89/nel3ab/pull/1>, *"REQ-1.11: main rejects direct pushes, owner included, with `ci` required to merge"*, `req-1.11-protect-main` → `main`.
+  · **Check:** `statusCheckRollup` → `{"__typename":"CheckRun","name":"ci","workflowName":"CI","status":"COMPLETED","conclusion":"SUCCESS","startedAt":"2026-08-18T13:51:09Z","completedAt":"2026-08-18T13:51:59Z"}` — the check reports under the required context **`ci`**, not the workflow name `CI`.
+  · **Run URL:** <https://github.com/AhmedQureshi89/nel3ab/actions/runs/32144768616> (job <https://github.com/AhmedQureshi89/nel3ab/actions/runs/32144768616/job/95735761328>), **`success`, 50s**, green on the first attempt.
+  · **Merged:** `2026-08-18T13:52:19Z`, `state: MERGED`, merge commit **`508887dfbeb2059da56edeecccb992adddd18209`**. `mergeStateStatus` was observed **`BLOCKED` while the check was pending, then `CLEAN` once it went green**. (After a merge GitHub stops computing it — PR #1 now reports `mergeStateStatus: UNKNOWN`, which is why the transition was captured live and is re-demonstrated below on a second, still-open PR rather than re-derived from #1.)
+  **The blocking is not inferred from a greyed-out button — it is the ruleset, re-read today.** `gh api repos/AhmedQureshi89/nel3ab/rulesets/20990615` → `{"id":20990615,"name":"protect-main","enforcement":"active","bypass_actors":[],"current_user_can_bypass":"never","rules":[…{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"ci"}],"strict_required_status_checks_policy":true}}…]}`. **`strict_required_status_checks_policy: true`** additionally requires the branch to be up to date with `main`, so a stale-but-green PR is blocked too. GitHub stated the same thing from the enforcement side during Gate 5's push probe: `remote: - Changes must be made through a pull request.` / `remote: - Required status check "ci" is expected.`
+  **LIVE DEMONSTRATION ON PR #2 — the PR carrying this very tick, watched rather than recalled.** <https://github.com/AhmedQureshi89/nel3ab/pull/2>, `req-1.12-ci-gate` → `main`, head `e6c14e2dbafdf529251f7334e22fbe38f29f494a`. `gh pr view 2 --json mergeable,mergeStateStatus,statusCheckRollup` polled every 8s from the moment the PR opened:
+  ```
+  14:06:14Z  check ci QUEUED        mergeable MERGEABLE   mergeStateStatus BLOCKED
+  14:06:23Z  check ci IN_PROGRESS   mergeable MERGEABLE   mergeStateStatus BLOCKED
+  14:06:32Z  check ci IN_PROGRESS   mergeable MERGEABLE   mergeStateStatus BLOCKED
+  14:06:41Z  check ci IN_PROGRESS   mergeable MERGEABLE   mergeStateStatus BLOCKED
+  14:06:50Z  check ci IN_PROGRESS   mergeable MERGEABLE   mergeStateStatus BLOCKED
+  14:06:59Z  check ci COMPLETED/SUCCESS  mergeable MERGEABLE   mergeStateStatus CLEAN
+  ```
+  **`BLOCKED` → `CLEAN` at the exact moment `ci` reported `SUCCESS`, and nothing else changed in between** — the branch had no conflicts and no review requirement (`mergeable: MERGEABLE` throughout), so the check is the *only* thing that was holding the merge. That is precisely the claim this box makes.
+  **Run URL for PR #2:** <https://github.com/AhmedQureshi89/nel3ab/actions/runs/32146287293> (job `95740714996`), `ci`, **`success`, 44s** (14:06:15Z → 14:06:59Z), and it ran the same four commands on the same stack — `node: v24.19.0`, `Image: ubuntu-24.04`, `Lockfile is up to date, resolution step is skipped`, `$ eslint .` · `$ stylelint "**/*.css"` · `$ prettier --check .` · `$ tsc --build --pretty` · `$ node scripts/check-collected-tests.mjs` → `Test Files 7 passed (7)` → `[check-collected-tests] OK` · `$ pnpm -r --filter=./apps/* build` → `apps/web build: Done`.
+  **THE MERGE WAS ACTUALLY ATTEMPTED AND ACTUALLY REFUSED — a state field says the button *would* be blocked; this is the server declining.** With PR #2 at head `c41c638` and its `ci` check `QUEUED` (`mergeStateStatus: BLOCKED`), `gh pr merge 2 --merge` exited **1**:
+  ```
+  X Pull request AhmedQureshi89/nel3ab#2 is not mergeable: the base branch policy prohibits the merge.
+  To have the pull request merged after all the requirements have been met, add the `--auto` flag.
+  To use administrator privileges to immediately merge the pull request, add the `--admin` flag.
+  ```
+  The refusal came while authenticated as the repository owner and admin. **`--admin` was offered by the CLI and deliberately not used** — the ruleset's `bypass_actors: []` / `current_user_can_bypass: "never"` means it would not have worked anyway, and using it would have destroyed the thing being measured. The PR was merged only after `ci` reported `SUCCESS` on that head.
+  **Every `ci` run this repo has produced has been green, and `main` has taken no direct push since `9f972fb`.** Every commit after that one reached `main` through a pull request whose `ci` check went green first.
 - [ ] **NFR-1 (Fresh clone, locally):** clone into an empty directory, `pnpm install --frozen-lockfile`, run the four commands. All pass with no manual step, no `.env`, no global install beyond Node 24 + pnpm. Record wall-clock time for the whole sequence — it is the number every later phase's inner loop pays.
 - [ ] **NFR-3 (Offline):** the four commands pass with networking disabled after install. Nothing reaches Azure, Postgres, or a running service.
 - [ ] **REQ-1.6 / R3 (Build produces artifacts):** `pnpm build` leaves a real `.next` output for `apps/web` and compiled output for each package. Record the artifact paths. A build script that echoes and exits 0 satisfies the exit criterion while proving nothing.
