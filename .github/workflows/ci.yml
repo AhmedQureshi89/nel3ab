@@ -1,0 +1,60 @@
+# REQ-1.12 — the full gate, run on every pull request targeting `main`.
+# See specs/phase-1/specs.md §2.15.
+#
+# THE JOB NAME BELOW IS LOAD-BEARING. REQ-1.11's branch protection requires the
+# status check `ci` by that exact string. Renaming the job silently un-protects
+# `main`: the required check would never report, and the rule would match
+# nothing. If it ever must change, change the ruleset in the same commit.
+#
+# One job, one workflow, no matrix. Node 24 only (tech-specs.md §2.1) — a matrix
+# here would be theatre. Lint runs first because it takes seconds and it is what
+# guards the RTL rule (REQ-1.8); build is the slowest step and runs last.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      # Before setup-node, because `cache: pnpm` below needs the pnpm binary to
+      # resolve the store path. Version comes from `packageManager` in
+      # package.json, so the pnpm pin lives in exactly one place (NFR-4).
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6.0.10
+
+      - name: Install Node 24
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # --frozen-lockfile is what makes NFR-1/NFR-4 real: without it CI silently
+      # resolves a different tree than the one committed.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
