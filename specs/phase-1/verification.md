@@ -404,7 +404,7 @@ The most important gate in the phase, and the only one whose failure would other
   To use administrator privileges to immediately merge the pull request, add the `--admin` flag.
   ```
   The refusal came while authenticated as the repository owner and admin. **`--admin` was offered by the CLI and deliberately not used** — the ruleset's `bypass_actors: []` / `current_user_can_bypass: "never"` means it would not have worked anyway, and using it would have destroyed the thing being measured. The PR was merged only after `ci` reported `SUCCESS` on that head.
-  **Two PRs, three green runs, and `main` has taken no direct push since `9f972fb`.** Every commit after that one reached `main` through a pull request whose `ci` check went green first.
+  **Every `ci` run this repo has produced has been green, and `main` has taken no direct push since `9f972fb`.** Every commit after that one reached `main` through a pull request whose `ci` check went green first.
 - [ ] **NFR-1 (Fresh clone, locally):** clone into an empty directory, `pnpm install --frozen-lockfile`, run the four commands. All pass with no manual step, no `.env`, no global install beyond Node 24 + pnpm. Record wall-clock time for the whole sequence — it is the number every later phase's inner loop pays.
 - [ ] **NFR-3 (Offline):** the four commands pass with networking disabled after install. Nothing reaches Azure, Postgres, or a running service.
 - [ ] **REQ-1.6 / R3 (Build produces artifacts):** `pnpm build` leaves a real `.next` output for `apps/web` and compiled output for each package. Record the artifact paths. A build script that echoes and exits 0 satisfies the exit criterion while proving nothing.
