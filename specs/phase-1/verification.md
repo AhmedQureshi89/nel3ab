@@ -397,7 +397,14 @@ The most important gate in the phase, and the only one whose failure would other
   ```
   **`BLOCKED` → `CLEAN` at the exact moment `ci` reported `SUCCESS`, and nothing else changed in between** — the branch had no conflicts and no review requirement (`mergeable: MERGEABLE` throughout), so the check is the *only* thing that was holding the merge. That is precisely the claim this box makes.
   **Run URL for PR #2:** <https://github.com/AhmedQureshi89/nel3ab/actions/runs/32146287293> (job `95740714996`), `ci`, **`success`, 44s** (14:06:15Z → 14:06:59Z), and it ran the same four commands on the same stack — `node: v24.19.0`, `Image: ubuntu-24.04`, `Lockfile is up to date, resolution step is skipped`, `$ eslint .` · `$ stylelint "**/*.css"` · `$ prettier --check .` · `$ tsc --build --pretty` · `$ node scripts/check-collected-tests.mjs` → `Test Files 7 passed (7)` → `[check-collected-tests] OK` · `$ pnpm -r --filter=./apps/* build` → `apps/web build: Done`.
-  **Two PRs, two green runs, and `main` has taken no direct push since `9f972fb`.** Every commit after that one reached `main` through a pull request whose `ci` check went green first.
+  **THE MERGE WAS ACTUALLY ATTEMPTED AND ACTUALLY REFUSED — a state field says the button *would* be blocked; this is the server declining.** With PR #2 at head `c41c638` and its `ci` check `QUEUED` (`mergeStateStatus: BLOCKED`), `gh pr merge 2 --merge` exited **1**:
+  ```
+  X Pull request AhmedQureshi89/nel3ab#2 is not mergeable: the base branch policy prohibits the merge.
+  To have the pull request merged after all the requirements have been met, add the `--auto` flag.
+  To use administrator privileges to immediately merge the pull request, add the `--admin` flag.
+  ```
+  The refusal came while authenticated as the repository owner and admin. **`--admin` was offered by the CLI and deliberately not used** — the ruleset's `bypass_actors: []` / `current_user_can_bypass: "never"` means it would not have worked anyway, and using it would have destroyed the thing being measured. The PR was merged only after `ci` reported `SUCCESS` on that head.
+  **Two PRs, three green runs, and `main` has taken no direct push since `9f972fb`.** Every commit after that one reached `main` through a pull request whose `ci` check went green first.
 - [ ] **NFR-1 (Fresh clone, locally):** clone into an empty directory, `pnpm install --frozen-lockfile`, run the four commands. All pass with no manual step, no `.env`, no global install beyond Node 24 + pnpm. Record wall-clock time for the whole sequence — it is the number every later phase's inner loop pays.
 - [ ] **NFR-3 (Offline):** the four commands pass with networking disabled after install. Nothing reaches Azure, Postgres, or a running service.
 - [ ] **REQ-1.6 / R3 (Build produces artifacts):** `pnpm build` leaves a real `.next` output for `apps/web` and compiled output for each package. Record the artifact paths. A build script that echoes and exits 0 satisfies the exit criterion while proving nothing.
