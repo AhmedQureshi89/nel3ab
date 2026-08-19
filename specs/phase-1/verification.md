@@ -269,7 +269,10 @@ The most important gate in the phase, and the only one whose failure would other
   **Confirmed a second time, after creation, on this repo's own data — the strongest form, since it is GitHub attributing *our* commits rather than historical ones:** `gh api "repos/AhmedQureshi89/nel3ab/commits?sha=main&per_page=100" --jq '[.[].author.login] | group_by(.) | map({login:.[0],n:length})'` → **`[{"login":"AhmedQureshi89","n":17}]`**. All 17 pushed commits, every one authored `a.alshareef.89@gmail.com`, were attributed by GitHub to `AhmedQureshi89` with zero nulls and zero other logins. The account and the requirement's email are the same person, verified by the server.
   **Name availability re-checked immediately before creation, not once at planning time:** `gh api repos/AhmedQureshi89/nel3ab` → **HTTP 404 Not Found** (`"status":"404"`), so nothing was overwritten and no pre-existing repo was adopted.
   **Human confirmation:** the user was shown the above and replied *"yes, confirmed — create it private and continue"* on **2026-08-18**. `gh repo create` ran only after that. `specs/phase-1/RUN-HALTED.md`, which recorded the stop, was deleted once the halt was cleared.
-- [x] **REQ-1.10 (Private):** `gh repo view --json visibility,owner,isPrivate` shows `private` under the personal account. Record it.
+- [x] **REQ-1.10 (Visibility):** `gh repo view --json visibility,owner,isPrivate` shows the repo under the **personal account**, with the visibility that `mission.md` A-1 requires — **public** as amended 2026-08-18 (originally: `private`). Record it.
+  **Amended 2026-08-18 by planning session; `mission.md` A-1 in force.** The original wording required `private`. It could not coexist with REQ-1.11: GitHub Free grants branch protection on public repositories only, measured as a 403 from both the branch-protection and rulesets endpoints and confirmed a plan limit rather than a token-scope limit. Protection was chosen over privacy; A-2 records the accepted cost to the question bank.
+  **Re-measured 2026-08-19 against the amended bar:** `{"isPrivate":false,"owner":{"id":"U_kgDOBmfAeQ","login":"AhmedQureshi89"},"visibility":"PUBLIC"}` — public, owner is the personal **User** account (`owner_id` matches `gh api user`), not an organisation. **PASSES as amended.**
+  **The original measurement is preserved below, unaltered.** It was true when taken and is false now; it is kept because a record of what was measured then is evidence, and rewriting it would be the §10 failure "the specs were edited to match what was built". The two readings together are the honest account: the repo was created private, verified private, and then deliberately made public.
   **Measured 2026-08-18.** Created with exactly `specs.md` §2.16's invocation, unmodified — `gh repo create nel3ab --private --source=. --remote=origin --push` → exit **0**, `https://github.com/AhmedQureshi89/nel3ab`, `branch 'main' set up to track 'origin/main'`, `* [new branch] HEAD -> main`. **Exactly one repository was created**; nothing was forked, transferred, deleted, or given a collaborator.
   **Raw JSON, verbatim:**
   ```json
@@ -495,14 +498,42 @@ The most important gate in the phase, and the only one whose failure would other
 
 Evaluated once Gate 6 has been reached. Gates 1–6 test *our* config, and failures there are bugs to fix. This gate asks a different question — **does the stack `tech-specs.md` §2.1–2.2 commits to actually work at the pinned versions, on both platforms, without escape hatches?** — and its answer is a fact about the ecosystem, not about our skill.
 
-- [ ] 🚦 **REQ-1.2 / NFR-2 / NFR-4 (Pinned stack holds — VERDICT GATE — no retry):** Node 24 + Next.js 15 + React 19 + TypeScript strict with project references + Vitest + ESLint 9 + Stylelint install and pass all four commands on **both** Windows (local) and Ubuntu (CI) **with no escape hatch** — specifically: no `pnpm.overrides`, no `peerDependencyRules.ignoreMissing`/`allowedVersions`, no `--no-strict-peer-dependencies`, no `skipLibCheck` added beyond the base, no `@ts-expect-error` in project config or shells, no strict flag disabled anywhere, and no floated version range introduced to make a resolution succeed.
+- [ ] 🚦 **REQ-1.2 / NFR-2 / NFR-4 (Pinned stack holds — VERDICT GATE — no retry):** Node 24 + Next.js 15 + React 19 + TypeScript strict with project references + Vitest + ESLint 9+ + Stylelint install and pass all four commands on **both** Windows (local) and Ubuntu (CI) **with no escape hatch** — specifically: no `pnpm.overrides`, no `peerDependencyRules.ignoreMissing`/`allowedVersions`, no `--no-strict-peer-dependencies`, no `skipLibCheck` added beyond the base, no `@ts-expect-error` in project config or shells, no strict flag disabled anywhere, and no floated version range introduced to make a resolution succeed.
   **A FAIL here halts the phase.** It is a finding about the stack, and the response is a deliberate, recorded change to `tech-specs.md` §2.1–2.2 in a planning session — not a loosened pin. Record which package conflicted, its resolution error verbatim, and the minimum change that would have made it pass.
 
 **Why this is a verdict gate and Gate 6 is not:** if CI fails because of a typo in `ci.yml`, retrying after fixing the typo is correct — that is our code. If it fails because Next 15 will not run under Node 24 with project references, retrying with a loosened constraint manufactures a green wall that hides an architectural decision made by accident. The distinction is the whole point of the notation.
 
+> ### Amendment 2026-08-18 — "ESLint 9" → "ESLint 9+". Read this before evaluating the gate.
+>
+> **What changed and why.** This gate's summary line named "ESLint 9". `specs.md` §2.12 — written the same day, before any code — says "Flat config (**ESLint 9+**)". The two documents contradicted each other from the moment they were written. The implementer follows `specs.md`, which is the HOW document, and installed **ESLint 10.8.1**; this line is a summary that went stale against its own triad. The correction makes the gate say what §2.12 always said.
+>
+> **The uncomfortable half, stated rather than buried.** The contradiction was noticed *after* ESLint 10 was installed and green, and it is being resolved in the direction that lets the current install pass. That is the shape of the thing this whole system exists to prevent: deciding what counts as success after seeing the result. Three facts bear on whether it is legitimate here, and the reader should weigh them rather than take this note's word for it:
+> 1. Both texts pre-date implementation. Nothing was invented after the fact — a pre-existing internal contradiction was resolved.
+> 2. `specs.md` §2.12 is the instruction the implementer actually read when choosing a version. Had they read this line instead, they would have installed 9, and the gate would have been satisfied without any amendment. The ambiguity was real in both directions.
+> 3. The amendment was made in a **planning session**, before the gate was evaluated, at the user's explicit direction — not by the runner mid-evaluation. The run halted at 37/38 rather than evaluating an ambiguous gate, which is the behaviour the notation is for.
+>
+> **What this amendment does NOT do.** It does not touch the escape-hatch clause, the both-platforms clause, or the no-retry rule. The substance of the gate is untouched; only the version phrasing moved, and only to match the triad's own HOW document.
+>
+> **This gate has not been evaluated.** Evidence was gathered during the run and deliberately not scored; it is in `specs/phase-1/RUN-HALTED.md` under "Gate 7 evidence — gathered, deliberately not scored". Evaluate once, against this text, and record the result whichever way it falls.
+
 ---
 
 ## 8. Automated Commands
+
+> ### Amendment 2026-08-18 — six commands in this block were narrower than their wording
+>
+> Execution found that **six** of these probes did not test what they appeared to test. Four of them would have reported clean **regardless of what the code contained** — the exact vacuous-green failure §10 exists to catch, sitting inside the file that catches it. Each was worked around at the time with a corrected command and the real measurement recorded; the gate text was left unedited then, because rewriting a gate mid-implementation is itself a §10 failure. They are corrected here, in a planning session, with the defective form kept alongside so the mistake stays legible.
+>
+> | # | Defective probe | What was actually wrong |
+> |---|---|---|
+> | 1 | `git grep … -- "packages/*/src"` | A git pathspec wildcard is matched against the **whole path**, so this matched **zero files**. Silent. |
+> | 2 | `pnpm vitest run --dir does-not-exist` | Exits **0** with all files passing — each project's own `root` overrides the run-level `--dir`. |
+> | 3 | `connection ?string` (NFR-5) | Misses the underscore form; would not catch a leaked `WEBPUBSUB_CONNECTION_STRING`. |
+> | 4 | `git diff ca16ff5..HEAD -- design/` | Compares two **commits**; blind to an uncommitted edit sitting in the working tree. |
+> | 5 | `find … "*.tsbuildinfo" \| wc -l # expect 6` | Counts files, not projects — six `.tsbuildinfo` could in principle come from the wrong six. Weak, not vacuous. |
+> | 6 | `pnpm test --reporter=json` | `pnpm test` is now a wrapper (§2.3b); pass reporter flags to `vitest` directly, or read the wrapper's own assertion. |
+>
+> **The general lesson, worth more than the six fixes:** every probe in this file should be run **once against a known violation** before it is trusted. Four of these were written by someone who reasoned about what the command *should* match and never watched it match anything. The negative tests in Gate 3 were the only checks originally designed this way, and they are the only ones that were never in doubt.
 
 ```bash
 # Gate 1 — line endings (expect: no output = no non-LF text files)
@@ -512,10 +543,14 @@ git check-attr text -- packages/ui/fonts/example.woff2
 # Gate 2 — workspace, types, tests
 pnpm ls -r --depth -1
 pnpm typecheck
-find . -name "*.tsbuildinfo" -not -path "*/node_modules/*" | wc -l   # expect 6
-pnpm test --reporter=json > .test-report.json                        # assert 6 files
-pnpm vitest run --dir does-not-exist                                 # expect non-zero
-git grep -nE "reducer|RoomState|winsNeeded" -- "packages/*/src"       # expect empty
+find . -name "*.tsbuildinfo" -not -path "*/node_modules/*"           # list them; expect one per project, 6 projects
+pnpm vitest run --reporter=json --outputFile.json=.test-report.json  # assert >=1 file per project
+node scripts/check-collected-tests.mjs                               # the real gate: fails if a project drops out
+pnpm vitest run does-not-exist-pattern                               # expect NON-ZERO (positional filter, NOT --dir)
+git grep -nE "reducer|RoomState|winsNeeded" -- "packages/*/src/*"     # expect empty — note the trailing /*
+#   VACUOUS FORMS, kept as a warning, do not use:
+#     pnpm vitest run --dir does-not-exist        # exits 0, runs the whole suite
+#     git grep -nE … -- "packages/*/src"          # matches zero files, always "clean"
 
 # Gate 3 — guardrails (the negative tests are the point)
 pnpm lint
@@ -526,15 +561,26 @@ pnpm stylelint "**/*.css" --formatter verbose                        # inspect t
 
 # Gate 4 — rendered RTL root
 pnpm --filter nel3ab-web build && pnpm --filter nel3ab-web start &
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3000      # expect 200, not an error page
 curl -s http://localhost:3000 | grep -o '<html[^>]*>'               # expect lang="ar" dir="rtl"
-git diff ca16ff5..HEAD -- design/                                    # expect empty
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3000/nope # CONTROL: expect 404
+git diff ca16ff5..HEAD -- design/                                    # expect empty (commits only)
+git status --porcelain -- design/                                    # ALSO required: expect empty (working tree)
+git rev-parse ca16ff5:design HEAD:design                             # strongest: the two tree hashes must match
 
 # Gate 5 — remote and protection
 gh auth status && gh api user --jq '.login'
-gh repo view --json visibility,owner,isPrivate
+#   NOTE: `gh api user/emails` needs the `user` scope and will 404 without it.
+#   Settle identity by attribution instead — GitHub maps a commit to a login only
+#   when the address is VERIFIED on that account:
+gh api -H "Accept: application/vnd.github.cloak-preview+json" \
+  "search/commits?q=author-email:a.alshareef.89@gmail.com" --jq '.total_count'
+gh repo view --json visibility,owner,isPrivate                       # expect PUBLIC (amended; see A-1)
+gh api repos/:owner/:repo/rulesets --jq '.[].id'                     # then read bypass_actors, expect []
 git log --format='%ae' | sort -u                                     # expect one address
-git commit --allow-empty -m "protection probe" && git push origin main   # EXPECT REJECTION
+git commit --allow-empty -m "protection probe" && git push origin main   # EXPECT REJECTION (GH013)
 git reset --hard HEAD~1
+git ls-remote origin refs/heads/main   # confirm the REF did not move; the object may exist, the ref must not
 
 # Gate 6 — fresh clone
 git clone <remote> /tmp/nel3ab-fresh && cd /tmp/nel3ab-fresh
@@ -556,7 +602,7 @@ Phase 1 is complete when **all** of the following hold:
 2. Gate 2 passed — six projects resolve, six `.tsbuildinfo` files, strictness proven to bite, `pnpm test` collects 6 files and can fail, lockfile committed, no premature dependencies, no rules-engine logic in `@nel3ab/game`.
 3. Gate 3 passed — **both** negative tests made `pnpm lint` fail, the block axis lints clean, and each of the three linters can independently fail `pnpm lint`.
 4. Gate 4 passed — `<html lang="ar" dir="rtl">` in rendered output, no Phase 2 content present, `design/` byte-identical.
-5. Gate 5 passed — private repo under the confirmed personal account, single commit-author email, and a real direct push to `main` rejected while authenticated as the owner.
+5. Gate 5 passed — **public** repo (amended 2026-08-18, `mission.md` A-1; originally "private") under the confirmed personal account, single commit-author email, and a real direct push to `main` rejected while authenticated as the owner.
 6. Gate 6 passed — `pnpm lint && pnpm typecheck && pnpm test && pnpm build` green from a fresh clone locally **and** on a PR in CI, with recorded artifacts and wall-clock time.
 7. Gate 7 returned **PASS** — the pinned stack holds on both platforms with no escape hatch. A FAIL is recorded as a finding and the phase halts for a planning session.
 
@@ -577,7 +623,16 @@ The roadmap's stated exit criterion is a subset of the above and is satisfied by
 - **Scope leakage from Phase 2 or 3.** A `Button` primitive "while we're here", a token port, a `RoomState` type "just the interface". Each looks harmless and each moves work out of the phase that has the verification to justify it — Phase 3's clock coverage, Phase 2's fidelity review. Gate 2's grep and Gate 4's grep are narrow; a determined implementer can leak past them.
 - **The specs were edited to match what was built.** `verification.md` is read-only during implementation. If a gate here is reworded mid-phase, the bar was set after seeing the result, and the phase's green means nothing at all.
 
+### Added 2026-08-18, after execution — three failure modes this file did not originally name
+
+The first two were found *by* this phase and are now facts about it, not hypotheticals. The third is the risk created by the amendment session itself, and it is listed here because a document that catalogues everyone else's self-deception should catalogue its own.
+
+- **A probe that was never watched matching anything.** Six commands in §8 turned out narrower than their wording, and **four would have reported clean regardless of the code**: a git pathspec wildcard matching zero files, a vitest `--dir` filter silently overridden by each project's `root`, a secrets regex missing the underscore form, and a `git diff` blind to uncommitted work. Each looked exactly like a passing check. The guardrail against this is not more careful reading — three of the four survived careful reading — it is **running every probe once against a deliberate violation before trusting it**. Gate 3's negative tests were the only checks originally designed that way and the only ones never in doubt. If a future gate here is ticked without evidence that its command *can* fail, treat it as unverified.
+- **A configured protection that enforces less than it appears to.** `main` requires a pull request but **not an approving review** (`required_approving_review_count: 0`), because GitHub forbids self-approval and requiring one would deadlock a solo developer. Every PR in this phase was opened and merged by the same automated actor. REQ-1.11 is genuinely satisfied — a PR *is* required, and a direct push *is* rejected — but anyone reading "protected `main` + CI required" and inferring that `mission.md` §5.4's human verification is enforced would be wrong. It is not enforced by anything today. See `mission.md` A-3, binding on Phase 8.
+- **An amendment session that resolved ambiguities in the direction of the result already obtained.** On 2026-08-18 this file's Gate 7 was corrected from "ESLint 9" to "ESLint 9+" *after* ESLint 10.8.1 was installed and green, and REQ-1.10's visibility bar was changed from private to public *after* the repository had already been made public. Both changes are defensible and both are argued in place rather than asserted — but the honest reader should note that in each case the bar moved toward what had already happened, and judge accordingly. What protects the phase here is not that the reasoning is good; it is that **the original text, the original measurement, and the direction of the change are all still visible in this file.** If a future amendment deletes what it supersedes instead of marking it, that protection is gone.
+
 ---
 
 *Written: 2026-08-17 — before implementation began.*
+*Amended: 2026-08-18 by a planning session — Gate 7's "ESLint 9" → "ESLint 9+" (matching `specs.md` §2.12); REQ-1.10's visibility bar private → public (`mission.md` A-1); six §8 commands corrected; three failure modes added to §10. Every superseded text, and every measurement taken against the old bar, is preserved in place rather than replaced.*
 *This file is read-only during implementation. Only checkbox ticks and measured values may be added; gates may not be changed except by a dated planning session.*

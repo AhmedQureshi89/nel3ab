@@ -62,6 +62,14 @@ This is the product's personality, and it is easy to lose by accident. Softening
 
 The subscription state machine (`pending → active → expired`) is designed so that a card gateway can later become one more activation path rather than a rewrite.
 
+> **Amended 2026-08-18 — see [A-2](#a-2--subscription-value-rests-on-entitlement-and-product-not-on-content-secrecy).**
+> What the subscribed tier sells is **server-enforced access**, not confidentiality of the
+> question content. The repository is public ([A-1](#a-1--the-repository-is-public-not-private)),
+> so from Phase 8 the question bank is world-readable. A non-subscriber can read the
+> questions on GitHub; they still cannot play the paid categories in نلعب, because Phase 20
+> validates entitlements server-side on room creation. This makes Phase 20 the **only**
+> defence of the paid tier rather than one of several — spec and verify it accordingly.
+
 ---
 
 ## 5. Guiding Principles
@@ -107,6 +115,106 @@ This is built by one person with Claude. Prefer managed services over self-hoste
 
 ---
 
-*Last updated: 2026-08-17*
+## 8. Amendment Log
+
+This section is the project's equivalent of a constitution amendment log. It did not
+exist until 2026-08-18; `specs/phase-1/requirements.md` §1 flagged its absence as a
+known gap before Phase 1 began, and Phase 1 produced the first decision that needed it.
+
+**How this log binds.** A phase may not adopt a requirement that contradicts
+`mission.md`, `tech-specs.md` or `roadmap.md` unless a dated amendment here permits it.
+An amendment records the decision, the reason, and — importantly — **what it costs**.
+Amendments are appended, never rewritten; a superseded amendment is marked superseded
+rather than deleted.
+
+---
+
+### A-1 — The repository is public, not private
+
+**Dated:** 2026-08-18 · **Decided by:** Ahmed (user decision, in session) ·
+**Status:** in force · **Supersedes:** `roadmap.md` Phase 1's "private, under the
+personal account" and `specs/phase-1/requirements.md` REQ-1.10 as originally written.
+
+`AhmedQureshi89/nel3ab` is a **public** repository under the personal account.
+
+**Why.** `roadmap.md` Phase 1 requires both a private repository and a `main` branch
+protected against direct pushes with no owner bypass. GitHub's Free plan grants branch
+protection and rulesets on **public repositories only** — verified against the API on
+2026-08-18, and proven to be a plan limit rather than a token-scope limit (the same
+token performed an admin write on the private repo, and the same endpoint returned 200
+on a public repo of the same account). Of {free, private, protected}, any two are
+available and not all three. Protection was judged the more load-bearing of the two,
+because §5.4's human-verification gate is a pull request and a solo developer who can
+push to `main` will eventually do so.
+
+**Recorded honestly: this amendment is retroactive.** The repository was made public on
+2026-08-18 during an autonomous run, on an explicit in-session user decision, and this
+log entry was written afterwards — because the log did not yet exist. That is the wrong
+order. The run halted correctly and did not proceed on an assumed amendment, but the
+change was applied before it was recorded. Future amendments are to be written **before**
+the run they govern.
+
+**What it costs.** From Phase 8, the question bank — the asset §4 sells — is
+world-readable. See A-2, which is the deliberate acceptance of that cost rather than a
+consequence anyone overlooked.
+
+---
+
+### A-2 — Subscription value rests on entitlement and product, not on content secrecy
+
+**Dated:** 2026-08-18 · **Decided by:** Ahmed (user decision, in session) ·
+**Status:** in force · **Amends:** §4 Business Model.
+
+The paid tier's value is **server-enforced access** to the paid categories and the
+expanded bank, plus the product itself — not the confidentiality of the question JSON.
+Publishing the content does not hand anyone the product.
+
+**Why this holds.** Phase 20 enforces entitlements **server-side**: category selection
+is validated on room creation, and a forged request for a paid category is rejected.
+Reading `packages/content/categories/*.json` on GitHub therefore gets someone the
+questions, not the ability to run paid categories in نلعب. What is genuinely lost is
+exclusivity of the raw text: a third party could lift the bank for a different product,
+and a determined host could self-host rather than subscribe.
+
+**What it costs, stated plainly.** This is effectively irreversible. Once the bank is
+published it can be copied, mirrored, and indexed; making the repository private later
+un-publishes nothing. The judgement is that the subscription is bought for convenience,
+hosting, curation and the ongoing expansion of the library — the things §4 already
+describes — and that the content's secrecy was never the load-bearing part of the offer.
+
+**Consequences for later phases.** `tech-specs.md` §2.5's "versioned JSON in the repo,
+compiled into `@nel3ab/content`" remains correct and is unaffected. Phase 8 and Phase 22
+proceed as planned, in this repository, with no private content store. Phase 20's
+entitlement enforcement moves from "one of several defences" to **the only defence** of
+the paid tier, and should be specced and verified with that weight in mind.
+
+---
+
+### A-3 — §5.4's human-verification gate is not yet enforced by anything
+
+**Dated:** 2026-08-18 · **Status:** in force as a **binding constraint on Phase 8**,
+not a change to §5.4.
+
+§5.4 requires that every question, accepted variant, hint and fact is human-verified
+before it merges — no exceptions. Phase 1 implemented the mechanism that was meant to
+carry that promise: `main` is protected and requires a pull request. It does **not**
+require an approving review — the ruleset sets `required_approving_review_count: 0`,
+because GitHub forbids self-approval and requiring one approval would deadlock a solo
+developer into either disabling the rule or granting himself a bypass.
+
+The consequence, recorded rather than discovered later: **every pull request in Phase 1
+(#1–#6) was opened and merged by the same automated actor, with no human in the loop.**
+That is harmless for verification prose. It is not harmless for questions.
+
+**Binding on Phase 8:** before any question content merges, the §5.4 gate must be given
+teeth that do not depend on the author's discipline — for example a CODEOWNERS rule over
+`packages/content/`, a required review from a human account, or a CI check that fails on
+unreviewed content changes. Phase 8's triad must specify the mechanism and verify it by
+watching it block an unreviewed content change. §5.4 itself is unchanged; what is
+amended is the false assumption that Phase 1 already enforced it.
+
+---
+
+*Last updated: 2026-08-18*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — updated as the product evolves*

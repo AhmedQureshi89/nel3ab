@@ -36,6 +36,23 @@ Phase 1 requires **no amendment**. It introduces no threshold, no widened bound,
 | Private repo under the personal account; `main` protected | `roadmap.md` Phase 1 |
 
 > **Noted gap, not blocking:** `mission.md` has no §10 amendment log — it ends at §7. The skill's amendment discipline points at "§10 or that project's equivalent," and this project has no equivalent. The first phase that genuinely needs an amendment will have nowhere to record it. Adding an amendment log is **not** in this phase's scope; it is flagged so the omission is a known one rather than a surprise.
+>
+> **RESOLVED 2026-08-18.** The prediction held: Phase 1 produced the first decision that needed an amendment, and there was nowhere to put it. `mission.md` **§8 Amendment Log** now exists and carries A-1 (repository is public), A-2 (subscription value rests on entitlement, not content secrecy) and A-3 (§5.4's review gate is not yet enforced — binding on Phase 8). The log was created in a planning session on 2026-08-18, *after* A-1's subject matter had already been acted on, which is exactly the ordering failure this note anticipated.
+
+### Amendments in force on this phase (added 2026-08-18)
+
+Phase 1 was authored on the claim that it required **no** amendment. That was true when written and is no longer true. Three are now in force, all recorded in `mission.md` §8:
+
+| Id | Effect on this phase |
+|---|---|
+| **A-1** | REQ-1.10 requires a **public** repo, not a private one. `roadmap.md` Phase 1's checklist amended to match |
+| **A-2** | `mission.md` §4's paid tier is defended by server-side entitlement, not content secrecy. No change to this phase's work; changes what Phase 20 carries |
+| **A-3** | Phase 1's PR requirement does **not** enforce §5.4's human verification. Binding on Phase 8, which must give that gate teeth |
+
+Two further corrections were made to this phase's own documents in the same session, and are **not** constitutional amendments — they resolve contradictions internal to the triad:
+
+- **`specs.md` §2.3's build script** widened from `pnpm -r --filter=./apps/* build` to `pnpm -r build`, so that REQ-1.6's verification phrase "compiled output for each package" is literally satisfied. `@nel3ab/ui` was reached by no build path before.
+- **Gate 7's summary text** corrected from "ESLint 9" to "ESLint 9+", matching `specs.md` §2.12, which is the instruction the implementer actually followed.
 
 ---
 
@@ -87,9 +104,18 @@ A deliberate violation, introduced in a real CSS Module in the repo, must make `
 
 ### 2.4 Remote and CI
 
-**REQ-1.10 — Private GitHub repo under the personal account**
-A private repo named `nel3ab` exists under the personal account (`a.alshareef.89@gmail.com`), `main` pushed, remote tracking configured.
-*Why:* the question bank is the commercial asset — `mission.md` §4 sells the expanded bank and three paid categories. A public repo gives it away. Under the personal account rather than the work account (`ahmed@tadawulcom.sa`) because this is not Tadawulcom's product.
+**REQ-1.10 — GitHub repo under the personal account** — **AMENDED 2026-08-18**
+A repo named `nel3ab` exists under the personal account (`a.alshareef.89@gmail.com`), `main` pushed, remote tracking configured. It is **public**.
+*Why:* under the personal account rather than the work account (`ahmed@tadawulcom.sa`) because this is not Tadawulcom's product — that half is unchanged and was verified by commit attribution.
+
+> **Amendment (2026-08-18) — `mission.md` A-1 and A-2 are in force.**
+> This requirement originally read *"Private GitHub repo…"* and justified it as: *"the question bank is the commercial asset — `mission.md` §4 sells the expanded bank and three paid categories. A public repo gives it away."*
+>
+> That reasoning was sound and was **overridden deliberately, not refuted.** REQ-1.11 requires `main` protected with no owner bypass, and GitHub Free grants branch protection on public repositories only — measured against the API on 2026-08-18 and confirmed to be a plan limit, not a token-scope limit. Private and protected could not both hold. Protection won because `mission.md` §5.4's human-verification gate *is* a pull request.
+>
+> The cost is real and is accepted in A-2: from Phase 8 the question bank is world-readable. Phase 20's server-side entitlement enforcement becomes the **only** defence of the paid tier.
+>
+> **Order-of-operations finding, recorded not smoothed over:** the repository was made public *before* this amendment was written, because `mission.md` had no amendment log to write it in. The run halted correctly rather than proceeding on an assumed amendment, but the change preceded its record. Future amendments precede the run they govern.
 
 **REQ-1.11 — `main` protected against direct pushes, with CI required to merge**
 Direct pushes to `main` are rejected. Merging requires the CI check to pass. If classic branch protection is unavailable on the account's plan, a repository ruleset achieves the same, and protection applies to the repository owner too — not just to other contributors.

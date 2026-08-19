@@ -64,8 +64,8 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 - [ ] Vitest configured; one trivial passing test per package
 - [ ] ESLint + Prettier across all packages
 - [ ] Stylelint on all CSS / CSS Modules with a logical-properties rule — physical `left`/`right`/`margin-left`/`padding-right` fail lint wherever an inline-start/end equivalent exists. This is the RTL guardrail; ESLint cannot lint `.css`, so it cannot enforce it. `pnpm lint` runs ESLint and Stylelint together
-- [ ] GitHub repo created — **private, under the personal account** (`a.alshareef.89@gmail.com`)
-- [ ] `main` protected: no direct pushes, CI required to pass before merge. Use a ruleset if classic branch protection is unavailable on the plan
+- [ ] GitHub repo created — **public, under the personal account** (`a.alshareef.89@gmail.com`). **Amended 2026-08-18 — was "private"; see `mission.md` A-1.** GitHub Free grants branch protection on public repositories only, so private and protected could not both hold; protection was chosen. `mission.md` A-2 records the accepted consequence for the question bank
+- [ ] `main` protected: no direct pushes, CI required to pass before merge. Use a ruleset if classic branch protection is unavailable on the plan. **Note (A-3):** requiring a PR is not the same as requiring a *review* — see `mission.md` A-3, binding on Phase 8
 - [ ] CI running lint + typecheck + test + build on every PR
 - [ ] `design/` handoff committed as the reference of record
 
