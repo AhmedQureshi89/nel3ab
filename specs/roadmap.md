@@ -15,7 +15,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 
 | Phase | Name                                      | Duration | Status         |
 |-------|-------------------------------------------|----------|----------------|
-| 1     | Repo, toolchain & CI                      | 1 day    | 🛠️ In Progress |
+| 1     | Repo, toolchain & CI                      | 1 day    | ✅ Completed    |
 | 2     | Arcade design system                      | 1 day    | 🔲 Not Started |
 | 3     | Rules engine — state & clock              | 1 day    | 🔲 Not Started |
 | 4     | Rules engine — round & match flow          | 1 day    | 🔲 Not Started |
@@ -46,7 +46,15 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 
 ## Completed Work
 
-Nothing yet — this is a greenfield project as of 2026-08-17. No GitHub repository exists, so no issue/PR audit was possible; this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
+**Phase 1 — Repo, toolchain & CI. Completed 2026-08-19.** The monorepo builds, lints, typechecks and tests clean from a fresh clone on both Windows and Ubuntu CI, and `main` is protected on a public repository at [AhmedQureshi89/nel3ab](https://github.com/AhmedQureshi89/nel3ab). All 38 verification boxes are ticked with measured values in [`phase-1/verification.md`](phase-1/verification.md), including the 🚦 stack-compatibility verdict gate, which returned **PASS** at `2961449` — the pinned stack (Node 24 · Next 15.5.23 · React 19.2.8 · TypeScript 5.9.3 strict with project references · Vitest 4.1.10 · ESLint 10.8.1 · Stylelint 17.14.1) holds on both platforms with no override, no ignored peer range and no floated pin.
+
+Three findings are carried forward rather than closed by this phase, and each is binding on a later one:
+
+- **The repository is public, not private** — GitHub Free grants branch protection on public repos only, and the two could not both hold. See `mission.md` [A-1](mission.md#a-1--the-repository-is-public-not-private) and [A-2](mission.md#a-2--subscription-value-rests-on-entitlement-and-product-not-on-content-secrecy); the question bank will be world-readable from **Phase 8**.
+- **`main` requires a pull request but not an approving review** (`required_approving_review_count: 0`, because GitHub forbids self-approval). §5.4's human-verification gate is therefore enforced by nothing today — `mission.md` [A-3](mission.md#a-3--54s-human-verification-gate-is-not-yet-enforced-by-anything), binding on **Phase 8**.
+- **`next build` does not consume the TypeScript project-reference graph**; `pnpm typecheck` is what exercises it. Relevant from **Phase 2** onward, which owns `packages/ui`.
+
+No other phase has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
 
 ---
 
@@ -58,16 +66,16 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 
 > **Goal:** A monorepo that builds, lints, tests and deploys nothing — correctly.
 
-- [ ] Initialise pnpm workspace: `apps/web`, `apps/game`, `packages/{game,protocol,content,ui}` — question JSON lives at `packages/content/categories/`, not at the repo root
-- [ ] TypeScript strict across all packages, shared `tsconfig.base.json`, project references
-- [ ] Next.js 15 App Router scaffold in `apps/web` with `dir="rtl"` and `lang="ar"` on the root layout
-- [ ] Vitest configured; one trivial passing test per package
-- [ ] ESLint + Prettier across all packages
-- [ ] Stylelint on all CSS / CSS Modules with a logical-properties rule — physical `left`/`right`/`margin-left`/`padding-right` fail lint wherever an inline-start/end equivalent exists. This is the RTL guardrail; ESLint cannot lint `.css`, so it cannot enforce it. `pnpm lint` runs ESLint and Stylelint together
-- [ ] GitHub repo created — **public, under the personal account** (`a.alshareef.89@gmail.com`). **Amended 2026-08-18 — was "private"; see `mission.md` A-1.** GitHub Free grants branch protection on public repositories only, so private and protected could not both hold; protection was chosen. `mission.md` A-2 records the accepted consequence for the question bank
-- [ ] `main` protected: no direct pushes, CI required to pass before merge. Use a ruleset if classic branch protection is unavailable on the plan. **Note (A-3):** requiring a PR is not the same as requiring a *review* — see `mission.md` A-3, binding on Phase 8
-- [ ] CI running lint + typecheck + test + build on every PR
-- [ ] `design/` handoff committed as the reference of record
+- [x] Initialise pnpm workspace: `apps/web`, `apps/game`, `packages/{game,protocol,content,ui}` — question JSON lives at `packages/content/categories/`, not at the repo root
+- [x] TypeScript strict across all packages, shared `tsconfig.base.json`, project references
+- [x] Next.js 15 App Router scaffold in `apps/web` with `dir="rtl"` and `lang="ar"` on the root layout
+- [x] Vitest configured; one trivial passing test per package
+- [x] ESLint + Prettier across all packages
+- [x] Stylelint on all CSS / CSS Modules with a logical-properties rule — physical `left`/`right`/`margin-left`/`padding-right` fail lint wherever an inline-start/end equivalent exists. This is the RTL guardrail; ESLint cannot lint `.css`, so it cannot enforce it. `pnpm lint` runs ESLint and Stylelint together
+- [x] GitHub repo created — **public, under the personal account** (`a.alshareef.89@gmail.com`). **Amended 2026-08-18 — was "private"; see `mission.md` A-1.** GitHub Free grants branch protection on public repositories only, so private and protected could not both hold; protection was chosen. `mission.md` A-2 records the accepted consequence for the question bank
+- [x] `main` protected: no direct pushes, CI required to pass before merge. Use a ruleset if classic branch protection is unavailable on the plan. **Note (A-3):** requiring a PR is not the same as requiring a *review* — see `mission.md` A-3, binding on Phase 8
+- [x] CI running lint + typecheck + test + build on every PR
+- [x] `design/` handoff committed as the reference of record
 
 **Exit criteria:** `pnpm build && pnpm typecheck && pnpm test && pnpm lint` passes clean from a fresh clone, and CI is green on a PR running the same four commands.
 
@@ -450,6 +458,6 @@ Players remain account-free throughout. Everything in this milestone is host-sid
 
 ---
 
-*Last updated: 2026-08-17*
+*Last updated: 2026-08-19*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — phases are re-evaluated as priorities shift*
