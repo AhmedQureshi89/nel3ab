@@ -3,7 +3,9 @@
 > The canonical technical reference for نلعب's architecture, technology stack, services, data flows, and integration contracts.
 
 > [!NOTE]
-> This is a **greenfield** project. Nothing described here is built yet — this document is the target architecture agreed during the constitution interview, not a description of existing code. Sections marked 🔲 are decisions made but not implemented.
+> This is a **near-greenfield** project. Almost nothing described here is built yet — this document is the target architecture agreed during the constitution interview, not a description of existing code. Sections marked 🔲 are decisions made but not implemented.
+>
+> **Status 2026-08-19 — Phase 1 complete.** What exists is the toolchain, not the architecture: the pnpm monorepo, its six TypeScript projects, lint/typecheck/test/build, and CI on a protected `main`. Of §2 that means §2.1's **Runtime**, **Framework** (an App Router scaffold of `layout.tsx` / `page.tsx` / `globals.css`, no product screens), **Language** and **i18n / dir** rows, plus §2.2's **Runtime** and **Language** rows — `apps/game` is a shell with no Fastify server in it. §2.3's four packages exist as shells exporting `PLACEHOLDER`, `@nel3ab/ui` carrying a 20-line placeholder `tokens.module.css` that Phase 2 replaces with the real port. **Zod is not yet a dependency of anything.** Everything else in this document — Fastify, Web PubSub, Postgres, Drizzle, Zod schemas, Blob Storage, Key Vault, the clock in §4, every table in §5 — is still unbuilt. The pinned versions Phase 1 settled (Next 15.5.23 · React 19.2.8 · TypeScript 5.9.3 · Vitest 4.1.10 · ESLint 10.8.1 · Stylelint 17.14.1 · pnpm 11.22.0) are recorded in `phase-1/verification.md`, not here; §2.1–2.2 deliberately pin no patch versions, and Phase 1's verdict gate confirmed the stack holds as written.
 
 ---
 
@@ -305,6 +307,6 @@ Greenfield, so this is a register of decisions taken with known costs rather tha
 
 ---
 
-*Last updated: 2026-08-17*
+*Last updated: 2026-08-19*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — updated as the architecture evolves*
