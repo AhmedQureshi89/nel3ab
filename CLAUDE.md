@@ -9,9 +9,11 @@ room. One host runs a "judge" screen; players join from their phones with a 6-ch
 code, no account and no app install. See `specs/mission.md` for the product constitution
 and `specs/tech-specs.md` for the target architecture.
 
-The repo is currently a **greenfield monorepo skeleton**: Phase 1 (repo, toolchain, CI)
-is essentially complete and every workspace package is a deliberate shell exporting
-`PLACEHOLDER`. The rules engine, protocol, content and UI primitives are owned by later
+The repo is currently a **greenfield monorepo skeleton**. Phase 1 (repo, toolchain, CI)
+is **complete** as of 2026-08-19 — 38/38 verification boxes with measured values, and its
+🚦 stack-compatibility verdict gate returned PASS. Phase 2 (Arcade design system) is next
+and has no triad yet. Every workspace package is still a deliberate shell exporting
+`PLACEHOLDER`: the rules engine, protocol, content and UI primitives are owned by later
 phases and are intentionally absent — do not "fill them in" outside their phase.
 
 ## Commands
@@ -47,10 +49,18 @@ or `pnpm vitest run -t "substring"`. Two traps:
 Six workspace projects: `apps/{web,game}` and `packages/{game,protocol,content,ui}`.
 
 ```
-packages/game  ──▶ packages/protocol ──┐
-packages/content ──────────────────────┼──▶ apps/game   (Fastify + Web PubSub server; shell)
-packages/ui  ──────────────────────────┴──▶ apps/web    (Next 15 App Router)
+packages/game ──▶ packages/protocol
+      │                  │
+      │                  ├──▶ apps/game  (Fastify + Web PubSub server; shell)
+      │                  │      ▲
+      │                  │      └── packages/content
+      └──────────────────┴──▶ apps/web   (Next 15 App Router)
+                                 ▲
+                                 └── packages/ui
 ```
+
+`apps/web` depends on `ui`, `protocol` and `game`; `apps/game` on `content`, `protocol`
+and `game`. Neither app depends on the other, and `content` and `ui` never meet.
 
 - `@nel3ab/game` — pure rules engine: reducer, clock maths, round/match flow. No React,
   no sockets, no timers. Phases 3–4.
@@ -141,7 +151,8 @@ This is a spec-driven project. `specs/` holds the constitution (`mission.md`,
 `/spec-run` skills author and execute them.
 
 - `roadmap.md` has the 24-phase table and current status. `specs/phase-1/RUN-HALTED.md`
-  records where the last autonomous run stopped and why.
+  is a closed historical record of where the one autonomous run halted and why — read it
+  for the halt discipline it demonstrates, not for current state.
 - `verification.md` is the checklist of record; a requirement is done when its gate is
   ticked with measured evidence, not when the code looks right. Gates marked 🚦 are
   **verdict gates: evaluated exactly once, no retry.**
