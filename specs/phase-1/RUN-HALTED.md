@@ -1,5 +1,27 @@
 # Run halted — 2026-08-18
 
+> ## CLOSED 2026-08-19. This file is a historical record, not current state.
+>
+> Everything below describes the repo as it stood on 2026-08-18 and is preserved
+> unedited. Three of its statements are no longer true, and are listed here rather than
+> corrected in place, so the halt and its resolution both stay legible:
+>
+> | Says below | Now |
+> |---|---|
+> | "36 of 38 boxes ticked" | **38 of 38**, each with a measured value |
+> | "Gate 7 — not evaluated" | Evaluated **once** on 2026-08-19 at `2961449`: **PASS**. Recorded in `verification.md` §7 |
+> | "No verdict has been written into `roadmap.md`. Phase 1 still reads 🛠️ In Progress" | The user marked Phase 1 **✅ Completed** on 2026-08-19 |
+>
+> The three amendments this file asked a `/spec-phase` session to settle were settled on
+> 2026-08-18 (`077a2f9`), and REQ-1.6/R3 was re-ticked on 2026-08-19 (`87e2915`) once
+> `pnpm build` was widened to all six projects. The two carried-forward findings it names
+> — the public repository and the un-enforced review requirement — are **not** closed by
+> any of that; they are recorded in `mission.md` A-1/A-2/A-3 and are binding on Phase 8.
+>
+> **What this file is still worth reading for:** it is the record of a run that stopped at
+> 37/38 rather than evaluate an ambiguous verdict gate, and of six probes that were found
+> narrower than their wording. That discipline is the reusable part.
+
 **Reason:** The phase's remaining check is a 🚦 verdict gate whose own text is
 ambiguous, and a verdict gate cannot be retried. Amending gate text is a planning act.
 The user directed that the wording be corrected in a `/spec-phase` session **before**
