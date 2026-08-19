@@ -105,9 +105,9 @@ git commit -m "Normalise line endings to LF"
   "packageManager": "pnpm@<pinned>",    // NFR-4; corepack reads this
   "engines": { "node": ">=24 <25" },
   "scripts": {
-    "build":     "pnpm -r --filter=./apps/* build",
+    "build":     "pnpm -r build",          // AMENDED 2026-08-18 — was --filter=./apps/*
     "typecheck": "tsc --build --pretty",
-    "test":      "vitest run",
+    "test":      "node scripts/check-collected-tests.mjs",  // AMENDED 2026-08-18 — was "vitest run"
     "lint":      "pnpm lint:js && pnpm lint:css && pnpm format:check",
     "lint:js":   "eslint .",
     "lint:css":  "stylelint \"**/*.css\"",
@@ -120,7 +120,13 @@ Notes that matter:
 
 - `typecheck` uses `tsc --build` on the solution tsconfig, so project references are actually exercised. `tsc -p .` on each package separately would pass even if the reference graph is wrong.
 - `lint` chains all three with `&&` so **there is no way to satisfy the exit criterion while skipping Stylelint** (REQ-1.8). Do not parallelise these into a single tool-agnostic runner in this phase.
-- `pnpm -r` for `build` (per-project builds), plain `vitest run` for `test` (one runner, all projects — see §2.9).
+- `pnpm -r` for `build` (per-project builds), one runner for `test` (all projects — see §2.9).
+
+> **Amendment 2026-08-18 — two script corrections, both forced by measurement.**
+>
+> **(a) `build` scope widened to all six projects.** It read `pnpm -r --filter=./apps/* build`. That invokes only `apps/web`'s `next build` (which emits no declarations) and `apps/game`'s `tsc --build` (which reaches `game`, `protocol` and `content` transitively through project references). **`@nel3ab/ui` was reached by no build path at all** — `apps/web` is its only referrer and `next build` runs no `tsc`. Measured on 2026-08-18: `pnpm build` from a deleted tree produced 115 artifacts across five projects and nothing under `packages/ui/dist`. `verification.md`'s REQ-1.6/R3 box requires "compiled output for **each package**", so the box and this section contradicted each other; the box was un-ticked rather than ticked with a caveat, and this script is the side that moves. `tsc --build` is incremental, so the added cost is small.
+>
+> **(b) `test` is a Node wrapper, not bare `vitest run`.** Measured on 2026-08-17: `passWithNoTests: false` fails only when the **entire** run collects nothing. Moving `packages/ui/src/index.test.ts` aside still exited **0** with `Test Files 5 passed (5)` — a project can silently drop out of the suite and `pnpm test` stays green, which is precisely the vacuous green REQ-1.6 exists to prevent. `scripts/check-collected-tests.mjs` runs Vitest once and asserts the collected file count against the workspace projects found on disk. §2.9 already authorised "a one-line Node script over the JSON output"; this records the decision in §2.3 too, so the two sections agree. `pnpm vitest run …` still works directly and the wrapper forwards arguments.
 - **Windows/Linux parity (NFR-2):** no `&&` inside a single npm script beyond what pnpm itself normalises, no `rm -rf`, no `cp`. If a clean step is ever needed, use a Node-based tool, not a shell builtin.
 
 ### 2.4 `pnpm-workspace.yaml` [NEW]
@@ -276,7 +282,9 @@ Prettier is the sole formatter: include the Prettier compatibility config **last
 
 **Implements:** REQ-1.7
 
-Minimal and boring: no semicolons or semicolons — pick one and never discuss it again; single quotes; 100-column print width; `endOfLine: "lf"` (NFR-2, and it must agree with `.gitattributes` or the two tools will fight forever). Ignore `design/` via `.prettierignore`.
+Minimal and boring: no semicolons or semicolons — pick one and never discuss it again; single quotes; 100-column print width; `endOfLine: "lf"` (NFR-2, and it must agree with `.gitattributes` or the two tools will fight forever). Ignore `design/` **and `specs/`** via `.prettierignore`.
+
+> **Amendment 2026-08-18 — `specs/` added to `.prettierignore`.** This section originally named only `design/`. Measured: with `specs/` formatted, Prettier reflows **799 lines** across the six spec documents (`tech-specs.md` 282, `specs.md` 171, `verification.md` 124, `requirements.md` 100, `roadmap.md` 62, `mission.md` 60) and mis-pads table cells containing Arabic and em-dashes, because its column arithmetic does not account for the rendered width of those glyphs. Two reasons to exclude them: the triad is **read-only during implementation**, so a formatter that rewrites it puts `pnpm lint` in direct conflict with this phase's own hard rule; and the documents are prose for humans, not source. The exclusion is deliberate and is not a way of hiding a lint failure — `prettier --check .` covers 33 files and is green.
 
 ### 2.14 `stylelint.config.mjs` [NEW] — the RTL guardrail
 
@@ -334,8 +342,48 @@ Steps, in order: checkout → install pnpm → `actions/setup-node` with Node 24
 
 ```
 gh auth status                      # confirm the account FIRST — see risks
-gh repo create nel3ab --private --source=. --remote=origin --push
+gh repo create nel3ab --public --source=. --remote=origin --push
 ```
+
+> **Amendment 2026-08-18 — `--private` → `--public`; `mission.md` A-1 is in force.**
+> Measured: on GitHub Free, both `PUT /repos/:o/:r/branches/main/protection` and
+> `POST /repos/:o/:r/rulesets` return **403 "Upgrade to GitHub Pro or make this repository
+> public to enable this feature"** for a private repo. Confirmed a plan limit, not a scope
+> limit: the same token performed an admin `PATCH` on the same private repo, and the same
+> ruleset endpoint returned **200** on a public repo of the same account. REQ-1.10 and
+> REQ-1.11 could not both be satisfied; protection was chosen. See A-1 for the decision and
+> A-2 for the accepted cost.
+>
+> **Identity check — how it was actually settled.** `gh api user/emails` returns 404 without
+> the `user` scope, and `gh api user` reports `email: null`, so the pre-check in the paragraph
+> below could not be answered the way it assumed. It was settled by commit attribution
+> instead: `search/commits?q=author-email:a.alshareef.89@gmail.com` returns 308 commits, all
+> attributed to the single login `AhmedQureshi89` — GitHub attributes a commit to a login only
+> when the address is **verified** on that account. Counter-evidence checked: the work address
+> `ahmed@tadawulcom.sa` has one commit on GitHub, attributed to a different login. Record this
+> route, because the `user` scope may well still be missing next time.
+>
+> **Protection mechanism: use a ruleset, not classic branch protection.** Both became
+> available once the repo was public. A ruleset is preferred because `bypass_actors: []` and
+> `current_user_can_bypass: "never"` are **positive, readable evidence** that no bypass exists,
+> whereas classic protection's owner exemption is an *absence* (`enforce_admins` defaulting
+> off) that must be inferred — the "indistinguishable from real protection" failure
+> `verification.md` §10 warns about.
+>
+> **Required status check name.** Require the **job id**, not the workflow name. In `ci.yml`
+> the workflow `name:` is `CI` while the check reported is `ci`. Requiring `CI` configures a
+> check that never reports and makes `main` permanently unmergeable while looking correct in
+> every settings page. Verify the name via the `check-runs` API rather than reading the YAML.
+>
+> **`required_approving_review_count: 0` is deliberate**, because GitHub forbids self-approval
+> and requiring one approval would deadlock a solo developer into disabling the rule or
+> granting himself a bypass. This satisfies REQ-1.11 — a PR *is* required — but it does **not**
+> enforce `mission.md` §5.4. See A-3, binding on Phase 8.
+>
+> **Bootstrap order (learned the hard way).** Land `.github/workflows/ci.yml` on `main`
+> **before** enabling the ruleset. Enabling a required status check that nothing has ever
+> reported, with an empty bypass list, leaves every PR stuck at "waiting for status" with no
+> admin override.
 
 **Blocking pre-check:** `gh` on this machine is authenticated as `AhmedQureshi89`, and the token's scopes (`gist`, `read:org`, `repo`, `workflow`) do not include `user:email`, so the account's email could not be verified offline. REQ-1.10 requires the repo under `a.alshareef.89@gmail.com`. **Confirm the account identity before creating the repo.** A repo created under the wrong account must be deleted and recreated, and if it were the work account the commercial asset would sit in the wrong place.
 
@@ -358,6 +406,7 @@ Then protect `main` (REQ-1.11): require a pull request before merging, require t
 | `prettier.config.mjs`, `.prettierignore` | NEW | REQ-1.7 |
 | `stylelint.config.mjs` | NEW | REQ-1.8, REQ-1.9 |
 | `vitest.config.ts` | NEW | REQ-1.6 |
+| `scripts/check-collected-tests.mjs` | NEW (added by amendment 2026-08-18) | REQ-1.6 — asserts the collected count; see §2.3(b) |
 | `packages/game/{package.json,tsconfig.json,src/index.ts,src/index.test.ts}` | NEW | REQ-1.1, 1.2, 1.5, 1.6 |
 | `packages/protocol/{…same four…}` | NEW | REQ-1.1, 1.2, 1.5, 1.6 |
 | `packages/content/{…same four…}` + `categories/.gitkeep` | NEW | REQ-1.1, 1.2, 1.5, 1.6 |
