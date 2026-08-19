@@ -6,7 +6,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "build": "pnpm -r --filter=./apps/* build",
+    "build": "pnpm -r build",
     "typecheck": "tsc --build --pretty",
     "test": "node scripts/check-collected-tests.mjs",
     "lint": "pnpm lint:js && pnpm lint:css && pnpm format:check",
