@@ -1,0 +1,16 @@
+/*
+ * REQ-2.1 — the CSS Module half of Gate 1's plumbing probe.
+ * See specs/phase-2/specs.md §1 STEP 1 and §4 risks R1/R3.
+ *
+ * This is NOT a primitive and carries no design value. Panel, Card, Pill, Dot
+ * and Button are STEP 4 and are specified in specs.md §2.6–§2.7; every one of
+ * them reads var(--…) tokens that STEP 2 has not written yet. This file exists
+ * only so that a `.module.css` inside a source-consumed workspace package is
+ * seen by tsc --build, Vite/oxc, Next's transpilePackages and Stylelint at once.
+ *
+ * Inline axis only, like every other stylesheet here (NFR-2.2).
+ */
+
+.probe {
+  padding-inline: 1px;
+}

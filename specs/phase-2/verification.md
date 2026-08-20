@@ -97,22 +97,52 @@ retractable by making it private later (the same irreversibility `mission.md` A-
 The first `.tsx` in `packages/ui` is the cheapest possible probe of risk R1/R2. Run it before
 writing a token.
 
-- [ ] **REQ-2.1 (Four tools see the package):** with `packages/ui` containing at least one
+- [x] **REQ-2.1 (Four tools see the package):** with `packages/ui` containing at least one
   `.tsx` component, one `.module.css` and one `.test.tsx`, all four of `pnpm lint`,
   `pnpm typecheck`, `pnpm test`, `pnpm build` pass.
+  > Measured 2026-08-20, Windows, after `pnpm install`: **all four pass.** The probe is
+  > `src/plumbing-probe.{tsx,module.css,test.tsx}` — Gate 1's "at least one" of each, written to
+  > be the cheapest possible probe of R1/R2 and deliberately not exported from `index.ts`.
+  > `pnpm typecheck` — clean; `tsc --build` emitted `dist/plumbing-probe.{js,d.ts}`, so the
+  > project-reference graph transformed the JSX and resolved `./plumbing-probe.module.css`
+  > through the new `src/css.d.ts`. `pnpm test` — 8 files / 9 assertions, 0 failed.
+  > `pnpm lint` — eslint, stylelint and `prettier --check` all clean, 0 disables added.
+  > `pnpm build` — 6 projects, `next build` ✓ compiled in 1396ms, 4/4 static pages.
+  > **R2 did not materialise:** Vitest transformed this package's `.test.tsx` with **no** `oxc`
+  > override — `jsx: "react-jsx"` was sufficient, as specs.md §2.10 predicted.
+  > **R3 did not materialise:** the `.module.css` import resolved to a proxy under the default
+  > `css: false`; **no** `test.css: true` was needed.
+  > **Honest limit on "four tools":** `next build` compiled `apps/web`, but nothing in `apps/web`
+  > imports the probe, so Next has not yet compiled a `.module.css` from `packages/ui`. That is
+  > the exact hole verification §9 names ("`next build` may never touch them"), and it is closed
+  > by Gate 4, where `/styleguide` imports the primitives. R1 is therefore probed by three tools
+  > here and by the fourth at Gate 4.
 
-- [ ] **REQ-2.1 (Still consumed as source):** `packages/ui/package.json`'s `main`, `types` and
+- [x] **REQ-2.1 (Still consumed as source):** `packages/ui/package.json`'s `main`, `types` and
   every `exports` entry still point under `./src/`, never `./dist/`.
+  > Measured: `main` `./src/index.ts` · `types` `./src/index.ts` · `exports["."]`
+  > `./src/index.ts` · `exports["./tokens.module.css"]` `./src/tokens.module.css` — 4/4 under
+  > `./src/`, 0 under `./dist/`. The `./tokens.css` / `./base.css` entries of specs.md §2.9 are
+  > **not** added yet and `./tokens.module.css` is **not** yet removed: both changes land at
+  > STEP 2 with the files they point at, rather than committing a manifest whose `exports`
+  > resolve to nothing.
 
-- [ ] **NFR-2.5 (No project dropped out):** `pnpm test`'s
+- [x] **NFR-2.5 (No project dropped out):** `pnpm test`'s
   `[check-collected-tests]` line reports **six** workspace projects, each with ≥ 1 collected file.
   Widening `include` to `*.test.tsx` did not stop `*.test.ts` matching.
-  > Measured: ____ test file(s) across 6 project(s); per-project counts ____
+  > Measured: **8** test file(s) across **6** project(s), 9 assertions passed / 0 failed;
+  > per-project counts — `apps/game` 1 · `apps/web` 2 · `packages/content` 1 · `packages/game` 1
+  > · `packages/protocol` 1 · `packages/ui` 2. Six of the eight are `.test.ts` and still matched
+  > after the widening (`rtl-root.test.ts`, `smoke.test.ts`, and the four `src/index.test.ts`),
+  > so the widening did not narrow. `[check-collected-tests] OK`.
 
-- [ ] **NFR-2.3 (Pins exact):** `react`, `react-dom`, `@types/react`, `@types/react-dom` in
+- [x] **NFR-2.3 (Pins exact):** `react`, `react-dom`, `@types/react`, `@types/react-dom` in
   `packages/ui/package.json` are pinned exactly, with no `^`/`~`, and are character-identical to
   the pins already in `apps/web/package.json`.
-  > Measured: react `____` · react-dom `____` · @types/react `____` · @types/react-dom `____`
+  > Measured: react `19.2.8` · react-dom `19.2.8` · @types/react `19.2.18` · @types/react-dom
+  > `19.2.4` — 4/4 character-identical to `apps/web/package.json`, 0 floated (`^`/`~`) ranges.
+  > `react` is a dependency, the other three devDependencies, per specs.md §2.9. `pnpm install`
+  > added 15 lockfile lines and no `pnpm.overrides` or `peerDependencyRules`; 0 peer warnings.
 
 ---
 

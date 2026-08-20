@@ -16,7 +16,11 @@ const project = (name: string, root: string) => ({
   test: {
     name,
     root,
-    include: ['**/*.test.ts'],
+    // `.test.ts` stays FIRST and stays matched (REQ-2.1, specs/phase-2/specs.md
+    // §2.12): widening for `packages/ui`'s .tsx must not narrow for the five
+    // projects whose only test file is a .ts, or they drop out of collection
+    // and scripts/check-collected-tests.mjs fails on the count.
+    include: ['**/*.test.ts', '**/*.test.tsx'],
     passWithNoTests: false,
   },
 })
