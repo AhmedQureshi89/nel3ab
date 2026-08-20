@@ -151,23 +151,38 @@ writing a token.
 This is where fidelity is made mechanical. Every box here is an automated test that reads
 `design/` at run time, so it keeps holding after this phase ends.
 
-- [ ] **REQ-2.4 (Every reference token is ported, light):** `tokens.test.ts` asserts that every
+- [x] **REQ-2.4 (Every reference token is ported, light):** `tokens.test.ts` asserts that every
   custom property in `design/arcade-tokens.css`'s `:root` block appears in the shipped light block
   with an **identical value**. The count is asserted, not just the presence.
-  > Measured: ____ / ____ tokens matched
+  > Measured 2026-08-20: **44 / 44** tokens matched, 0 mismatches. The count is asserted at both
+  > ends — a separate test asserts the *reference* parses to 44, so a regex that stopped matching
+  > would fail there rather than pass vacuously with a denominator of 0 (§9, first bullet).
+  > **The test was proven to bite:** mutating `--bd: 2.5px` → `2px` in the shipped file failed it
+  > with `expected '2px' to be '2.5px'`; the file was restored and re-run green. That is the exact
+  > 2.5px→2px rounding requirements.md §1.1 names as the regression no diff review catches.
 
-- [ ] **REQ-2.4 (Every reference token is ported, dark, twice):** every custom property in the
+- [x] **REQ-2.4 (Every reference token is ported, dark, twice):** every custom property in the
   reference's `[data-theme="dark"]` block appears with an identical value in **both** the
   `@media (prefers-color-scheme: dark)` block and the `[data-theme="dark"]` block, and those two
   blocks are identical to each other.
-  > Measured: ____ / ____ tokens matched in each of 2 dark blocks
+  > Measured: **7 / 7** tokens matched in each of 2 dark blocks — `:root:not([data-theme='light'])`
+  > inside `@media (prefers-color-scheme: dark)`, and the bare `[data-theme='dark']`. The two
+  > blocks compare **identical** as ordered key/value lists. The duplication is deliberate
+  > (specs.md §2.3) and is now checked, so it cannot drift.
 
-- [ ] **REQ-2.4 (The port adds nothing):** the shipped token layer declares **no** colour, radius,
+- [x] **REQ-2.4 (The port adds nothing):** the shipped token layer declares **no** colour, radius,
   border-width, shadow or motion custom property that the reference does not declare. The only
   permitted difference is the `--font` / `--font-en` indirection through `var(--font-baloo, …)` /
   `var(--font-archivo, …)`, which the test names as an explicit exemption rather than skipping
   silently.
-  > Measured: ____ extra token(s) found (must be 0), exemptions: ____
+  > Measured: **0** extra token(s) found, and **0** reference tokens dropped — asserted as exact
+  > set equality in both directions, which is stricter than the requirement's "no colour, radius,
+  > border-width, shadow or motion" wording and needs no category list to stay correct.
+  > Exemptions, named in the test as `FONT_INDIRECTION` rather than skipped: `--font` =
+  > `var(--font-baloo, 'Baloo Bhaijaan 2'), system-ui, sans-serif` · `--font-en` =
+  > `var(--font-archivo, 'Archivo'), system-ui, sans-serif`. The test does not merely skip these
+  > two — it reconstructs the expected value from the reference's own and asserts equality, so the
+  > fallback stacks are still checked byte for byte.
 
 - [ ] **REQ-2.5 (Themes nest):** `[data-theme]` on a non-root element re-themes that subtree —
   demonstrated by the styleguide (Gate 4) and asserted structurally here: the light palette's
