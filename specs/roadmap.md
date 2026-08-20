@@ -16,7 +16,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 | Phase | Name                                      | Duration | Status         |
 |-------|-------------------------------------------|----------|----------------|
 | 1     | Repo, toolchain & CI                      | 1 day    | ✅ Completed    |
-| 2     | Arcade design system                      | 1 day    | 🔲 Not Started |
+| 2     | Arcade design system                      | 1 day    | 🛠️ In Progress |
 | 3     | Rules engine — state & clock              | 1 day    | 🔲 Not Started |
 | 4     | Rules engine — round & match flow          | 1 day    | 🔲 Not Started |
 | 5     | Judge app — setup & room-ready            | 1 day    | 🔲 Not Started |
@@ -54,7 +54,12 @@ Three findings are carried forward rather than closed by this phase, and each is
 - **`main` requires a pull request but not an approving review** (`required_approving_review_count: 0`, because GitHub forbids self-approval). §5.4's human-verification gate is therefore enforced by nothing today — `mission.md` [A-3](mission.md#a-3--54s-human-verification-gate-is-not-yet-enforced-by-anything), binding on **Phase 8**.
 - **`next build` does not consume the TypeScript project-reference graph**; `pnpm typecheck` is what exercises it. Relevant from **Phase 2** onward, which owns `packages/ui`.
 
-No other phase has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
+**Phase 2 — Arcade design system. Started 2026-08-20.** The triad is written and committed ([`phase-2/requirements.md`](phase-2/requirements.md), [`specs.md`](phase-2/specs.md), [`verification.md`](phase-2/verification.md)): 12 requirements, 6 NFRs, 35 verification boxes across 7 gates, two of them verdict gates. **1 of 35 boxes is ticked.**
+
+- **Gate 0 — the font redistribution licence — returned 🚦 PASS at `5cfeec5`.** Baloo Bhaijaan 2 and Archivo are both **SIL OFL 1.1**, read from each family's own upstream (`EkType/Baloo2-Variable` @ `da4090c`, `Omnibus-Type/Archivo` @ `b5d6398`) rather than from a summary or Google's copy. The clause grants redistribution explicitly and conditions on nothing about the medium, so committing the binaries to this public repository is permitted. Both licence texts are committed verbatim at `apps/web/app/fonts/`, which is OFL condition 2 — the notice travels with the copy. Neither family declares a Reserved Font Name, so the `.ttf → .woff2` conversion may keep the family name; that must be re-checked before any font upgrade.
+- Gate 0's other two boxes — provenance and post-checkout hashes — stay open until the binaries are committed. A SHA-256 taken before a commit and a fresh checkout proves nothing about what git stored.
+
+No phase after 2 has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
 
 ---
 
@@ -458,6 +463,6 @@ Players remain account-free throughout. Everything in this milestone is host-sid
 
 ---
 
-*Last updated: 2026-08-19*
+*Last updated: 2026-08-20*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — phases are re-evaluated as priorities shift*
