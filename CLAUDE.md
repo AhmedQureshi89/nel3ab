@@ -11,8 +11,11 @@ and `specs/tech-specs.md` for the target architecture.
 
 The repo is currently a **greenfield monorepo skeleton**. Phase 1 (repo, toolchain, CI)
 is **complete** as of 2026-08-19 — 38/38 verification boxes with measured values, and its
-🚦 stack-compatibility verdict gate returned PASS. Phase 2 (Arcade design system) is next
-and has no triad yet. Every workspace package is still a deliberate shell exporting
+🚦 stack-compatibility verdict gate returned PASS. Phase 2 (Arcade design system) is **in
+progress** since 2026-08-20: its triad is written and 1 of 35 boxes is ticked — Gate 0, the
+font redistribution licence verdict gate, returned PASS (both families are SIL OFL 1.1, read
+from their own upstreams; the two licence texts are committed at `apps/web/app/fonts/` and no
+font binary is committed yet). Every workspace package is still a deliberate shell exporting
 `PLACEHOLDER`: the rules engine, protocol, content and UI primitives are owned by later
 phases and are intentionally absent — do not "fill them in" outside their phase.
 
@@ -124,6 +127,14 @@ a comment at the top of the file in question — read it before changing the fil
 9. **Vitest 4 multi-project config lives in `vitest.config.ts` under `test.projects`.**
    `vitest.workspace.ts` was removed in v4 and is deliberately absent. `apps/web` needs
    the `oxc.jsx` override there because its tsconfig sets `jsx: "preserve"` for Next.
+
+10. **The font licences live beside the fonts, and moving them breaks the licence.** Both
+    families are SIL OFL 1.1, whose second condition is that the copyright notice and licence
+    accompany every copy — so `apps/web/app/fonts/LICENSE-*.txt` must stay in the same
+    directory as the binaries, verbatim. `README.md` there records provenance and SHA-256s
+    taken _after_ a commit and a fresh checkout, because that is the only hash that says
+    anything about what git stored. Any new font family repeats the Gate 0 licence check
+    before its bytes are committed; this repository is public.
 
 ## Product rules that constrain code
 
