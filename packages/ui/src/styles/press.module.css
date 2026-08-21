@@ -1,0 +1,53 @@
+/*
+ * REQ-2.8 — the press. See specs/phase-2/specs.md §2.5.
+ *
+ * design/arcade-tokens.css ends with a single rule:
+ *
+ *   .press:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--stroke); }
+ *
+ * That is correct for a control whose rest shadow is `0 6px 0`, and wrong for the
+ * other two of the three pairs the prototypes actually use. It is an *instance*
+ * of the invariant, not the invariant. What ports is the arithmetic:
+ *
+ *   pressed offset = rest offset - travel
+ *
+ * mission.md §3 states it as prose — "the shadow shrinks by the same amount".
+ * requirements.md §1.1 measures it across every pressable element in the three
+ * prototypes, and press.test.ts re-measures them from design/designs/ at run
+ * time rather than trusting that table. Writing the pressed offset as calc() is
+ * what stops a future variant with a `0 7px 0` rest shadow from pressing wrong;
+ * three hard-coded pairs eventually will.
+ *
+ * A module rather than a plain stylesheet because CSS Modules' `composes` is the
+ * only "mixin" this toolchain has (specs.md §1). Consumers set --press-rest and
+ * --press-travel. Nothing anywhere sets the pressed offset.
+ *
+ * This rule changes transform and box-shadow and nothing else. The three
+ * techniques mission.md §3 names as the ways the press gets lost are absent, and
+ * press.test.ts asserts this file contains none of them by name — which is also
+ * why they are not written out here.
+ *
+ * A control with no rest shadow — Button `secondary`, specs.md §2.7 — does NOT
+ * compose .press. It is not a suppressed press; it is a control that was never
+ * raised.
+ */
+
+.press {
+  box-shadow: 0 var(--press-rest) 0 var(--stroke);
+}
+
+/* The disabled guard lives here rather than in each variant. REQ-2.8 requires
+   that the press does not fire on a disabled control, and a guard repeated once
+   per variant is a guard that is missing from the fourth one.
+
+   specs.md §2.5 writes this as `:not(:disabled):not([aria-disabled='true'])`.
+   stylelint-config-standard's `selector-not-notation` rejects the chained form,
+   and NFR-2.2 is explicit that new CSS conforms to stylelint.config.mjs rather
+   than the reverse. The list form below selects exactly the same elements; only
+   the specificity differs (0,1,0 rather than 0,2,0), and both still outrank the
+   `.press` rest rule above. No `stylelint-disable` was added — that would fail
+   REQ-2.12's verdict gate. */
+.press:active:not(:disabled, [aria-disabled='true']) {
+  transform: translateY(var(--press-travel));
+  box-shadow: 0 calc(var(--press-rest) - var(--press-travel)) 0 var(--stroke);
+}

@@ -230,16 +230,53 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   > possible by construction: there is no moment at which a wrong theme is painted and then
   > corrected.
 
-- [ ] **REQ-2.8 (The prototypes really do hold the invariant):** `press.test.ts` extracts every
+- [x] **REQ-2.8 (The prototypes really do hold the invariant):** `press.test.ts` extracts every
   `(rest, travel, pressed)` triple from all three `design/designs/*.dc.html` files and asserts
   `pressed === rest − travel` for each. **At least the three distinct triples recorded in
   requirements.md §1.1 — (6,4,2), (5,3,2), (4,3,1) — must be among them**, so that the test is
   proven to be reading the prototypes rather than finding nothing and passing vacuously.
-  > Measured: ____ triple(s) extracted, ____ distinct, all satisfy the invariant · yes / no
+  > Measured 2026-08-21: **15** triple(s) extracted, **3** distinct, all satisfy the invariant ·
+  > **yes** — 0 violations.
+  > Distribution: `(6,4,2)` ×9 · `(5,3,2)` ×3 · `(4,3,1)` ×3. Per file, so that one large export
+  > cannot stand in for a sweep: `JoinRoom.dc.html` **1**, `Nel3ab - Arcade.dc.html` **8**,
+  > `Nel3ab Landing - Arcade.dc.html` **6** — each asserted to contribute at least one.
+  > The three distinct triples measured are **exactly** the three requirements.md §1.1 records,
+  > with no fourth. The test re-derives them from `design/designs/` at run time rather than
+  > hard-coding that table: mission.md §5.3 makes the prototype the specification, so if the
+  > table and the prototypes ever disagree the table is what is wrong, and a test built from the
+  > table could never notice.
+  > **Proven to bite**, two mutations, each reverted and re-run green: adding `(7,4,2)` to the
+  > recorded triples failed with `expected [ '6,4,2', '4,3,1', '5,3,2' ] to include '7,4,2'`;
+  > narrowing the file filter to `JoinRoom` alone failed both the file-count assertion and the
+  > recorded-triples assertion, the latter with
+  > `expected [ '6,4,2' ] to include '5,3,2'` — which is precisely the vacuous-sweep failure this
+  > box exists to prevent.
 
-- [ ] **REQ-2.8 (The implementation computes rather than restates):** `press.module.css`
+- [x] **REQ-2.8 (The implementation computes rather than restates):** `press.module.css`
   contains `calc(var(--press-rest) - var(--press-travel))`, and contains none of `scale(`,
   `opacity`, `filter`. No variant anywhere writes a pressed offset as a literal.
+  > Measured 2026-08-21: `calc(var(--press-rest) - var(--press-travel))` present · **0** of the
+  > three banned strings found. The banned-string check runs over the **whole file text,
+  > comments included**, which is the strictest reading of "contains none of" and is why
+  > `press.module.css` documents the exclusion without writing the three words.
+  > The third clause has nothing to bite on yet — the variants are STEP 4's — so it is asserted
+  > as a **standing rule** rather than as a claim about today: every `:active` rule in any
+  > `packages/ui/src/**/*.css` that sets a `box-shadow` must set it with `calc(`. **1**
+  > `:active` rule found and checked (asserted non-zero, or the rule would pass over nothing);
+  > Button and Pill will land against it in STEP 4 instead of being trusted. A literal *rest*
+  > offset stays legal — Panel is `0 4px 0` — because it is the *pressed* offset that must be
+  > arithmetic.
+  > **Proven to bite**, two mutations, each reverted and re-run green: replacing the computed
+  > offset with a literal `0 2px 0` failed **two** tests, the standing rule reporting
+  > ``.press:active:not(:disabled, [aria-disabled='true']) writes a pressed box-shadow without
+  > calc()``; adding `opacity: 0.9` to the press rule failed the banned-string check.
+  > **Deviation from specs.md §2.5, recorded rather than silent:** the spec writes the guard as
+  > `:not(:disabled):not([aria-disabled='true'])`. `stylelint-config-standard`'s
+  > `selector-not-notation` rejects the chained form, so the shipped selector is
+  > `:not(:disabled, [aria-disabled='true'])` — the same elements, differing only in specificity
+  > (0,1,0 rather than 0,2,0), which still outranks the `.press` rest rule. NFR-2.2 is explicit
+  > that new CSS conforms to `stylelint.config.mjs` rather than the reverse, and no
+  > `stylelint-disable` was added. The config itself is byte-identical to its Phase 1 state.
 
 - [ ] **REQ-2.6 (Global states and keyframes complete):** `base.css` carries `:focus`,
   `:focus-visible` (3px `var(--red)`, offset 3px), `::selection` (`rgba(255,201,60,.55)`), the
