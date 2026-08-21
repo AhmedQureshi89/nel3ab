@@ -97,22 +97,52 @@ retractable by making it private later (the same irreversibility `mission.md` A-
 The first `.tsx` in `packages/ui` is the cheapest possible probe of risk R1/R2. Run it before
 writing a token.
 
-- [ ] **REQ-2.1 (Four tools see the package):** with `packages/ui` containing at least one
+- [x] **REQ-2.1 (Four tools see the package):** with `packages/ui` containing at least one
   `.tsx` component, one `.module.css` and one `.test.tsx`, all four of `pnpm lint`,
   `pnpm typecheck`, `pnpm test`, `pnpm build` pass.
+  > Measured 2026-08-20, Windows, after `pnpm install`: **all four pass.** The probe is
+  > `src/plumbing-probe.{tsx,module.css,test.tsx}` — Gate 1's "at least one" of each, written to
+  > be the cheapest possible probe of R1/R2 and deliberately not exported from `index.ts`.
+  > `pnpm typecheck` — clean; `tsc --build` emitted `dist/plumbing-probe.{js,d.ts}`, so the
+  > project-reference graph transformed the JSX and resolved `./plumbing-probe.module.css`
+  > through the new `src/css.d.ts`. `pnpm test` — 8 files / 9 assertions, 0 failed.
+  > `pnpm lint` — eslint, stylelint and `prettier --check` all clean, 0 disables added.
+  > `pnpm build` — 6 projects, `next build` ✓ compiled in 1396ms, 4/4 static pages.
+  > **R2 did not materialise:** Vitest transformed this package's `.test.tsx` with **no** `oxc`
+  > override — `jsx: "react-jsx"` was sufficient, as specs.md §2.10 predicted.
+  > **R3 did not materialise:** the `.module.css` import resolved to a proxy under the default
+  > `css: false`; **no** `test.css: true` was needed.
+  > **Honest limit on "four tools":** `next build` compiled `apps/web`, but nothing in `apps/web`
+  > imports the probe, so Next has not yet compiled a `.module.css` from `packages/ui`. That is
+  > the exact hole verification §9 names ("`next build` may never touch them"), and it is closed
+  > by Gate 4, where `/styleguide` imports the primitives. R1 is therefore probed by three tools
+  > here and by the fourth at Gate 4.
 
-- [ ] **REQ-2.1 (Still consumed as source):** `packages/ui/package.json`'s `main`, `types` and
+- [x] **REQ-2.1 (Still consumed as source):** `packages/ui/package.json`'s `main`, `types` and
   every `exports` entry still point under `./src/`, never `./dist/`.
+  > Measured: `main` `./src/index.ts` · `types` `./src/index.ts` · `exports["."]`
+  > `./src/index.ts` · `exports["./tokens.module.css"]` `./src/tokens.module.css` — 4/4 under
+  > `./src/`, 0 under `./dist/`. The `./tokens.css` / `./base.css` entries of specs.md §2.9 are
+  > **not** added yet and `./tokens.module.css` is **not** yet removed: both changes land at
+  > STEP 2 with the files they point at, rather than committing a manifest whose `exports`
+  > resolve to nothing.
 
-- [ ] **NFR-2.5 (No project dropped out):** `pnpm test`'s
+- [x] **NFR-2.5 (No project dropped out):** `pnpm test`'s
   `[check-collected-tests]` line reports **six** workspace projects, each with ≥ 1 collected file.
   Widening `include` to `*.test.tsx` did not stop `*.test.ts` matching.
-  > Measured: ____ test file(s) across 6 project(s); per-project counts ____
+  > Measured: **8** test file(s) across **6** project(s), 9 assertions passed / 0 failed;
+  > per-project counts — `apps/game` 1 · `apps/web` 2 · `packages/content` 1 · `packages/game` 1
+  > · `packages/protocol` 1 · `packages/ui` 2. Six of the eight are `.test.ts` and still matched
+  > after the widening (`rtl-root.test.ts`, `smoke.test.ts`, and the four `src/index.test.ts`),
+  > so the widening did not narrow. `[check-collected-tests] OK`.
 
-- [ ] **NFR-2.3 (Pins exact):** `react`, `react-dom`, `@types/react`, `@types/react-dom` in
+- [x] **NFR-2.3 (Pins exact):** `react`, `react-dom`, `@types/react`, `@types/react-dom` in
   `packages/ui/package.json` are pinned exactly, with no `^`/`~`, and are character-identical to
   the pins already in `apps/web/package.json`.
-  > Measured: react `____` · react-dom `____` · @types/react `____` · @types/react-dom `____`
+  > Measured: react `19.2.8` · react-dom `19.2.8` · @types/react `19.2.18` · @types/react-dom
+  > `19.2.4` — 4/4 character-identical to `apps/web/package.json`, 0 floated (`^`/`~`) ranges.
+  > `react` is a dependency, the other three devDependencies, per specs.md §2.9. `pnpm install`
+  > added 15 lockfile lines and no `pnpm.overrides` or `peerDependencyRules`; 0 peer warnings.
 
 ---
 
@@ -121,35 +151,84 @@ writing a token.
 This is where fidelity is made mechanical. Every box here is an automated test that reads
 `design/` at run time, so it keeps holding after this phase ends.
 
-- [ ] **REQ-2.4 (Every reference token is ported, light):** `tokens.test.ts` asserts that every
+- [x] **REQ-2.4 (Every reference token is ported, light):** `tokens.test.ts` asserts that every
   custom property in `design/arcade-tokens.css`'s `:root` block appears in the shipped light block
   with an **identical value**. The count is asserted, not just the presence.
-  > Measured: ____ / ____ tokens matched
+  > Measured 2026-08-20: **44 / 44** tokens matched, 0 mismatches. The count is asserted at both
+  > ends — a separate test asserts the *reference* parses to 44, so a regex that stopped matching
+  > would fail there rather than pass vacuously with a denominator of 0 (§9, first bullet).
+  > **The test was proven to bite:** mutating `--bd: 2.5px` → `2px` in the shipped file failed it
+  > with `expected '2px' to be '2.5px'`; the file was restored and re-run green. That is the exact
+  > 2.5px→2px rounding requirements.md §1.1 names as the regression no diff review catches.
 
-- [ ] **REQ-2.4 (Every reference token is ported, dark, twice):** every custom property in the
+- [x] **REQ-2.4 (Every reference token is ported, dark, twice):** every custom property in the
   reference's `[data-theme="dark"]` block appears with an identical value in **both** the
   `@media (prefers-color-scheme: dark)` block and the `[data-theme="dark"]` block, and those two
   blocks are identical to each other.
-  > Measured: ____ / ____ tokens matched in each of 2 dark blocks
+  > Measured: **7 / 7** tokens matched in each of 2 dark blocks — `:root:not([data-theme='light'])`
+  > inside `@media (prefers-color-scheme: dark)`, and the bare `[data-theme='dark']`. The two
+  > blocks compare **identical** as ordered key/value lists. The duplication is deliberate
+  > (specs.md §2.3) and is now checked, so it cannot drift.
 
-- [ ] **REQ-2.4 (The port adds nothing):** the shipped token layer declares **no** colour, radius,
+- [x] **REQ-2.4 (The port adds nothing):** the shipped token layer declares **no** colour, radius,
   border-width, shadow or motion custom property that the reference does not declare. The only
   permitted difference is the `--font` / `--font-en` indirection through `var(--font-baloo, …)` /
   `var(--font-archivo, …)`, which the test names as an explicit exemption rather than skipping
   silently.
-  > Measured: ____ extra token(s) found (must be 0), exemptions: ____
+  > Measured: **0** extra token(s) found, and **0** reference tokens dropped — asserted as exact
+  > set equality in both directions, which is stricter than the requirement's "no colour, radius,
+  > border-width, shadow or motion" wording and needs no category list to stay correct.
+  > Exemptions, named in the test as `FONT_INDIRECTION` rather than skipped: `--font` =
+  > `var(--font-baloo, 'Baloo Bhaijaan 2'), system-ui, sans-serif` · `--font-en` =
+  > `var(--font-archivo, 'Archivo'), system-ui, sans-serif`. The test does not merely skip these
+  > two — it reconstructs the expected value from the reference's own and asserts equality, so the
+  > fallback stacks are still checked byte for byte.
 
-- [ ] **REQ-2.5 (Themes nest):** `[data-theme]` on a non-root element re-themes that subtree —
+- [x] **REQ-2.5 (Themes nest):** `[data-theme]` on a non-root element re-themes that subtree —
   demonstrated by the styleguide (Gate 4) and asserted structurally here: the light palette's
   selector list includes `[data-theme='light']`, and the dark palette is declared under both a
   `prefers-color-scheme` media query and a `[data-theme='dark']` selector.
+  > Measured 2026-08-21, three new assertions in `tokens.test.ts`. The light block's selector list
+  > parses to **2** selectors — `:root` and `[data-theme='light']` — both asserted as members and
+  > both **unqualified**. Dark is declared **twice**: once under
+  > `@media (prefers-color-scheme: dark)`, once as a top-level `[data-theme='dark']` with **0**
+  > enclosing at-rules. The `:root:not([data-theme='light'])` guard specs.md §2.3 calls
+  > load-bearing is asserted by exact string.
+  > What these three assert is *nesting capability*, not existence — REQ-2.4 above already covers
+  > existence value for value. Element-agnosticism is the property that is invisible in a diff
+  > (`html[data-theme='light']` reads as a harmless tightening) and is the one that silently
+  > breaks Gate 4.
+  > **Proven to bite** — three mutations, each reverted and re-run green:
+  > `[data-theme='light']` → `html[data-theme='light']` failed with ``expected [ ':root', …(1) ]
+  > to include '[data-theme=\'light\']'``, and the REQ-2.4 tests stayed **green** through that
+  > mutation, so this box catches what none of them did;
+  > `:root:not([data-theme='light'])` → `:root` failed with ``expected ':root' to be
+  > ':root:not([data-theme=\'light\'])'``; `[data-theme='dark']` → `html[data-theme='dark']`
+  > failed the block lookup outright.
+  > The **rendered** half — a `[data-theme]` panel actually re-themed in a browser — is Gate 4's
+  > `/styleguide` box and the 👁 side-by-side check. It is not claimed here.
 
-- [ ] **REQ-2.5 (No script resolves the theme):** no `<script>`, no `localStorage`, no
+- [x] **REQ-2.5 (No script resolves the theme):** no `<script>`, no `localStorage`, no
   `useEffect` and no cookie participates in theme selection anywhere in `apps/web` or
   `packages/ui`. A flash of the wrong theme is therefore impossible by construction, not by
   correct scripting. *(Grep evidence, not observation: name the searched terms and the hit
   count.)*
-  > Measured: searched `____`, hits: ____ (must be 0)
+  > Measured 2026-08-21 over the **11** git-tracked `.ts` / `.tsx` / `.js` / `.jsx` / `.mjs` /
+  > `.cjs` / `.html` files in `apps/web` and `packages/ui`. The file list comes from `git
+  > ls-files`, so `dist/` and `.next/` are out of scope by construction rather than by a filter
+  > that could rot.
+  > The four terms this box names — `<script`, `localStorage`, `useEffect`, `cookie` — hits: **0**.
+  > Seven more searched to widen the net past the named list — `sessionStorage`,
+  > `useLayoutEffect`, `matchMedia`, `dangerouslySetInnerHTML`, `setAttribute`, `colorScheme`,
+  > `next-themes` — hits: **0**.
+  > `prefers-color-scheme` — hits: **1**, recorded rather than filtered away:
+  > `packages/ui/src/styles/tokens.test.ts:94`, a string literal the CSS-block reader matches on
+  > in order to *find* the media query it then asserts. It selects nothing at run time; it is the
+  > test that proves the mechanism is CSS-only.
+  > Total across all twelve terms: **1** matching line, **0** of them participating in theme
+  > selection. Theme resolution belongs entirely to the cascade, which is why no flash is
+  > possible by construction: there is no moment at which a wrong theme is painted and then
+  > corrected.
 
 - [ ] **REQ-2.8 (The prototypes really do hold the invariant):** `press.test.ts` extracts every
   `(rest, travel, pressed)` triple from all three `design/designs/*.dc.html` files and asserts
