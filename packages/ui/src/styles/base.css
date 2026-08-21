@@ -1,0 +1,96 @@
+/*
+ * REQ-2.6 — the global states and keyframes. See specs/phase-2/specs.md §2.4.
+ *
+ * A VERBATIM port of the globals block of design/arcade-tokens.css. `design/` is
+ * the reference of record (CLAUDE.md invariant 5, mission.md §5.3) and
+ * base.test.ts reads it at run time and compares it to this file, so this file
+ * cannot drift without CI going red.
+ *
+ * These live here, globally, rather than inside the primitives that use them,
+ * because they are global in the reference and because design/README.md's
+ * "Never leave a default browser focus ring" is a promise about every focusable
+ * element on every screen — including the ones no primitive owns. Scattering
+ * `:focus-visible` into per-component CSS is precisely how a screen ends up
+ * with a default focus ring.
+ *
+ * `ring` is animated by nothing in this phase and is ported anyway: REQ-2.4
+ * says the port is complete, not selective, and a keyframe left out now is a
+ * keyframe someone re-derives by eye later.
+ *
+ * `.press` is deliberately NOT here — it is the one rule the reference states
+ * as an instance rather than an invariant, so it ships as press.module.css
+ * instead (specs.md §2.5, REQ-2.8).
+ *
+ * `.ltr-num` belongs in this file too (specs.md §2.4) but is REQ-2.7's box, not
+ * this one's.
+ *
+ * A plain stylesheet, not a CSS Module: these selectors are element states and
+ * global at-rules, and hashing them would defeat the point.
+ */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgb(255 201 60 / 55%);
+}
+
+[aria-disabled='true'],
+:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Keyframes */
+
+@keyframes pop {
+  from {
+    transform: scale(0.72);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 201 60 / 75%);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgb(255 201 60 / 0%);
+  }
+}
+
+@keyframes slidein {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
