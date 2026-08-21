@@ -164,3 +164,41 @@ test('the port adds nothing the reference does not declare', () => {
   expect(extra, 'tokens invented by the port').toStrictEqual([])
   expect(missing, 'reference tokens dropped by the port').toStrictEqual([])
 })
+
+// --- REQ-2.5: the palettes nest ------------------------------------------------
+// This is the whole reason the port has three selector blocks where the
+// reference has two (specs.md §2.3). roadmap.md's Phase 2 exit criterion needs
+// the styleguide to render every primitive in BOTH themes side by side, which is
+// impossible if a palette is scoped to `:root` alone.
+//
+// So what is asserted below is not "a dark block exists" — REQ-2.4 covers that,
+// value for value. It is that each palette can be forced onto a SUBTREE, which
+// is true only while the theme selectors carry no element qualifier. That
+// property is invisible in a diff (`html[data-theme='light']` reads as a
+// harmless tightening) and it is the one that silently breaks Gate 4.
+
+/** `:root, [data-theme='light']` → [':root', "[data-theme='light']"] */
+const selectorList = (block: Block) => block.selector.split(',').map((part) => part.trim())
+
+test('the light palette can be forced onto any element, not only the root', () => {
+  const selectors = selectorList(shippedLight)
+
+  expect(selectors).toContain(':root')
+  expect(selectors).toContain("[data-theme='light']")
+})
+
+test('the dark palette is declared twice: by device preference AND by attribute', () => {
+  expect(shippedDarkMedia.atRules).toContain('@media (prefers-color-scheme: dark)')
+
+  // Unqualified, and at top level — a nested [data-theme="dark"] panel inside a
+  // light page re-themes itself and inherits the other 37 tokens by cascade.
+  expect(shippedDarkAttribute.selector).toBe("[data-theme='dark']")
+  expect(shippedDarkAttribute.atRules).toStrictEqual([])
+})
+
+test("the device-preference block keeps its :not([data-theme='light']) guard", () => {
+  // specs.md §2.3 calls this guard load-bearing: without it a [data-theme="light"]
+  // container on a dark-preferring device would inherit :root's dark values for
+  // any token it did not itself redeclare.
+  expect(shippedDarkMedia.selector).toBe(":root:not([data-theme='light'])")
+})

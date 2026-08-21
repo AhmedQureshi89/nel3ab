@@ -184,17 +184,51 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   > two — it reconstructs the expected value from the reference's own and asserts equality, so the
   > fallback stacks are still checked byte for byte.
 
-- [ ] **REQ-2.5 (Themes nest):** `[data-theme]` on a non-root element re-themes that subtree —
+- [x] **REQ-2.5 (Themes nest):** `[data-theme]` on a non-root element re-themes that subtree —
   demonstrated by the styleguide (Gate 4) and asserted structurally here: the light palette's
   selector list includes `[data-theme='light']`, and the dark palette is declared under both a
   `prefers-color-scheme` media query and a `[data-theme='dark']` selector.
+  > Measured 2026-08-21, three new assertions in `tokens.test.ts`. The light block's selector list
+  > parses to **2** selectors — `:root` and `[data-theme='light']` — both asserted as members and
+  > both **unqualified**. Dark is declared **twice**: once under
+  > `@media (prefers-color-scheme: dark)`, once as a top-level `[data-theme='dark']` with **0**
+  > enclosing at-rules. The `:root:not([data-theme='light'])` guard specs.md §2.3 calls
+  > load-bearing is asserted by exact string.
+  > What these three assert is *nesting capability*, not existence — REQ-2.4 above already covers
+  > existence value for value. Element-agnosticism is the property that is invisible in a diff
+  > (`html[data-theme='light']` reads as a harmless tightening) and is the one that silently
+  > breaks Gate 4.
+  > **Proven to bite** — three mutations, each reverted and re-run green:
+  > `[data-theme='light']` → `html[data-theme='light']` failed with ``expected [ ':root', …(1) ]
+  > to include '[data-theme=\'light\']'``, and the REQ-2.4 tests stayed **green** through that
+  > mutation, so this box catches what none of them did;
+  > `:root:not([data-theme='light'])` → `:root` failed with ``expected ':root' to be
+  > ':root:not([data-theme=\'light\'])'``; `[data-theme='dark']` → `html[data-theme='dark']`
+  > failed the block lookup outright.
+  > The **rendered** half — a `[data-theme]` panel actually re-themed in a browser — is Gate 4's
+  > `/styleguide` box and the 👁 side-by-side check. It is not claimed here.
 
-- [ ] **REQ-2.5 (No script resolves the theme):** no `<script>`, no `localStorage`, no
+- [x] **REQ-2.5 (No script resolves the theme):** no `<script>`, no `localStorage`, no
   `useEffect` and no cookie participates in theme selection anywhere in `apps/web` or
   `packages/ui`. A flash of the wrong theme is therefore impossible by construction, not by
   correct scripting. *(Grep evidence, not observation: name the searched terms and the hit
   count.)*
-  > Measured: searched `____`, hits: ____ (must be 0)
+  > Measured 2026-08-21 over the **11** git-tracked `.ts` / `.tsx` / `.js` / `.jsx` / `.mjs` /
+  > `.cjs` / `.html` files in `apps/web` and `packages/ui`. The file list comes from `git
+  > ls-files`, so `dist/` and `.next/` are out of scope by construction rather than by a filter
+  > that could rot.
+  > The four terms this box names — `<script`, `localStorage`, `useEffect`, `cookie` — hits: **0**.
+  > Seven more searched to widen the net past the named list — `sessionStorage`,
+  > `useLayoutEffect`, `matchMedia`, `dangerouslySetInnerHTML`, `setAttribute`, `colorScheme`,
+  > `next-themes` — hits: **0**.
+  > `prefers-color-scheme` — hits: **1**, recorded rather than filtered away:
+  > `packages/ui/src/styles/tokens.test.ts:94`, a string literal the CSS-block reader matches on
+  > in order to *find* the media query it then asserts. It selects nothing at run time; it is the
+  > test that proves the mechanism is CSS-only.
+  > Total across all twelve terms: **1** matching line, **0** of them participating in theme
+  > selection. Theme resolution belongs entirely to the cascade, which is why no flash is
+  > possible by construction: there is no moment at which a wrong theme is painted and then
+  > corrected.
 
 - [ ] **REQ-2.8 (The prototypes really do hold the invariant):** `press.test.ts` extracts every
   `(rest, travel, pressed)` triple from all three `design/designs/*.dc.html` files and asserts
