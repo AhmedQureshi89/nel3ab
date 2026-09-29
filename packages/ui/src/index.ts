@@ -3,6 +3,7 @@
 //
 // The token layer and the globals are plain stylesheets imported once by the
 // app (styles/tokens.css, styles/base.css), not exports of this module.
+export { Button, type ButtonProps } from './primitives/Button.js'
 export { Card, type CardProps } from './primitives/Card.js'
 export { Dot, type DotProps } from './primitives/Dot.js'
 export { Panel, type PanelProps } from './primitives/Panel.js'

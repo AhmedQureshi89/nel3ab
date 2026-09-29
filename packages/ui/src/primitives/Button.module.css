@@ -1,0 +1,101 @@
+/*
+ * REQ-2.10 — Button. See specs/phase-2/specs.md §2.7.
+ *
+ *   variant    border  radius  padding    type         fill                rest    travel
+ *   primary    3px     18px    17px 20px  20px / 800   --yellow            0 6px 0  4px
+ *   action     3px     18px    15px 8px   15.5px / 800 panel|yellow|leaf   0 5px 0  3px
+ *   secondary  2.5px   16px    13px       15px / 700   --panel             none     none
+ *
+ * The rest shadow and the pressed state are NOT written here. primary and
+ * action carry press.module.css's class (Button.tsx) and set only the two
+ * inputs it reads; the pressed offset is computed there. secondary sets
+ * neither and carries no shadow at all.
+ *
+ * Measured from the prototypes, beyond the table:
+ *   - `font-family: inherit` — the prototypes' own reset is
+ *     `input, button { font-family: inherit }`. apps/web/app/globals.css does
+ *     not carry it and is untouched this phase, and without it a <button>
+ *     renders in the browser's control font, not Baloo Bhaijaan 2.
+ *   - `cursor: pointer` on every enabled button. Guarded with the same :not()
+ *     as the press, so that base.css's `cursor: not-allowed` still wins on a
+ *     disabled one regardless of which stylesheet loads first.
+ *   - action: `white-space: nowrap`; its fills are the prototype's three action
+ *     buttons — skip (panel / ink), hint (yellow / --on-yellow), correct
+ *     (leaf / --on-leaf) — chosen with a `data-tone` attribute, panel by
+ *     default. Its sub-label is the prototype's `11px / 700 / opacity .6` line.
+ *   - primary text size: the prototypes use 19px on four primary CTAs and 20px
+ *     on two. specs.md §2.7 chose 20px, one of the prototype's own values, and
+ *     20px is what ships.
+ */
+
+.button {
+  font-family: inherit;
+}
+
+.button:not(:disabled, [aria-disabled='true']) {
+  cursor: pointer;
+}
+
+.button[data-variant='primary'] {
+  --press-rest: 6px;
+  --press-travel: 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: var(--bd-thick) solid var(--stroke);
+  border-radius: var(--r-btn);
+  padding-block: 17px;
+  padding-inline: 20px;
+  background: var(--yellow);
+  color: var(--on-yellow);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* A hover, not a press: specs.md §2.5's "no filter" is about :active. */
+.button[data-variant='primary']:hover:not(:disabled, [aria-disabled='true']) {
+  filter: brightness(1.04);
+}
+
+.button[data-variant='action'] {
+  --press-rest: 5px;
+  --press-travel: 3px;
+
+  border: var(--bd-thick) solid var(--stroke);
+  border-radius: var(--r-btn);
+  padding-block: 15px;
+  padding-inline: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 15.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.button[data-variant='action'][data-tone='yellow'] {
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+
+.button[data-variant='action'][data-tone='leaf'] {
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+.button[data-variant='secondary'] {
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-tile);
+  padding: 13px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sub-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+}
