@@ -299,9 +299,26 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   >
   > `.ltr-num` is REQ-2.7's box and is deliberately not in this file yet.
 
-- [ ] **REQ-2.7 (`.ltr-num` isolates, not merely reverses):** `.ltr-num` sets `direction: ltr`
+- [x] **REQ-2.7 (`.ltr-num` isolates, not merely reverses):** `.ltr-num` sets `direction: ltr`
   **and** `unicode-bidi: isolate` **and** `var(--font-en)`. All three; the isolation is the one
   that gets dropped and the one the requirement exists for.
+  > Measured 2026-09-29 by `ltr-num.test.ts` (**3** tests): `base.css` declares `.ltr-num`
+  > **exactly once**, and its declarations are **exactly** `{ font-family: var(--font-en),
+  > direction: ltr, unicode-bidi: isolate }` — **3/3** present, **0** others, so
+  > `font-variant-numeric` is pinned absent (requirements §4) without a banned-property list.
+  > There is no reference to compare against (the prototypes never surface the bidi hazard), so
+  > the test asserts the requirement's own three values rather than reading `design/`.
+  > **6** planted mutations, each reverted (`cmp` against the saved copy) — **0 survivors**:
+  > deleting `unicode-bidi: isolate` (2 tests failed, one reporting `expected undefined to be
+  > 'isolate'`) · `isolate` → `embed` (2 failed, `expected 'embed' to be 'isolate'`) · adding
+  > `font-variant-numeric: tabular-nums` · appending a second `.ltr-num { unicode-bidi: normal }`
+  > (`expected [ …(2) ] to have a length of 1`) · deleting `direction: ltr` · `var(--font-en)` →
+  > `var(--font)`.
+  > Gate commands green: `pnpm lint` (eslint · stylelint · prettier, 0 disables added) ·
+  > `pnpm typecheck` · `pnpm test` — **12** files / **36** assertions across **6** projects,
+  > `[check-collected-tests] OK` · `pnpm build`.
+  > The rendered half — Latin order and Archivo inside an Arabic sentence, neighbours undisturbed
+  > — is Gate 6's 👁 box and is not claimed here.
 
 - [ ] **NFR-2.2 (RTL guardrail green, zero disables):** `pnpm lint:css` passes over every new CSS
   file, and `grep -rn "stylelint-disable" ` across the repo returns nothing outside `design/`.

@@ -21,8 +21,9 @@
  * as an instance rather than an invariant, so it ships as press.module.css
  * instead (specs.md §2.5, REQ-2.8).
  *
- * `.ltr-num` belongs in this file too (specs.md §2.4) but is REQ-2.7's box, not
- * this one's.
+ * `.ltr-num` (REQ-2.7) is the one rule here with no reference to port: the
+ * prototypes never surface the bidi hazard. It is documented beside its rule at
+ * the end of this file and asserted by ltr-num.test.ts.
  *
  * A plain stylesheet, not a CSS Module: these selectors are element states and
  * global at-rules, and hashing them would defeat the point.
@@ -45,6 +46,28 @@
 :disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/*
+ * REQ-2.7 — a Latin or numeric run (room code, clock, tally, score) inside
+ * Arabic text. See specs.md §2.4.
+ *
+ * All three declarations, or it is broken in the case it exists for.
+ * `unicode-bidi: isolate` is what stops the run reordering its Arabic
+ * neighbours; `direction: ltr` alone does not — an embedded LTR run without
+ * isolation still participates in the surrounding bidi paragraph and can drag
+ * adjacent punctuation with it.
+ *
+ * `font-variant-numeric` is deliberately not set (requirements.md §4): adding
+ * `tabular-nums` later is a design amendment, not a bug fix.
+ *
+ * Unhashed and global on purpose — a utility any app or package can apply, not
+ * a component.
+ */
+.ltr-num {
+  font-family: var(--font-en);
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 /* Keyframes */
