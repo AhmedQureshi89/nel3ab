@@ -278,10 +278,26 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   > that new CSS conforms to `stylelint.config.mjs` rather than the reverse, and no
   > `stylelint-disable` was added. The config itself is byte-identical to its Phase 1 state.
 
-- [ ] **REQ-2.6 (Global states and keyframes complete):** `base.css` carries `:focus`,
+- [x] **REQ-2.6 (Global states and keyframes complete):** `base.css` carries `:focus`,
   `:focus-visible` (3px `var(--red)`, offset 3px), `::selection` (`rgba(255,201,60,.55)`), the
   disabled rule (`opacity .45`, `cursor: not-allowed`), and all four keyframes `pop`, `bob`,
   `ring`, `slidein` with the reference's exact values — including `ring`, which nothing uses yet.
+  > Measured: **4/4** global rules and **4/4** keyframes (**8/8** stops) asserted declaration-for-
+  > declaration against `design/arcade-tokens.css` read from disk, by `base.test.ts` —
+  > **26 tests passed** in `@nel3ab/ui`, **33/33** across all 6 projects. **10** planted mutations
+  > (alpha `55%`→`54%`, channel `201`→`200`, ring spread `10px`→`12px`, outline `3px`→`2px`,
+  > offset `3px`→`2px`, opacity `.45`→`.4`, `scale(.72)`→`scale(.7)`, `translateY(-7px)`→`-5px`,
+  > and deleting the unused `ring` block entirely) were each caught: **0 survivors**.
+  > Gate commands green: `eslint .` · `stylelint "**/*.css"` · `prettier --check .` ·
+  > `tsc --build` · full vitest run.
+  >
+  > `stylelint-config-standard` rejects the reference's legacy `rgba(255,201,60,.55)`, so the
+  > shipped file uses `rgb(255 201 60 / 55%)` — the same colour, and per NFR-2.2 the new CSS
+  > conforms to `stylelint.config.mjs` rather than the reverse. **No `stylelint-disable` was
+  > added.** `base.test.ts` canonicalises both notations before comparing, so every channel and
+  > alpha is still asserted (the two colour mutations above prove it).
+  >
+  > `.ltr-num` is REQ-2.7's box and is deliberately not in this file yet.
 
 - [ ] **REQ-2.7 (`.ltr-num` isolates, not merely reverses):** `.ltr-num` sets `direction: ltr`
   **and** `unicode-bidi: isolate` **and** `var(--font-en)`. All three; the isolation is the one
