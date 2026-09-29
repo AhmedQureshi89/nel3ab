@@ -1,0 +1,25 @@
+/*
+ * REQ-2.9 — Panel. See specs/phase-2/specs.md §2.6.
+ *
+ * Every value is a token from styles/tokens.css, and every token is the
+ * prototypes' measured value: `border: 3px solid var(--stroke)`,
+ * `border-radius: var(--r)`, `box-shadow: 0 var(--drop) 0 var(--stroke)`,
+ * `padding: 14px`.
+ *
+ * Variants are keyed off the data-* attributes Panel.tsx emits, never off extra
+ * classes, so the attribute a test asserts is the one the cascade reads.
+ */
+
+.panel {
+  background: var(--panel);
+  border: var(--bd-thick) solid var(--stroke);
+  border-radius: var(--r);
+}
+
+.panel[data-raised='true'] {
+  box-shadow: var(--sh-card);
+}
+
+.panel[data-padded='true'] {
+  padding: var(--pad-card);
+}

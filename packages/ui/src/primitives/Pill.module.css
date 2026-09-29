@@ -1,0 +1,57 @@
+/*
+ * REQ-2.9 — Pill. See specs/phase-2/specs.md §2.6.
+ *
+ * Measured from the prototype's player chip (design/designs/"Nel3ab -
+ * Arcade.dc.html"): `display: inline-flex; align-items: center; gap: 7px;
+ * border: 2.5px solid var(--stroke); border-radius: 999px; padding: 4px 8px 4px
+ * 12px; font-size: 13.5px; font-weight: 700; white-space: nowrap`.
+ *
+ * THE INLINE PADDING IS START 8, END 12. The prototype writes it physically —
+ * right 8px, left 12px — and the document is dir="rtl", so physical right IS
+ * inline-start. `padding-inline: 12px 8px` would be logical, mirrored,
+ * lint-clean, type-correct and wrong: Stylelint cannot catch it, because both
+ * orderings are logical. primitives.test.tsx derives the expected pair from the
+ * prototype's own padding and asserts it here.
+ *
+ * Text colours are the prototype's pairings: red and sky chips are `#fff`,
+ * yellow is `--on-yellow`, panel is `--ink`. `#fff` has no token in
+ * design/arcade-tokens.css and none is added (requirements §4); it is written
+ * here as the prototype writes it, and recorded as an R5 discrepancy.
+ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-pill);
+  padding-block: 4px;
+  padding-inline: 8px 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pill[data-tone='panel'] {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.pill[data-tone='red'] {
+  background: var(--red);
+  color: #fff;
+}
+
+.pill[data-tone='sky'] {
+  background: var(--sky);
+  color: #fff;
+}
+
+.pill[data-tone='yellow'] {
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+
+.pill[data-selected='true'] {
+  box-shadow: var(--sh-sel);
+}

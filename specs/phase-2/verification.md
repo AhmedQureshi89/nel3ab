@@ -374,10 +374,24 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   `disabled` attribute and `aria-disabled="true"`, and `press.module.css`'s `:not()` guard
   excludes both selectors.
 
-- [ ] **REQ-2.9 (The Pill's inline padding is start-8 / end-12):** `Pill.module.css` reads
+- [x] **REQ-2.9 (The Pill's inline padding is start-8 / end-12):** `Pill.module.css` reads
   `padding-inline: 8px 12px`, matching the prototype's physical `right: 8px; left: 12px` under
   `dir="rtl"`. *(specs.md §2.6 — the phase's most likely fidelity error, and the one Stylelint
   cannot catch because both orderings are logical.)*
+  > Measured 2026-09-29: `Pill.module.css` `.pill` declares `padding-inline: 8px 12px` and
+  > `padding-block: 4px`. The expected pair is **not typed into the test** — `primitives.test.tsx`
+  > reads `design/designs/Nel3ab - Arcade.dc.html`, asserts its root is `dir="rtl"`, finds
+  > **exactly 1** element with `border-radius:999px;padding:T R B L;font-size:13.5px` (the player
+  > chip, `4px 8px 4px 12px`; asserted as a count so a failed match cannot pass vacuously), and
+  > requires `padding-inline` = `R L` = `8px 12px` and `padding-block` = `T` = `4px` (with `T = B`).
+  > **Proven to bite:** swapping to `padding-inline: 12px 8px` failed exactly that test, and
+  > nothing else in the suite noticed — `stylelint` stays green on the swapped form, which is the
+  > point this box makes. Reverted and re-run green.
+  > The same commit's value-by-value CSS assertions (each `var(--token)` resolved one level through
+  > `tokens.css`, so the number checked is the number that renders) cover the rest of REQ-2.9:
+  > Panel 3px / 20px / `0 4px 0` / 14px, Card lg 24px / `0 6px 0` / `overflow: hidden`, Pill
+  > 999px / 2.5px / 13.5px·700 / `0 3px 0` selected, Dot 9px / 11px. **15** planted mutations
+  > across the four primitives and `index.ts`, **0 survivors**.
 
 - [ ] **NFR-2.1 (`design/` untouched):** `git status design/` is clean and `git log` shows no
   commit in this phase touching a path under `design/`. Tests read it; nothing writes it.
