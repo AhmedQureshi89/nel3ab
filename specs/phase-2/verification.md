@@ -498,22 +498,54 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   `/styleguide` returns 404.
   > Measured: HTTP ____ from `/styleguide` on a production server
 
-- [ ] **REQ-2.3 (No third-party origin):** the production build's served HTML **and** the CSS it
+- [x] **REQ-2.3 (No third-party origin):** the production build's served HTML **and** the CSS it
   links contain no occurrence of `fonts.googleapis.com` or `fonts.gstatic.com`, and no
   `<link rel="preconnect">` to either. Checked against the served bytes, not the source.
-  > Measured: ____ occurrence(s) across ____ served asset(s) (must be 0)
+  > Measured: **0** occurrence(s) across **2** served asset(s) (must be 0)
+  > Measured 2026-09-29, Windows, after `rm -rf .next` + `next build` + `next start`: `curl` of
+  > `/` (HTTP 200) and of the one stylesheet it links, `/_next/static/css/42c357e7dc54dee0.css`
+  > (2973 bytes). `fonts.googleapis.com` / `fonts.gstatic.com` — **0**; the looser `googleapis` /
+  > `gstatic` — **0**; `rel="preconnect"` of any kind — **0**. The served CSS carries **3**
+  > `@font-face` rules, every `src` a same-origin `/_next/static/media/…woff2`: `baloo` wght
+  > `400 800`, `archivo` `600`, `archivo` `800`. Each URL returns `200 font/woff2`, and each
+  > served body's SHA-256 is **identical** to the committed file's (`6c9220d8…`, `5eb4dd14…`,
+  > `8cc0e60e…`, as in `fonts/README.md`) — next/font copies the binaries, it does not re-encode
+  > them. `@nel3ab/ui/tokens.css`, `base.css` and `globals.css` are in that stylesheet in import
+  > order.
+  > **Finding, recorded rather than silent — `preload: true` emits nothing on a Windows build.**
+  > `.next/server/next-font-manifest.json` is `{"pages":{},"app":{}, …}`, so the served HTML has
+  > **0** `<link rel="preload" as="font">`. Cause, read from Next 15.5.23's
+  > `next-font-manifest-plugin.js` and confirmed by a temporary log line in it (restored, `cmp`
+  > identical): the plugin matches loader modules with `mod.request.includes('/next-font-loader/
+  > index.js?')`, and on Windows `mod.request` is a backslash path, so nothing matches. It is
+  > Next's platform bug, not this repository's configuration; Linux builds (CI, any production
+  > host) take the forward-slash path. The fonts still load through `@font-face` when text uses
+  > them — preload is an optimisation, not REQ-2.3's requirement.
 
 - [ ] **REQ-2.3 (Both families actually load, at the required weights):** the served page
   requests font files from this origin only, and the set covers Baloo Bhaijaan 2 at 500/600/700/800
   and Archivo at 600/800.
   > Measured: ____ font request(s), all same-origin · weights covered: ____
 
-- [ ] **REQ-2.5 / rtl-root (The root tag is still asserted whole):** `apps/web/rtl-root.test.ts`
+- [x] **REQ-2.5 / rtl-root (The root tag is still asserted whole):** `apps/web/rtl-root.test.ts`
   still matches the **entire** `<html …>` opening tag against an exact string, updated for the
   font `className`. Per the 2026-08-20 decision the tag carries **no** `data-theme` attribute.
   It was **not** relaxed into a substring or attribute-by-attribute check — the reason it is a
   whole-tag match is written in its own comment and still holds.
-  > Measured: expected tag `____`
+  > Measured: expected tag `<html lang="ar" dir="rtl" class="__variable--font-baloo __variable--font-archivo">`
+  > Measured 2026-09-29. Still one `toBe` on the whole `<html[^>]*>` match; the original comment
+  > is kept word for word and extended. `next/font/local` cannot run under Vitest — its runtime
+  > body is literally `throw new Error()`, because Next's compiler replaces every call at build
+  > time — so the test stubs it, and the stub derives each class from the `variable` the call
+  > declares. The expected string therefore **names** `--font-baloo` and `--font-archivo` rather
+  > than a build hash. The real tag, from the served production page, is
+  > `<html lang="ar" dir="rtl" class="__variable_c21152 __variable_f2c517">`, and the served CSS
+  > defines exactly those two classes: `.__variable_c21152{--font-baloo:"baloo","baloo Fallback"}`
+  > and `.__variable_f2c517{--font-archivo:"archivo","archivo Fallback"}`. **0** `data-theme`.
+  > **Proven to bite**, three mutations to `layout.tsx`, each restored (`cmp`) and re-run green:
+  > adding `data-theme="light"` — failed, received `…dir="rtl" data-theme="light" class=…`;
+  > dropping `${archivo.variable}` — failed, received `class="__variable--font-baloo"`; dropping
+  > `dir="rtl"` — failed, received `<html lang="ar" class=…`.
 
 ---
 
