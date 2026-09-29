@@ -5,24 +5,29 @@ import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 
+import press from '../styles/press.module.css'
+import { Button } from './Button.js'
 import { Card } from './Card.js'
 import { Dot } from './Dot.js'
 import { Panel } from './Panel.js'
 import { Pill } from './Pill.js'
 
-// REQ-2.9, verification.md Gate 3. See specs/phase-2/specs.md §2.6 and §2.11.
+// REQ-2.9 and REQ-2.10, verification.md Gate 3. See specs/phase-2/specs.md
+// §2.6, §2.7 and §2.11.
 //
 // Two halves, because neither is enough alone:
 //
 //   1. Rendered markup (`renderToStaticMarkup`, the precedent set by
 //      apps/web/rtl-root.test.ts — no jsdom). Every variant is asserted through
-//      its `data-*` attribute, never a CSS-Module class name, which is hashed
-//      and a build detail (specs.md §2.6).
+//      its `data-*` attribute, never a CSS-Module class name typed into the
+//      test, which is hashed and a build detail (specs.md §2.6). The one class
+//      checked — Button's press — is compared against press.module.css's own
+//      export, so the hash never appears here.
 //   2. The CSS text, value by value. Rendering exercises no CSS at all, so the
-//      measured values REQ-2.9 exists for — 3px, 20px, `0 4px 0`, 14px, 24px,
-//      999px, 2.5px, 13.5px/700, 9px, 11px — are asserted here, with each
-//      `var(--token)` resolved one level through styles/tokens.css so that the
-//      number checked is the number that renders.
+//      measured values REQ-2.9 and REQ-2.10 exist for — 3px, 20px, `0 4px 0`,
+//      14px, 24px, 999px, 2.5px, 13.5px/700, 9px, 11px, and Button's table —
+//      are asserted here, with each `var(--token)` resolved one level through
+//      styles/tokens.css so that the number checked is the number that renders.
 //
 // Paths resolve from import.meta.url, NOT process.cwd(): each Vitest project
 // sets its own `root` in vitest.config.ts, so cwd is not the repo root.
@@ -293,4 +298,172 @@ test('the four primitives are presentational: no press, no "use client", no inli
     expect(tsx, `${name}.tsx`).not.toMatch(/style=\{/)
     expect(tsx, `${name}.tsx`).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(/i)
   }
+})
+
+// --- Button (REQ-2.10) --------------------------------------------------------
+
+const classes = (element: ReactElement) => root(element).attributes['class']?.split(' ') ?? []
+
+describe('Button', () => {
+  test('defaults to primary, is type="button", and is not disabled', () => {
+    const { tag, attributes } = root(<Button>ابدأ</Button>)
+    expect(tag).toBe('button')
+    expect(attributes).toMatchObject({ type: 'button', 'data-variant': 'primary' })
+    expect(attributes).not.toHaveProperty('disabled')
+    expect(attributes).not.toHaveProperty('aria-disabled')
+  })
+
+  const variants = ['primary', 'secondary', 'action'] as const
+  test.each(variants.flatMap((variant) => [true, false].map((off) => [variant, off] as const)))(
+    '%s, disabled %s',
+    (variant, disabled) => {
+      const { attributes } = root(<Button variant={variant} disabled={disabled} />)
+      expect(attributes['data-variant']).toBe(variant)
+      if (disabled) {
+        // Disabled two ways, so base.css's rule and press.module.css's guard
+        // both apply whichever selector a consumer relies on.
+        expect(attributes).toMatchObject({ disabled: '', 'aria-disabled': 'true' })
+      } else {
+        expect(attributes).not.toHaveProperty('disabled')
+        expect(attributes).not.toHaveProperty('aria-disabled')
+      }
+    },
+  )
+
+  test('a caller can still override type and keep a className', () => {
+    expect(root(<Button type="submit" />).attributes['type']).toBe('submit')
+    expect(classes(<Button className="caller" />)).toContain('caller')
+  })
+
+  test('primary and action carry the one shared press; secondary never does', () => {
+    // specs.md §2.5 / §2.7: secondary is a control that was never raised, not a
+    // suppressed press.
+    expect(press.press, 'press.module.css exports no `press` class').toBeTruthy()
+    expect(classes(<Button variant="primary" />)).toContain(press.press)
+    expect(classes(<Button variant="action" />)).toContain(press.press)
+    expect(classes(<Button variant="secondary" />)).not.toContain(press.press)
+  })
+
+  test('the sub-label renders after the label on action, and only on action', () => {
+    const action = root(
+      <Button variant="action" subLabel="يمرّ الدور">
+        صحيح
+      </Button>,
+    ).markup
+    expect(action).toMatch(/>صحيح<span class="[^"]*">يمرّ الدور<\/span><\/button>$/)
+    expect(root(<Button subLabel="يمرّ الدور">صحيح</Button>).markup).not.toContain('يمرّ الدور')
+    expect(
+      root(
+        <Button variant="secondary" subLabel="يمرّ الدور">
+          صحيح
+        </Button>,
+      ).markup,
+    ).not.toContain('يمرّ الدور')
+  })
+})
+
+const button = (selector: string) => declared('Button.module.css', selector)
+
+test('Button primary: 3px, 18px, 17px 20px, 20px/800, yellow, 6px rest / 4px travel, pushed apart', () => {
+  expect(button(".button[data-variant='primary']")).toStrictEqual({
+    '--press-rest': '6px',
+    '--press-travel': '4px',
+    display: 'flex',
+    'align-items': 'center',
+    'justify-content': 'space-between',
+    border: '3px solid #241c17',
+    'border-radius': '18px',
+    'padding-block': '17px',
+    'padding-inline': '20px',
+    background: '#ffc93c',
+    color: '#241c17',
+    'font-size': '20px',
+    'font-weight': '800',
+  })
+  expect(
+    button(".button[data-variant='primary']:hover:not(:disabled, [aria-disabled='true'])"),
+  ).toStrictEqual({ filter: 'brightness(1.04)' })
+})
+
+test('Button action: 3px, 18px, 15px 8px, 15.5px/800, 5px rest / 3px travel, 11px/700 sub-label at .6', () => {
+  expect(button(".button[data-variant='action']")).toStrictEqual({
+    '--press-rest': '5px',
+    '--press-travel': '3px',
+    border: '3px solid #241c17',
+    'border-radius': '18px',
+    'padding-block': '15px',
+    'padding-inline': '8px',
+    background: '#fffaf0',
+    color: '#241c17',
+    'font-size': '15.5px',
+    'font-weight': '800',
+    'white-space': 'nowrap',
+  })
+  // The prototype's three action buttons: skip (panel), hint (yellow), correct (leaf).
+  expect(button(".button[data-variant='action'][data-tone='yellow']")).toStrictEqual({
+    background: '#ffc93c',
+    color: '#241c17',
+  })
+  expect(button(".button[data-variant='action'][data-tone='leaf']")).toStrictEqual({
+    background: '#3dbe6e',
+    color: '#0d2b1b',
+  })
+  expect(button('.sub-label')).toStrictEqual({
+    display: 'block',
+    'font-size': '11px',
+    'font-weight': '700',
+    opacity: '0.6',
+  })
+})
+
+test('Button secondary: 2.5px, 16px, 13px, 15px/700, panel — and no shadow, no press inputs', () => {
+  const secondary = button(".button[data-variant='secondary']")
+  expect(secondary).toStrictEqual({
+    border: '2.5px solid #241c17',
+    'border-radius': '16px',
+    padding: '13px',
+    background: '#fffaf0',
+    color: '#241c17',
+    'font-size': '15px',
+    'font-weight': '700',
+  })
+  // Stated separately so a failure names the regression REQ-2.10 exists for:
+  // "secondary as primary but grey" would give it a shadow and a press.
+  expect(Object.keys(secondary)).not.toContain('box-shadow')
+  expect(Object.keys(secondary).filter((name) => name.startsWith('--press'))).toStrictEqual([])
+})
+
+test('Button presses by the prototypes’ own arithmetic, and only through press.module.css', () => {
+  // Each raised variant's (rest, travel) must be one of the pairs press.test.ts
+  // measures from design/designs/, and its pressed offset is never written
+  // here: no box-shadow, transform, :active or `composes` anywhere in the file.
+  const pair = (variant: string) => {
+    const rule = button(`.button[data-variant='${variant}']`)
+    return [rule['--press-rest'], rule['--press-travel']].map((v) => Number.parseFloat(v!))
+  }
+  expect(pair('primary')).toStrictEqual([6, 4])
+  expect(pair('action')).toStrictEqual([5, 3])
+
+  const css = stripComments(read('packages/ui/src/primitives/Button.module.css'))
+  expect(css).not.toMatch(/box-shadow|transform|:active|composes/)
+})
+
+test('base rules: inherited font, and a pointer cursor that never beats not-allowed', () => {
+  expect(button('.button')).toStrictEqual({ 'font-family': 'inherit' })
+  expect(button(".button:not(:disabled, [aria-disabled='true'])")).toStrictEqual({
+    cursor: 'pointer',
+  })
+})
+
+test('press.module.css’s guard excludes both disabled selectors', () => {
+  // verification.md Gate 3 "Disabled is disabled two ways": Button emits both
+  // `disabled` and aria-disabled="true", so the press must refuse both.
+  const guarded = [...rules(read('packages/ui/src/styles/press.module.css')).keys()].filter((s) =>
+    s.includes(':active'),
+  )
+  expect(guarded).toHaveLength(1)
+  const not = /:not\(([^)]*)\)/.exec(guarded[0]!)
+  expect(not, `${guarded[0]} has no :not() guard`).not.toBeNull()
+  const excluded = not![1]!.split(',').map((part) => part.trim())
+  expect(excluded).toStrictEqual([':disabled', "[aria-disabled='true']"])
 })

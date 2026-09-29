@@ -355,24 +355,78 @@ This is where fidelity is made mechanical. Every box here is an automated test t
 
 ## 3. Gate 3 — The primitives (blocks Gate 4)
 
-- [ ] **REQ-2.9 / REQ-2.10 (All five exist and export):** `Panel`, `Card`, `Pill`, `Dot`,
+- [x] **REQ-2.9 / REQ-2.10 (All five exist and export):** `Panel`, `Card`, `Pill`, `Dot`,
   `Button` are exported from `@nel3ab/ui`, `PLACEHOLDER` is gone, and both tests that asserted it
   (`packages/ui/src/index.test.ts`, `apps/web/smoke.test.ts`) were updated rather than deleted.
+  > Measured 2026-09-29: `index.test.ts` asserts the export set **exactly** —
+  > `['Button', 'Card', 'Dot', 'Panel', 'Pill']`, **5/5**, each `typeof … === 'function'` — so an
+  > internal helper leaking out fails as surely as a primitive going missing; `'PLACEHOLDER' in ui`
+  > is `false`. `apps/web/smoke.test.ts` now imports `Panel` (REQ-2.9's commit). Both files were
+  > updated, not deleted: `[check-collected-tests]` still reports **6** projects, **13** files.
+  > **Finding, recorded here rather than left for Gate 4 to trip on — `next build` cannot yet
+  > resolve these exports.** A throwaway probe (never committed; `apps/web/app/page.tsx` and
+  > `next.config.ts` restored byte-for-byte) rendered all five from `app/page.tsx` and
+  > `next build` failed with **5** × `Module not found: Can't resolve './primitives/<X>.js'` from
+  > `packages/ui/src/index.ts`. The `.js` specifiers are what `moduleResolution: NodeNext`
+  > requires `tsc` to see; webpack does not map them to `.tsx` for a `transpilePackages` source
+  > package. It is latent on `main` since REQ-2.9 — nothing in `apps/web` imports `@nel3ab/ui`
+  > yet except under Vitest, which does map them — and it is **not** R1: with
+  > `webpack: config => { config.resolve.extensionAlias = { '.js': ['.ts', '.tsx', '.js'] } }` in
+  > `next.config.ts` the same probe **built (exit 0)**, rendered `<button type="button"
+  > class="Button_button__… press_press__…" data-variant="primary">` and a secondary with no press
+  > class, and emitted `.press_press__…:active:not(:disabled,[aria-disabled=true])` with the
+  > `calc()` intact — CSS Modules survive Next. specs.md §3 lists `next.config.ts` as UNTOUCHED,
+  > so the fix is an owner decision, not part of this box.
 
-- [ ] **REQ-2.9 / REQ-2.10 (Variants are observable):** `primitives.test.tsx` renders each
+- [x] **REQ-2.9 / REQ-2.10 (Variants are observable):** `primitives.test.tsx` renders each
   primitive and each variant and asserts the `data-*` attribute, not a CSS-Module class name.
   Covered: Panel raised/flat, Card md/lg, Pill × 4 tones × selected, Dot sm/md × won, Button ×
   3 variants × disabled.
-  > Measured: ____ render assertions
+  > Measured: **36** render assertions
+  > (render test cases, of **49** tests in the file): Panel **2** (raised/flat, padded/unpadded) ·
+  > Card **3** (md, lg, explicit overrides) · Pill **9** (default + 4 tones × selected/unselected) ·
+  > Dot **5** (default + sm/md × won/not) · Button **10** (default, 3 variants × disabled/enabled,
+  > `type`/`className` override, press class, sub-label) · caller `className` kept **4** ·
+  > children and props passed through **3**. Every variant is read from its `data-*` attribute
+  > (`data-raised`, `data-padded`, `data-size`, `data-tone`, `data-selected`, `data-won`,
+  > `data-variant`). The one class name checked — Button's press — is compared against
+  > `press.module.css`'s own export, never typed in.
 
-- [ ] **REQ-2.10 (Button's non-colour differences are real):** `secondary` has no rest shadow and
+- [x] **REQ-2.10 (Button's non-colour differences are real):** `secondary` has no rest shadow and
   does **not** compose `press`; `primary` is `justify-content: space-between`; `action` carries an
   11px/700 sub-label at `opacity .6`. Each checked against `specs.md` §2.7's table, value by
   value.
+  > Measured 2026-09-29, each rule compared with `toStrictEqual` after resolving `var(--token)`
+  > through `tokens.css`: primary **13/13** declarations (3px · 18px · `17px`/`20px` ·
+  > 20px/800 · `--yellow` on `--on-yellow` · `--press-rest: 6px` / `--press-travel: 4px` ·
+  > `display: flex; align-items: center; justify-content: space-between`), plus
+  > `filter: brightness(1.04)` on an enabled `:hover` only; action **11/11** (3px · 18px ·
+  > `15px`/`8px` · 15.5px/800 · 5px / 3px · `nowrap` · panel on ink by default, `data-tone`
+  > yellow and leaf) and its `.sub-label` **4/4** (`display: block`, 11px, 700, `opacity: 0.6`);
+  > secondary **7/7** (2.5px · 16px · 13px · 15px/700 · panel on ink) with **0** `box-shadow`
+  > and **0** `--press-*`. Rendered, primary and action carry `press.module.css`'s `press` class
+  > and secondary does **not**. `Button.module.css` contains no `box-shadow`, `transform`,
+  > `:active` or `composes` at all — the pressed offset exists only in `press.module.css`.
+  > **Deviation from specs.md §2.7, owner's ruling 2026-09-29:** the spec writes the press as
+  > `composes: press from '../styles/press.module.css'`, and Stylelint's `property-no-unknown`
+  > rejects `composes` (measured: `Unknown property "composes"`). `stylelint.config.mjs` is frozen
+  > (NFR-2.2) and disables are banned, so `Button.tsx` adds the imported `press` class to the
+  > element instead — the same single rule, and no escape from REQ-2.12's list.
+  > **16** planted mutations, **0 survivors**, among them secondary given the press class,
+  > secondary given a shadow, primary centred, primary rest 6→5px, action travel 3→4px, primary
+  > 20→19px, sub-label opacity .6→.5, and a pressed `transform` written into `Button.module.css`.
 
-- [ ] **REQ-2.10 (Disabled is disabled two ways):** a disabled Button renders both the native
+- [x] **REQ-2.10 (Disabled is disabled two ways):** a disabled Button renders both the native
   `disabled` attribute and `aria-disabled="true"`, and `press.module.css`'s `:not()` guard
   excludes both selectors.
+  > Measured: for **each** of the 3 variants, `disabled` renders `disabled=""` **and**
+  > `aria-disabled="true"`, and an enabled Button renders **neither**. `press.module.css` has
+  > exactly **1** `:active` rule, and its `:not()` excludes exactly
+  > `[':disabled', "[aria-disabled='true']"]`. Proven to bite: deleting the `aria-disabled` prop
+  > failed **3** tests, and narrowing the guard to `:not(:disabled)` failed this one — which
+  > `press.test.ts` alone did not catch. Button's own `cursor: pointer` and primary's hover use
+  > the same guard, so `base.css`'s `cursor: not-allowed` wins on a disabled Button whichever
+  > stylesheet loads first.
 
 - [x] **REQ-2.9 (The Pill's inline padding is start-8 / end-12):** `Pill.module.css` reads
   `padding-inline: 8px 12px`, matching the prototype's physical `right: 8px; left: 12px` under

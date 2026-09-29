@@ -11,7 +11,7 @@ import * as ui from './index.js'
 // helper leaking into the public surface is as much a change to the package's
 // contract as a primitive going missing.
 test('@nel3ab/ui exports exactly its primitives, each a component', () => {
-  expect(Object.keys(ui).sort()).toStrictEqual(['Card', 'Dot', 'Panel', 'Pill'])
+  expect(Object.keys(ui).sort()).toStrictEqual(['Button', 'Card', 'Dot', 'Panel', 'Pill'])
   for (const [name, value] of Object.entries(ui)) {
     expect(typeof value, name).toBe('function')
   }
