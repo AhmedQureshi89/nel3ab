@@ -81,14 +81,35 @@ retractable by making it private later (the same irreversibility `mission.md` A-
   *(Boxes 2 and 3 below stay unticked: no binary is committed yet — they are STEP 5's, and their
   SHA-256s are only meaningful after a commit and a fresh checkout.)*
 
-- [ ] **REQ-2.2 (Provenance recorded):** `apps/web/app/fonts/README.md` records, for every
+- [x] **REQ-2.2 (Provenance recorded):** `apps/web/app/fonts/README.md` records, for every
   committed font file: source URL, upstream version or commit, retrieval date, and SHA-256. The
   licence text of each family is committed verbatim beside the binaries.
+  > Measured 2026-09-29: **3** committed `.woff2` files, **3** rows, each with upstream repository
+  > URL, upstream path, upstream commit (`EkType/Baloo2-Variable` @ `da4090c1…`,
+  > `Omnibus-Type/Archivo` @ `b5d63988…` — the same commits whose `OFL.txt` Gate 0 read), font
+  > version (1.701 / 2.001), retrieval date, byte count and post-checkout SHA-256. The Baloo row
+  > also records its conversion (fontTools 4.66.0 + brotli 1.2.0, the exact 4-line call, lossless
+  > and reproducible). Licence texts: `LICENSE-BalooBhaijaan2.txt` and `LICENSE-Archivo.txt` are
+  > in the **same directory** as the binaries, unchanged since Gate 0 (`git diff` of both since
+  > their commit: empty).
+  > **Recorded deviation:** Archivo ships as its two static web fonts (600, 800), not the variable
+  > file specs.md §2.1 prefers and the README's Gate 0 text had planned — owner-approved
+  > 2026-09-29, reason in the README (the variable file is `.ttf`-only with an unused `wdth` axis;
+  > the statics are committed unmodified, so their hashes are upstream's).
 
-- [ ] **NFR-2.4 (Binaries survived git):** every SHA-256 in `fonts/README.md` was computed
+- [x] **NFR-2.4 (Binaries survived git):** every SHA-256 in `fonts/README.md` was computed
   **after** a commit and a fresh checkout, not before, and matches the upstream file. A mismatch
   means EOL normalisation touched a binary and `.gitattributes` did not cover the path.
-  > Measured: ____ file(s), all hashes match after round-trip · yes / no
+  > Measured: **3** file(s), all hashes match after round-trip · **yes**
+  > Method: the binaries were committed alone (`d855085`), then `git clone --no-local` into a
+  > fresh directory and `sha256sum` run there. The post-checkout SHA-256 equals the pre-commit
+  > working-tree SHA-256 for all 3, and `git check-attr` reports `binary: set`, `text: unset` for
+  > the path. **Against upstream:** each download's git blob id equals the blob id upstream's tree
+  > records for that path (`153e138…` Baloo `.ttf`, `8e0f912…` / `dfa845b…` Archivo), and the two
+  > Archivo files are committed unmodified, so their committed blob and post-checkout SHA-256 are
+  > upstream's own. Baloo's committed file is a lossless conversion of the upstream file, so
+  > "matches the upstream file" holds for it through the recorded, reproducible conversion (two
+  > runs, identical SHA-256 `6c9220d8…`), not byte for byte — which no `.ttf` → `.woff2` step can.
 
 ---
 
