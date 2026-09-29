@@ -320,10 +320,36 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   > The rendered half — Latin order and Archivo inside an Arabic sentence, neighbours undisturbed
   > — is Gate 6's 👁 box and is not claimed here.
 
-- [ ] **NFR-2.2 (RTL guardrail green, zero disables):** `pnpm lint:css` passes over every new CSS
+- [x] **NFR-2.2 (RTL guardrail green, zero disables):** `pnpm lint:css` passes over every new CSS
   file, and `grep -rn "stylelint-disable" ` across the repo returns nothing outside `design/`.
   `stylelint.config.mjs` is byte-identical to its Phase 1 state.
-  > Measured: ____ CSS file(s) linted, ____ disable comment(s) (must be 0)
+  > Measured: **6** CSS file(s) linted, **0** disable comment(s) (must be 0)
+  > Measured 2026-09-29 at `a3662ce`, Phase 1 baseline `ca2947a` (the Phase-1-complete merge).
+  > **Every new CSS file is linted.** `git diff --name-status ca2947a..HEAD -- '*.css'` lists **4**
+  > added — `plumbing-probe.module.css`, `styles/base.css`, `styles/press.module.css`,
+  > `styles/tokens.css` — and `stylelint "**/*.css" --formatter verbose` reports "6 of 7 sources
+  > checked": all 4 of them, plus `apps/web/app/globals.css` and `packages/ui/src/tokens.module.css`,
+  > with only `design/arcade-tokens.css` ignored. **0 problems**, exit 0.
+  > **Covered, not merely listed** — 8 planted violations, each reverted: `margin-left: 0` and
+  > `text-align: right` appended to each of the 4 new files, and all 8 failed (exit 2) on the
+  > intended rule, `property-disallowed-list` and `declaration-property-value-disallowed-list`
+  > respectively. Control: `margin-top: 0` in `base.css` passes (exit 0) — the block axis is still
+  > allowed, as invariant 3 requires. `git status` clean afterwards.
+  > **Zero disables, two ways.** Directive-shaped comments (a `/*` or `//` opening with
+  > `stylelint-disable`/`-enable`) in tracked files outside `design/`: **0**. And
+  > `stylelint "**/*.css" --ignore-disables` is also **0 problems** — so even an overlooked
+  > directive would be suppressing nothing.
+  > **The literal grep is not empty, and every hit is recorded rather than filtered away.**
+  > `git grep -n stylelint-disable -- . ':!design/'` returns **10** lines in **6** files, **0**
+  > of them directives: 8 are Markdown prose *about* the ban (`CLAUDE.md`, `specs/phase-1/specs.md`,
+  > `specs/phase-2/requirements.md` ×2, and this file ×4 — this box's own wording among them, so an
+  > empty literal grep is unsatisfiable as written); `stylelint.config.mjs:19` is a Phase 1 comment
+  > explaining the rules' design; `packages/ui/src/styles/press.module.css:48` is prose in the
+  > middle of a comment block ("No `stylelint-disable` was added — …"), which Stylelint does not
+  > parse as a directive because the comment does not open with it.
+  > **Config unchanged:** blob `73304979e63ce22eff714fc5714be0dd1039ebb7` at `ca2947a`, at `HEAD`,
+  > and in the working tree — byte-identical. `ignoreFiles` is still exactly `node_modules`,
+  > `design/`, `.next`, `dist`, and no `.stylelintignore` exists.
 
 ---
 
