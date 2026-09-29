@@ -603,7 +603,7 @@ Evaluated **after** Gates 0–4 are green, on a clean tree, from a fresh
 `pnpm install --frozen-lockfile`. Not before: an early evaluation would be measuring an
 unfinished package.
 
-- [ ] 🚦 **REQ-2.12 (Component library on the pinned stack) (VERDICT GATE — no retry):**
+- [x] 🚦 **REQ-2.12 (Component library on the pinned stack) (VERDICT GATE — no retry):**
   `pnpm lint && pnpm typecheck && pnpm test && pnpm build` all pass, with **none** of the
   following present anywhere in the repository as a consequence of this phase:
   `pnpm.overrides` · `peerDependencyRules` · `--no-strict-peer-dependencies` · `skipLibCheck`
@@ -619,11 +619,63 @@ unfinished package.
   consumed as TypeScript source on this stack. Record which tool demanded which escape, and take
   the documented fallback (specs.md §4, R1) as an architecture finding against `tech-specs.md`
   §2.3 — do not add the escape and continue.
-  > Measured: lint ____ · typecheck ____ · test ____ · build ____ · escapes required: ____
+  > Measured: lint **0** · typecheck **0** · test **0** · build **0** · escapes required: **none**
+  > **VERDICT 2026-09-30: PASS.** Evaluated once, not retried. `@nel3ab/ui` is a React + CSS
+  > Modules package consumed as TypeScript source on the pinned stack, with no escape hatch.
+  > **Where:** a fresh `git clone` of `origin/main` at `d97f191` (the merge of REQ-2.11, the
+  > phase's last code change) into an empty directory — 0 untracked or modified files — on
+  > Windows 11, Node `v24.14.0`, pnpm `11.22.0`. `pnpm install --frozen-lockfile` exit **0**, with
+  > **0** `WARN` / peer / deprecation lines. Then each command exactly once: `pnpm lint` **0**
+  > (eslint, stylelint, `prettier --check`) · `pnpm typecheck` **0** · `pnpm test` **0** —
+  > **14** files, **104** assertions, **6** projects, `[check-collected-tests] OK` ·
+  > `pnpm build` **0** — 6 projects, routes `/`, `/_not-found`, `/styleguide`.
+  > **The escape list, item by item**, `git grep` over every tracked file in that clone (`specs/`
+  > excluded only where noted, because it is prose *about* the list):
+  > `pnpm.overrides` / `peerDependencyRules` — **0** in any of the **7** manifests (no `pnpm`
+  > field in any), **0** in `pnpm-workspace.yaml`, `overrides:` in `pnpm-lock.yaml` **0**, no
+  > `.npmrc`; the text hits are `CLAUDE.md` prose and a `Card.module.css` comment using the word
+  > "overrides" about CSS specificity ·
+  > `--no-strict-peer-dependencies` — **0** outside `CLAUDE.md` prose ·
+  > `skipLibCheck` — exactly **1**, `tsconfig.base.json:12`, the one place it is permitted, and
+  > that file is unchanged since Phase 1 ·
+  > `@ts-expect-error` (widened to `@ts-ignore` / `@ts-nocheck`) — **0** outside `CLAUDE.md` prose ·
+  > `eslint-disable` — **0**, anywhere ·
+  > `stylelint-disable` — **0** directives (a comment *opening* with `stylelint-disable` /
+  > `-enable`); the 3 text hits are prose — `CLAUDE.md:102`, `stylelint.config.mjs:19` (Phase 1),
+  > `press.module.css:48` ("No `stylelint-disable` was added") ·
+  > `^` / `~` ranges — **0** across all **7** manifests' dependency fields ·
+  > the two RTL rules — `stylelint.config.mjs` blob `73304979…` at `d97f191` and at the Phase 1
+  > baseline `ca2947a`, **byte-identical** ·
+  > the `ci` job name — `jobs:` → `ci:` at `.github/workflows/ci.yml:25`, file unchanged since
+  > `ca2947a`.
+  > Also unchanged since `ca2947a`: `eslint.config.mjs`, `.gitattributes`, `tsconfig.base.json`,
+  > `pnpm-workspace.yaml` (22 non-merge commits in the phase).
+  > **What the phase needed instead of an escape**, recorded so the PASS cannot be read as
+  > "nothing had to give". None of these is on the list, and each is documented at its site:
+  > (1) `apps/web/next.config.ts` gained `webpack` `resolve.extensionAlias`
+  > `{'.js': ['.ts','.tsx','.js']}` so Next resolves the NodeNext `.js` specifiers in
+  > `@nel3ab/ui` (owner's ruling 2026-09-29; specs.md §3 had listed the file UNTOUCHED) ·
+  > (2) `Button.tsx` applies `press.module.css`'s class in code because Stylelint rejects
+  > `composes` (owner's ruling 2026-09-29) · (3) `press.module.css` writes
+  > `:not(:disabled, [aria-disabled='true'])` rather than the chained form, for
+  > `selector-not-notation` · (4) `base.css` writes `rgb(255 201 60 / 55%)` rather than the
+  > reference's `rgba(…,.55)`, for `stylelint-config-standard`. (3) and (4) are the same colours
+  > and elements, conforming to the frozen config rather than bending it (NFR-2.2).
+  > **R1 did not materialise:** Next compiles `packages/ui`'s `.module.css` through `/styleguide`,
+  > so all four tools have now seen the package's `.tsx` and `.module.css` — the hole Gate 1
+  > recorded is closed. **R2 and R3 did not materialise** (Gate 1).
 
-- [ ] **REQ-2.12 (CI agrees):** the same four commands are green on Ubuntu in the `ci` job on the
+- [x] **REQ-2.12 (CI agrees):** the same four commands are green on Ubuntu in the `ci` job on the
   pull request, not only on Windows locally.
-  > Measured: run ____ , commit ____
+  > Measured: run **36596901507** , commit **70ef236** (PR #25's head)
+  > Measured 2026-09-30: the `ci` job on PR #25, conclusion `success`. The merge commit `d97f191`
+  > that the local verdict was evaluated at has the **same tree** as `70ef236`
+  > (`a9ec37d68d13b99eda601f0b180e2eb162459889` for both — the branch was up to date with `main`
+  > when merged), so the PR run tested exactly the evaluated code. The post-merge `push` run on
+  > `main` at `d97f191`, run **36640555422**, is also `success`, on the `ubuntu24/20260920.314`
+  > runner image, with every step green — Install dependencies, Lint, Typecheck, Test, Build —
+  > and its log reports the same `14 test file(s) across 6 workspace project(s); 104
+  > assertion(s) passed, 0 failed` and the same `○ /styleguide` route.
 
 ---
 
