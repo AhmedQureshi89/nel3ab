@@ -447,8 +447,21 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   > 999px / 2.5px / 13.5px·700 / `0 3px 0` selected, Dot 9px / 11px. **15** planted mutations
   > across the four primitives and `index.ts`, **0 survivors**.
 
-- [ ] **NFR-2.1 (`design/` untouched):** `git status design/` is clean and `git log` shows no
+- [x] **NFR-2.1 (`design/` untouched):** `git status design/` is clean and `git log` shows no
   commit in this phase touching a path under `design/`. Tests read it; nothing writes it.
+  > Measured 2026-09-29 at `96f1aab` (after REQ-2.10's merge), Phase 1 baseline `ca2947a`:
+  > `git status --porcelain --ignored -- design/` — **0** lines. `git log ca2947a..HEAD -- design/`
+  > — **0** commits of the phase's **15** non-merge commits; `git log --all --since=2026-08-20
+  > -- design/` — **0** on any ref. The `design` tree object is **identical** at both ends,
+  > `d0b6a4fc4665f426ce0201e81ac29981ead56bbb`, over **8** tracked files; the last commit to touch
+  > `design/` is still `ca16ff5` (2026-08-17, the constitution). **Readers:** 4 test files open
+  > `design/` from disk — `tokens.test.ts`, `base.test.ts`, `press.test.ts`,
+  > `primitives.test.tsx` (`ltr-num.test.ts` names it only in a comment). **Writers:** the only
+  > `writeFile` / `appendFile` / `rmSync` / `unlink` / `rename` / `copyFile` in tracked `apps/`,
+  > `packages/` and `scripts/` code are **3** `rmSync` calls in `scripts/check-collected-tests.mjs`,
+  > all on its own `mkdtempSync` output directory. ESLint, Stylelint and Prettier all ignore
+  > `design/`, so no `--fix` can reach it either. This is a snapshot; Gate 5 re-reads it over the
+  > finished phase.
 
 ---
 
