@@ -488,15 +488,46 @@ This is where fidelity is made mechanical. Every box here is an automated test t
 
 ## 4. Gate 4 — The proof surface (blocks Gate 5)
 
-- [ ] **REQ-2.11 (Both themes, side by side, every primitive):** `styleguide.test.ts` asserts the
+- [x] **REQ-2.11 (Both themes, side by side, every primitive):** `styleguide.test.ts` asserts the
   rendered page contains a `data-theme="light"` subtree and a `data-theme="dark"` subtree, and
   that each of the five primitives appears inside **both**.
+  > Measured 2026-09-29 by `apps/web/styleguide.test.ts` (**18** tests): exactly **1**
+  > `<section data-theme="light">` and exactly **1** `<section data-theme="dark">`, and exactly
+  > **2** `data-theme` attributes on the whole page, so nothing else pins a theme. In **each**
+  > subtree: all **5** primitives, recognised by the `data-*` attributes they emit and never by a
+  > hashed class name — Panel as a `div[data-raised]` *without* `data-size`, so Cards are not
+  > counted as Panels. Every variant as well: Panel raised/flat · Card md/lg · Pill 4 tones ×
+  > selected true/false (**8**, each exactly once) · Dot sm/md × won true/false (**4**, each
+  > exactly once) · Button primary/secondary/action × enabled/disabled (disabled asserted as
+  > `disabled=""` **and** `aria-disabled="true"`) · an `.ltr-num` run inside the Arabic sentence
+  > `رمز الغرفة SKZJ62، وبقي 45 ثانية.` (room code and clock as the prototype renders them) · a
+  > plain `<a>` focus target.
+  > **Proven to bite** — 7 mutations to `page.tsx`, each restored (`cmp`) and re-run green: dark
+  > subtree removed (9 failed) · production guard removed (1) · Dot group removed (4) · selected
+  > Pills made unselected (2) · disabled secondary made enabled (2) · flat Panel made raised (2) ·
+  > both sections `data-theme="light"` (17).
+  > **Rendered, not only asserted** — `next dev`, `/styleguide` in a browser: both sections paint
+  > their own `--bg` / `--ink`; the computed family is `baloo, "baloo Fallback", system-ui,
+  > sans-serif` on each section and `archivo, …` on `.ltr-num`; 0 console errors. At 375px the
+  > two sections stack (both 375px wide, dark below light) with no horizontal scroll. This is not
+  > Gate 6: no value was compared against the prototype here.
+  > **Closes Gate 1's open hole.** `next build` now compiles `/styleguide`, which imports all five
+  > primitives, so Next has compiled `packages/ui`'s `.module.css` files — the fourth tool R1
+  > named. Route table: `○ /styleguide 515 B`.
 
-- [ ] **REQ-2.11 (Does not ship):** the route returns `notFound()` when
+- [x] **REQ-2.11 (Does not ship):** the route returns `notFound()` when
   `process.env.NODE_ENV === 'production'`, and the guard is a static branch Next inlines at build
   time. Confirmed against a production build: `next build && next start`, then a request to
   `/styleguide` returns 404.
-  > Measured: HTTP ____ from `/styleguide` on a production server
+  > Measured: HTTP **404** from `/styleguide` on a production server
+  > Measured 2026-09-29, Windows, `next build` + `next start`: `/styleguide` **404** (body "This
+  > page could not be found"), `/` **200**. Next prerendered the route as its 404:
+  > `.next/server/app/styleguide.meta` records `"status": 404`, and `styleguide.html` /
+  > `styleguide.rsc` contain **0** `data-variant`; the samples' text (`SKZJ62`, `ابدأ الجولة`)
+  > appears in **0** files under `.next/static`, so nothing of the page ships to a client. The
+  > guard is also asserted in `styleguide.test.ts`: with `NODE_ENV` stubbed to `production` the
+  > page throws an `Error` whose `digest` is `NEXT_HTTP_ERROR_FALLBACK;404`, and removing the guard
+  > fails that test.
 
 - [x] **REQ-2.3 (No third-party origin):** the production build's served HTML **and** the CSS it
   links contain no occurrence of `fonts.googleapis.com` or `fonts.gstatic.com`, and no
@@ -522,10 +553,27 @@ This is where fidelity is made mechanical. Every box here is an automated test t
   > host) take the forward-slash path. The fonts still load through `@font-face` when text uses
   > them — preload is an optimisation, not REQ-2.3's requirement.
 
-- [ ] **REQ-2.3 (Both families actually load, at the required weights):** the served page
+- [x] **REQ-2.3 (Both families actually load, at the required weights):** the served page
   requests font files from this origin only, and the set covers Baloo Bhaijaan 2 at 500/600/700/800
   and Archivo at 600/800.
-  > Measured: ____ font request(s), all same-origin · weights covered: ____
+  > Measured: **3** font request(s), all same-origin · weights covered: Baloo Bhaijaan 2
+  > **400–800** (one variable file: 500/600/700/800 all inside it) · Archivo **600**, **800**
+  > Measured 2026-09-29, two ways, because a Windows production build does not preload (finding
+  > recorded under "No third-party origin" above) and `/styleguide` 404s in production:
+  > **(1) Linux production build** — `node:24-bookworm` in Docker, a fresh `git clone` of this
+  > branch, `pnpm install --frozen-lockfile`, `next build`, `next start`. The font manifest is
+  > populated — `{"app":{"/work/apps/web/app/layout":[3 files]}}` — and the served `/` carries
+  > **3** `<link rel="preload" as="font" type="font/woff2" crossorigin>`, every `href` a
+  > same-origin `/_next/static/media/…-s.p.woff2`; each returns `200 font/woff2` with the
+  > committed file's SHA-256 (`6c9220d8…` Baloo, `5eb4dd14…` Archivo 600, `8cc0e60e…` Archivo
+  > 800). `googleapis`/`gstatic` **0**, `preconnect` **0**, `/styleguide` **404**. This also
+  > confirms the Windows finding's cause: the same source preloads on Linux.
+  > **(2) A browser actually fetching them** — `next dev`, `/styleguide`: the Resource Timing
+  > entries hold exactly **3** font requests, the same three files, all `200` from
+  > `http://localhost:3000`; third-party origins among **all** resources: **0**. `document.fonts`
+  > reports `baloo` (`400 800`), `archivo` (`600`) and `archivo` (`800`) all `loaded`. (The dev
+  > overlay's own `__nextjs-Geist` faces are declared but `unloaded`; they are not in a
+  > production build.)
 
 - [x] **REQ-2.5 / rtl-root (The root tag is still asserted whole):** `apps/web/rtl-root.test.ts`
   still matches the **entire** `<html …>` opening tag against an exact string, updated for the

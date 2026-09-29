@@ -1,0 +1,85 @@
+/*
+ * REQ-2.11 — layout of the /styleguide proof surface only. See
+ * specs/phase-2/specs.md §2.14.
+ *
+ * This file lays the samples out; it styles no primitive and declares no token.
+ * Every colour, radius, border and shadow on the page comes from @nel3ab/ui, so
+ * what is compared against the prototype is what the product will render.
+ *
+ * Inline axis only (NFR-2.2). Two themes side by side, one column below ~760px.
+ */
+
+.page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (width < 760px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
+ * Each theme paints its own ground and ink so the theme is visible, not merely
+ * applied (§2.14), and sets the Arabic family the way the prototype's screen
+ * root does (`font-family: var(--font)`), which is what makes the page request
+ * Baloo Bhaijaan 2 at all.
+ */
+.theme {
+  min-block-size: 100vh;
+  padding: 24px 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+.heading {
+  margin-block: 0 16px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.group {
+  margin-block-end: 24px;
+}
+
+.label {
+  margin-block: 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+  inline-size: 100%;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.inset {
+  padding: 14px;
+}
+
+.prose {
+  margin-block: 0;
+  font-size: 17px;
+}
+
+.link {
+  color: var(--ink);
+  font-weight: 700;
+}
