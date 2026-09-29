@@ -7,7 +7,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./tokens.module.css": "./src/tokens.module.css"
+    "./tokens.css": "./src/styles/tokens.css",
+    "./base.css": "./src/styles/base.css"
   },
   "scripts": {
     "build": "tsc --build"
