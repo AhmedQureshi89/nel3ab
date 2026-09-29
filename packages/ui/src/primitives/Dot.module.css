@@ -1,0 +1,41 @@
+/*
+ * REQ-2.9 — Dot. See specs/phase-2/specs.md §2.6.
+ *
+ * Measured from the prototype's tally dots (design/designs/"Nel3ab -
+ * Arcade.dc.html"), which differ from specs.md §2.6 in two places. Both follow
+ * the prototype — the owner's ruling of 2026-09-29, under CLAUDE.md invariant 5
+ * ("the prototype wins until someone amends the spec"). specs.md §2.6 and
+ * requirements.md REQ-2.9 still say otherwise and are owed an amendment:
+ *
+ *   - `md` (11px) has a 2.5px border (`--bd`); only `sm` (9px) has 2px
+ *     (`--bd-thin`). specs.md gives 2px for both.
+ *   - A dot not yet won is filled `--sunken` (#f0e2c8 light, #171521 dark — the
+ *     prototype's two literals, which are exactly that token's two values).
+ *     specs.md gives `transparent`.
+ *
+ * Sizes are border-box (the app's reset and the prototypes' agree), so 9px and
+ * 11px are the outer diameter, border included. Written as inline-size /
+ * block-size so that even a circle is on the logical axes (NFR-2.2).
+ */
+
+.dot {
+  display: inline-block;
+  border: var(--bd-thin) solid var(--stroke);
+  border-radius: 50%;
+  background: var(--sunken);
+}
+
+.dot[data-size='sm'] {
+  inline-size: 9px;
+  block-size: 9px;
+}
+
+.dot[data-size='md'] {
+  inline-size: 11px;
+  block-size: 11px;
+  border-width: var(--bd);
+}
+
+.dot[data-won='true'] {
+  background: var(--yellow);
+}
