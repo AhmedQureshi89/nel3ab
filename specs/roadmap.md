@@ -16,7 +16,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 | Phase | Name                                      | Duration | Status         |
 |-------|-------------------------------------------|----------|----------------|
 | 1     | Repo, toolchain & CI                      | 1 day    | ✅ Completed    |
-| 2     | Arcade design system                      | 1 day    | 🛠️ In Progress |
+| 2     | Arcade design system                      | 1 day    | ✅ Completed    |
 | 3     | Rules engine — state & clock              | 1 day    | 🔲 Not Started |
 | 4     | Rules engine — round & match flow          | 1 day    | 🔲 Not Started |
 | 5     | Judge app — setup & room-ready            | 1 day    | 🔲 Not Started |
@@ -54,10 +54,17 @@ Three findings are carried forward rather than closed by this phase, and each is
 - **`main` requires a pull request but not an approving review** (`required_approving_review_count: 0`, because GitHub forbids self-approval). §5.4's human-verification gate is therefore enforced by nothing today — `mission.md` [A-3](mission.md#a-3--54s-human-verification-gate-is-not-yet-enforced-by-anything), binding on **Phase 8**.
 - **`next build` does not consume the TypeScript project-reference graph**; `pnpm typecheck` is what exercises it. Relevant from **Phase 2** onward, which owns `packages/ui`.
 
-**Phase 2 — Arcade design system. Started 2026-08-20.** The triad is written and committed ([`phase-2/requirements.md`](phase-2/requirements.md), [`specs.md`](phase-2/specs.md), [`verification.md`](phase-2/verification.md)): 12 requirements, 6 NFRs, 35 verification boxes across 7 gates, two of them verdict gates. **1 of 35 boxes is ticked.**
+**Phase 2 — Arcade design system. Completed 2026-09-30.** `@nel3ab/ui` is a React + CSS Modules package consumed as TypeScript source: a token layer ported from `design/arcade-tokens.css` (44 light tokens and 7 dark, asserted value for value against the reference at test time, adding nothing), the global states and keyframes, `.ltr-num`, one shared press mechanism whose pressed offset is computed as `rest − travel`, and five primitives — `Panel`, `Card`, `Pill`, `Dot`, `Button` (primary / secondary / action). `apps/web` self-hosts Baloo Bhaijaan 2 and Archivo through `next/font/local` with no third-party origin, and `/styleguide` renders every primitive and variant in a light and a dark subtree side by side while returning 404 in production. All 35 verification boxes are ticked with measured values in [`phase-2/verification.md`](phase-2/verification.md). Both 🚦 verdict gates returned **PASS**: Gate 0, the font redistribution licence, at `5cfeec5` (both families SIL OFL 1.1, read from their own upstreams); and Gate 5, the stack verdict, at `d97f191` — the four gate commands pass on a fresh `--frozen-lockfile` install with none of the ten listed escape hatches, on Windows and on Ubuntu CI. The phase closed at `3b7d1d5`.
 
-- **Gate 0 — the font redistribution licence — returned 🚦 PASS at `5cfeec5`.** Baloo Bhaijaan 2 and Archivo are both **SIL OFL 1.1**, read from each family's own upstream (`EkType/Baloo2-Variable` @ `da4090c`, `Omnibus-Type/Archivo` @ `b5d6398`) rather than from a summary or Google's copy. The clause grants redistribution explicitly and conditions on nothing about the medium, so committing the binaries to this public repository is permitted. Both licence texts are committed verbatim at `apps/web/app/fonts/`, which is OFL condition 2 — the notice travels with the copy. Neither family declares a Reserved Font Name, so the `.ttf → .woff2` conversion may keep the family name; that must be re-checked before any font upgrade.
-- Gate 0's other two boxes — provenance and post-checkout hashes — stay open until the binaries are committed. A SHA-256 taken before a commit and a fresh checkout proves nothing about what git stored.
+**Gate 6 — the side-by-side pass against the prototype — was performed by Claude at the owner's direction**, in the desktop app's browser by computed-style measurement, not by a human eye; the record says so. It found five deviations. Three were fixed before close: the styleguide's own sample text; dark-subtree shadows painting the light ink (the `--sh-*` tokens resolved `var(--stroke)` at `:root` — a latent defect inherited from the reference file, now fixed in the token layer and guarded by a test that derives which tokens must be re-declared per theme); and the action button's sub-label, which rendered 8px short until it followed the prototype's `<br>` + inline structure rather than specs.md's "block element".
+
+Carried forward rather than closed, each binding on a later phase:
+
+- **The judge-choice pill (`6px 14px`) is a second pill shape `Pill` does not implement** — only the player chip (`4px 8px 4px 12px`) is. **Phase 5** builds the judge card and decides whether it is a `Pill` variant or its own primitive.
+- **Nothing applies `var(--font)` to the page.** The prototypes set the family on each screen's root element, not on `body`; `/styleguide` does the same per section. Every **Phase 5–7** screen root must set `font-family: var(--font)`, or it renders in the fallback.
+- **Dark is the untested default** (REQ-2.5, decided 2026-08-20: follow the device). Both themes were checked on the styleguide, not in a match. Open risk, carried into **Phase 5**.
+- **`next/font` preload is inert on a Windows build** — a Next 15.5.23 path-matching bug; a Linux build preloads all three files (measured in Docker). Production must build on Linux (**Phase 9**).
+- **`specs/phase-2/specs.md` is now behind the implementation in six places**, each an owner's ruling recorded in `verification.md` rather than a silent change: the Dot follows the prototype; Button applies the press class in code because Stylelint rejects `composes`; `next.config.ts` gained a webpack `extensionAlias` so Next resolves the NodeNext `.js` specifiers in `@nel3ab/ui`; Archivo ships as two static files; the dark blocks re-declare the `--sh-*` tokens; the action sub-label is inline. None contradicts `mission.md`, `tech-specs.md` or `roadmap.md`, so none needs a §8 amendment; whether to amend the phase triad's text is the owner's call.
 
 No phase after 2 has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
 
@@ -90,14 +97,14 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 
 > **Goal:** The visual identity exists as reusable primitives before any screen is built on top of it.
 
-- [ ] Port `arcade-tokens.css` into `packages/ui` as CSS custom properties — all tokens, both themes
-- [ ] Theme switching via `data-theme` on the root; no flash of wrong theme on load
-- [ ] Self-host Baloo Bhaijaan 2 (500/600/700/800) and Archivo (600/800) via `next/font/local`
-- [ ] Primitives: `Panel`, `Button` (primary/secondary/action variants), `Pill`, `Dot`, `Card`
-- [ ] Press behaviour as a shared mixin: `translateY` with the offset shadow shrinking by the same amount — never scale, never opacity
-- [ ] Global states: `:focus-visible` 3px red outline, yellow `::selection`, disabled at `opacity .45`
-- [ ] `.ltr-num` utility for direction-isolated Latin/numeric runs in Archivo
-- [ ] A `/styleguide` dev route rendering every primitive in both themes side by side
+- [x] Port `arcade-tokens.css` into `packages/ui` as CSS custom properties — all tokens, both themes
+- [x] Theme switching via `data-theme` on the root; no flash of wrong theme on load
+- [x] Self-host Baloo Bhaijaan 2 (500/600/700/800) and Archivo (600/800) via `next/font/local`
+- [x] Primitives: `Panel`, `Button` (primary/secondary/action variants), `Pill`, `Dot`, `Card`
+- [x] Press behaviour as a shared mixin: `translateY` with the offset shadow shrinking by the same amount — never scale, never opacity
+- [x] Global states: `:focus-visible` 3px red outline, yellow `::selection`, disabled at `opacity .45`
+- [x] `.ltr-num` utility for direction-isolated Latin/numeric runs in Archivo
+- [x] A `/styleguide` dev route rendering every primitive in both themes side by side
 
 **Exit criteria:** The styleguide renders every primitive in light and dark, and a button press visually matches the prototype exactly.
 
@@ -463,6 +470,6 @@ Players remain account-free throughout. Everything in this milestone is host-sid
 
 ---
 
-*Last updated: 2026-08-20*
+*Last updated: 2026-09-30*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — phases are re-evaluated as priorities shift*
