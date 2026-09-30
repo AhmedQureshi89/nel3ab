@@ -646,7 +646,7 @@ the harness reproduce the planning measurement *before* the engine is judged aga
   > departs from the prototype's arithmetic exactly where exact arithmetic does. The verdict sample and
   > the scripted scenarios were not compared with the float oracle.
 
-- [ ] 🚦 **REQ-3.11 (A 45-second round ends as it does in the prototype) (VERDICT GATE — no retry):**
+- [x] 🚦 **REQ-3.11 (A 45-second round ends as it does in the prototype) (VERDICT GATE — no retry):**
   with every box above in this gate ticked, the engine and the **float** oracle — the prototype's
   arithmetic as it actually computes, rounding error included — produce identical observations at
   every consumed step, and the same losing team, in **all 13 scripted scenarios of Table D** and
@@ -658,8 +658,19 @@ the harness reproduce the planning measurement *before* the engine is judged aga
   sequence, its first diverging step and both observations there; REQ-3.4 returns to the owner.
   The gate is **not** re-run with a different seed, sample size, rate list, event mix, question pool,
   tail length or stop rule, and the engine is **not** changed to reproduce the drift.
-  > Measured: scenarios diverging ____ / 13 · sequences diverging ____ / 10,000 · steps compared
-  > ____ · loser mismatches ____ · **VERDICT: ____**
+  > Measured: scenarios diverging **0** / 13 · sequences diverging **0** / 10,000 · steps compared
+  > **2,429,148** · loser mismatches **0** · **VERDICT: PASS**
+  > Steps: 7,082 (the 13 scenarios, each consumed in full) + 2,422,066 (the 10,000 verdict sequences
+  > under §2.8's stop rule, timed by the exact oracle — equal to Table B's row 1), the engine's
+  > observation compared entry by entry (`Object.is`) with the float oracle's after every one. Losers
+  > compared over the rounds that end — 11 scenarios, 4,417 verdict sequences — the same team in every
+  > one. Evaluated **once**, 2026-09-30, by the last describe block of `prototype-equivalence.test.ts`
+  > ("🚦 Gate 6 — REQ-3.11 verdict …", harness `engineVsFloat` on), in the first and only run that
+  > produced its counts: `pnpm vitest run packages/game/src/prototype-equivalence.test.ts`, 7 / 7 tests
+  > passed; the counts were read from a temporary JSON readout written by that run, removed before
+  > commit. Seed, sample size, rates, event mix, pool, `TAIL`, stop rule, harness and engine are as the
+  > boxes above ran them — only the test file changed. Its later runs inside `pnpm test` are the
+  > permanent regression check of this verdict, not a re-evaluation.
 
 ---
 

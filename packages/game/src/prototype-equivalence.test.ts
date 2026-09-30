@@ -2,7 +2,14 @@ import { beforeAll, describe, expect, test } from 'vitest'
 
 import { displaySeconds, remainingMs } from './clock.js'
 import { ROUND_SECONDS_OPTIONS } from './rules.js'
-import { generatedRun, runEngine, scenarioRun, type RunResult } from './testing/harness.js'
+import {
+  generatedRun,
+  runEngine,
+  scenarioRun,
+  type Observation,
+  type Run,
+  type RunResult,
+} from './testing/harness.js'
 import { mulberry32 } from './testing/prng.js'
 import { prototypeOracle, type Arithmetic } from './testing/prototype-oracle.js'
 import {
@@ -19,13 +26,14 @@ import {
 } from './testing/sequences.js'
 import type { Team } from './types.js'
 
-// Equivalence with the prototype — verification.md Gate 6's ORDINARY boxes,
-// in the gate's order: the generator's fingerprint (Table C), the oracles'
-// anchors (Table A), oracle against oracle (Table B), the engine against the
-// EXACT oracle, the scripted scenarios (Table D), and the cost of the owner's
-// 2026-09-30 decision (engine against the FLOAT oracle, per-length sample
-// only). See specs/phase-3/specs.md §2.8 (the samples, the oracle, the harness)
-// and §2.9 (this file's row).
+// Equivalence with the prototype — verification.md Gate 6, in the gate's
+// order. First its ORDINARY boxes: the generator's fingerprint (Table C), the
+// oracles' anchors (Table A), oracle against oracle (Table B), the engine
+// against the EXACT oracle, the scripted scenarios (Table D), and the cost of
+// the owner's 2026-09-30 decision (engine against the FLOAT oracle, per-length
+// sample only). Then, in its own describe block at the end of the file, the
+// 🚦 verdict box of REQ-3.11. See specs/phase-3/specs.md §2.8 (the samples,
+// the oracle, the harness) and §2.9 (this file's row).
 //
 // The first three prove that the generator, the two oracles and the harness
 // reproduce the planning session's measurement BEFORE the engine is judged
@@ -33,11 +41,12 @@ import type { Team } from './types.js'
 // verification.md's "Pre-registered values" — Tables A, B and C here, Table D
 // in testing/sequences.ts — and none is derived from a run.
 //
-// NOT HERE: the 🚦 verdict box of REQ-3.11 — the engine against the FLOAT
-// oracle on the verdict's 45 s sample and on the scripted scenarios. It is a
-// verdict gate, evaluated exactly once, by its own test. No run in this file
-// asks the harness for that comparison: the verdict sample is run with
-// `engineVsFloat` off, and the scenarios never step the float oracle at all.
+// The 🚦 verdict — the engine against the FLOAT oracle on the verdict's 45 s
+// sample and on the scripted scenarios — is a verdict gate, evaluated exactly
+// once, by its own test: the last describe block below. No run of the ordinary
+// boxes asks the harness for that comparison: their pass over the verdict
+// sample has `engineVsFloat` off, and their pass over the scenarios never
+// steps the float oracle at all.
 
 // ============================================================================
 // Pre-registered values (verification.md) — transcribed, never computed
@@ -481,5 +490,128 @@ describe('Gate 6 — equivalence with the prototype (the ordinary boxes)', () =>
     expect(perLength.map((t) => t.engineVsFloat)).toStrictEqual(
       perLength.map((t) => t.floatVsExact),
     )
+  })
+})
+
+// ============================================================================
+// Gate 6 — 🚦 the verdict box of REQ-3.11 (VERDICT GATE — no retry)
+// ============================================================================
+//
+// The engine against the FLOAT oracle — the prototype's arithmetic as it
+// actually computes, rounding error included — compared at every consumed
+// step, with the same losing team, in:
+//
+// - all 13 scripted scenarios of Table D, each consumed in FULL (`scenarioRun`),
+//   as the ordinary "Scripted scenarios" box consumes them; and
+// - all 10,000 sequences of the verdict sample (`VERDICT_SAMPLE`: 45 s, `SEED`,
+//   n 10,000), generated and stopped exactly as specs.md §2.8 gives them and
+//   as the ordinary boxes above run them (`generatedRun`: the three-question
+//   pool, `TAIL`, the stop rule timed by the exact oracle).
+//
+// PASS: 0 diverging scenarios and 0 diverging sequences. Nothing here may be
+// changed to reach it — not the seed, the sample size, the rate list, the event
+// mix, the question pool, `TAIL`, the stop rule or the engine (verification.md
+// Gate 6). The verdict was evaluated ONCE, by the run that added this block,
+// and verification.md records that run's numbers; every later run of this
+// block is the permanent regression check of that verdict, not a re-evaluation.
+
+/** The first consumed step at which the engine and the float oracle differed, and both observations there. */
+interface FloatDivergence {
+  /** A scenario's Table D `#`, or `#i` for sequence `i` of the verdict sample. */
+  readonly run: string
+  /** 1-based: the event after which they differed. */
+  readonly step: number
+  readonly engine: Observation
+  readonly float: Observation
+}
+
+interface LoserMismatch {
+  readonly run: string
+  readonly engine: Team | null
+  readonly float: Team | null
+}
+
+/** One half of the verdict — the scenarios, or the verdict sample — tallied run by run. */
+interface VerdictTally {
+  runs: number
+  /** Consumed steps, every one of them compared engine against float. */
+  steps: number
+  /** Every run whose engine and float observations differ at some consumed step — all of them, not a sample. */
+  diverging: FloatDivergence[]
+  /** Every run whose engine and float oracle name different losers. */
+  loserMismatches: LoserMismatch[]
+  /** Runs whose round ended, by the engine or the float oracle: the loser comparison's population. */
+  ending: number
+}
+
+const emptyVerdictTally = (): VerdictTally => ({
+  runs: 0,
+  steps: 0,
+  diverging: [],
+  loserMismatches: [],
+  ending: 0,
+})
+
+/** One run through the harness with `engineVsFloat` on, tallied into `t`. */
+function compareWithFloat(t: VerdictTally, name: string, run: Run): void {
+  const r = runEngine(run, { engineVsFloat: true })
+  if (r.engineVsFloat === undefined || r.floatLoser === undefined) {
+    throw new Error(`${name}: the engine was not compared with the float oracle`)
+  }
+  t.runs += 1
+  t.steps += r.stepsConsumed
+  if (r.engineVsFloat !== null) {
+    t.diverging.push({
+      run: name,
+      step: r.engineVsFloat.step,
+      engine: r.engineVsFloat.left,
+      float: r.engineVsFloat.right,
+    })
+  }
+  if (r.loser !== null || r.floatLoser !== null) t.ending += 1
+  if (r.loser !== r.floatLoser) {
+    t.loserMismatches.push({ run: name, engine: r.loser, float: r.floatLoser })
+  }
+}
+
+describe('🚦 Gate 6 — REQ-3.11 verdict: a 45-second round ends as it does in the prototype', () => {
+  let scenarios: VerdictTally
+  let sample: VerdictTally
+
+  // ~2.4 million lockstep steps. As above, the timeout is a ceiling, not the budget.
+  beforeAll(() => {
+    scenarios = emptyVerdictTally()
+    for (const scenario of SCENARIOS) {
+      compareWithFloat(scenarios, scenario.id, scenarioRun(scenario))
+    }
+    sample = emptyVerdictTally()
+    for (const sequence of sequences(VERDICT_SAMPLE)) {
+      compareWithFloat(sample, `#${sequence.index}`, generatedRun(VERDICT_SAMPLE, sequence))
+    }
+  }, 120_000)
+
+  test('🚦 REQ-3.11: the engine and the FLOAT oracle agree at every consumed step, with the same loser, in all 13 scenarios of Table D and all 10,000 verdict sequences', () => {
+    const measured = {
+      scenarios: { run: scenarios.runs, diverging: scenarios.diverging },
+      sequences: {
+        run: sample.runs,
+        diverging: sample.diverging.length,
+        first: sample.diverging.slice(0, KEEP),
+      },
+      stepsCompared: { scenarios: scenarios.steps, sequences: sample.steps },
+      loserMismatches: [...scenarios.loserMismatches, ...sample.loserMismatches],
+    }
+    expect(measured).toStrictEqual({
+      scenarios: { run: 13, diverging: [] },
+      sequences: { run: 10_000, diverging: 0, first: [] },
+      stepsCompared: {
+        // Every scenario in full; the verdict sample under the stop rule — Table B's row 1.
+        scenarios: SCENARIOS.reduce((n, s) => n + s.events.length, 0),
+        sequences: TABLE_B[0]?.steps,
+      },
+      loserMismatches: [],
+    })
+    // The loser comparison has a population: rounds that end, in both halves.
+    expect([scenarios.ending > 0, sample.ending > 0]).toStrictEqual([true, true])
   })
 })
