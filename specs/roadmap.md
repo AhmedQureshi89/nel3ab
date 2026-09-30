@@ -17,7 +17,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 |-------|-------------------------------------------|----------|----------------|
 | 1     | Repo, toolchain & CI                      | 1 day    | ✅ Completed    |
 | 2     | Arcade design system                      | 1 day    | ✅ Completed    |
-| 3     | Rules engine — state & clock              | 1 day    | 🔲 Not Started |
+| 3     | Rules engine — state & clock              | 1 day    | 🛠️ In Progress |
 | 4     | Rules engine — round & match flow          | 1 day    | 🔲 Not Started |
 | 5     | Judge app — setup & room-ready            | 1 day    | 🔲 Not Started |
 | 6     | Judge app — the play screen               | 1 day    | 🔲 Not Started |
