@@ -757,18 +757,45 @@ the harness reproduce the planning measurement *before* the engine is judged aga
   > Method, 2026-09-30, Windows: each mutation applied by exact string replacement (one match
   > required per site), never committed.
 
-- [ ] **NFR-3.6 (Fast enough to stay in `pnpm test`):** the `@nel3ab/game` project's test duration,
+- [x] **NFR-3.6 (Fast enough to stay in `pnpm test`):** the `@nel3ab/game` project's test duration,
   with coverage on, is under **20 s** on the Windows development machine; the CI run's duration is
   recorded. An overrun is a finding recorded here — the samples are not shrunk (R4).
-  > Measured: Windows ____ s · Ubuntu CI ____ s
+  > Measured: Windows **6.42 · 6.46 · 6.47** s · Ubuntu CI **10.98** s
+  > **Windows — under 20 s at the slowest of three.** `pnpm vitest run packages/game --coverage`, run
+  > three times in a fresh `git clone --no-local` of `phase-3-run` at `54e716c`, 2026-09-30, Windows 11:
+  > Vitest Duration 6.42 s, 6.46 s, 6.47 s, each 211 / 211 tests passed and coverage 100 on all four
+  > metrics. Conditions: on mains power (battery 100 %, AC connected), CPU load 3–20 %. Inside the same
+  > clone's single full `pnpm test` (REQ-3.13 below) the game project's longest file was
+  > `purity.test.ts` at 6.05 s, and the whole six-project run's Vitest Duration was 6.78 s.
+  > **Recorded as a finding, per this box's rule — the limit was exceeded under other conditions.**
+  > Earlier the same day, with the laptop recharging from 2.7 % battery, runs of **21–31 s** were
+  > observed on unchanged code. They did not reproduce on mains power; the figures above are the
+  > mains-power ones. The cause was not isolated. The samples were not shrunk.
+  > **Ubuntu CI — recorded; no limit applies.** Run `36727180451` (REQ-3.13 below), `ci` job, Test step
+  > (`pnpm test`, coverage on): Vitest Duration **10.98 s** for the whole six-project run (transform
+  > 577 ms, import 1.18 s, tests 17.75 s summed across workers), which bounds the game project. Its
+  > files there: `purity.test.ts` 10,360 ms, `prototype-equivalence.test.ts` 7,155 ms, the other five
+  > 4–35 ms each. Test step wall time 12 s (14:11:34 → 14:11:46 UTC). CI runs the game project only
+  > inside the full run, so no isolated figure exists there. The same six-project run took 10.98 s on
+  > the runner against 6.78 s on the Windows machine on mains power.
 
-- [ ] **NFR-3.1 (`design/` and `specs/` untouched):** `git diff` from the commit at which
+- [x] **NFR-3.1 (`design/` and `specs/` untouched):** `git diff` from the commit at which
   implementation began to the phase's final commit, over `design/` and `specs/`, shows changes to
   `specs/phase-3/verification.md` (ticks and measured values) and, at close, the status cell and
   "Completed Work" entry of `specs/roadmap.md` — and nothing else.
-  > Measured: files changed under `design/` ____ · under `specs/` ____
+  > Measured: files changed under `design/` **0** · under `specs/` **1** — `specs/phase-3/verification.md`
+  > `git diff --stat 2c2b7ac^ HEAD -- design/ specs/` at `54e716c`, 2026-09-30. `2c2b7ac` (Gate 1's
+  > coverage probe) is the phase's first implementation commit, so the range holds all ten
+  > implementation commits, `2c2b7ac` … `54e716c`. One file changed: `specs/phase-3/verification.md`,
+  > and every line the diff removes from it is an unticked box line, a `____` placeholder or a blank
+  > line — ticks and measured values only. `design/`: **0** files, and `git diff main...HEAD -- design/`
+  > is empty. `specs/roadmap.md` is unchanged in the range; its status cell and "Completed Work" entry
+  > are the owner's to write at close.
+  > The range's base, `2c2b7ac^` = `b7c46e0`, is the plan commit: it added `specs/phase-3/*` and set the
+  > roadmap status to 🛠️, before any implementation. Recorded at `54e716c`; the only later change under
+  > `design/` or `specs/` is the commit that records this box, which ticks this file's last three boxes.
 
-- [ ] 🚦 **REQ-3.13 (The four gate commands, no escape hatch) (VERDICT GATE — no retry):** on a
+- [x] 🚦 **REQ-3.13 (The four gate commands, no escape hatch) (VERDICT GATE — no retry):** on a
   fresh clone with `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (with
   coverage) and `pnpm build` all pass — on Windows **and** in the `ci` job on Ubuntu — and the §7
   escape grep finds no escape **directive** anywhere outside `design/` and `specs/`. The baseline
@@ -780,8 +807,64 @@ the harness reproduce the planning measurement *before* the engine is judged aga
   **PASS:** all four green on both platforms, 0 directives, 0 other escapes. **FAIL:** passing
   *required* an escape. Then coverage cannot be enforced on this stack as REQ-3.12 decided; **the
   phase halts** and REQ-3.12 returns to the owner. It is not made green by adding the escape.
-  > Measured: Windows lint ____ · typecheck ____ · test ____ · build ____ · CI run ____ ·
-  > grep lines ____ (new: ____, classified ____) · directives ____ · **VERDICT: ____**
+  > Measured: Windows lint **0** · typecheck **0** · test **0** · build **0** · CI run **36727180451**
+  > (job `ci`, `success`) · grep lines **4** (new: **0**, classified **4 / 4 prose, all baseline**) ·
+  > directives **0** · **VERDICT: PASS**
+  > **VERDICT 2026-09-30: PASS.** Evaluated once, not retried: each half ran once and its numbers were
+  > read once. The four gate commands pass on a fresh frozen install, on Windows and in the `ci` job on
+  > Ubuntu, with no escape hatch — coverage is enforced on this stack as REQ-3.12 decided.
+  > **Windows.** A fresh `git clone --no-local` of `phase-3-run` at `54e716c` (the phase's last code
+  > change) into an empty directory, Windows 11, each command exactly once:
+  > `pnpm install --frozen-lockfile` exit **0**, "Lockfile is up to date", 275 packages, **0** peer
+  > warnings (served from the local store, 0 downloaded) · `pnpm lint` **0** · `pnpm typecheck` **0** ·
+  > `pnpm test` **0** — **20** files, **318** assertions, **6** projects (`apps/game` 1 · `apps/web` 3 ·
+  > `packages/content` 1 · `packages/game` 7 · `packages/protocol` 1 · `packages/ui` 7),
+  > `[check-collected-tests] OK`, coverage 100 / 100 / 100 / 100 (statements 86 / 86 · branches
+  > 65 / 65 · functions 16 / 16 · lines 72 / 72), Vitest Duration 6.78 s · `pnpm build` **0** —
+  > Next 15.5.23, 5 / 5 static pages.
+  > **Ubuntu CI.** Run **36727180451**, https://github.com/AhmedQureshi89/nel3ab/actions/runs/36727180451 —
+  > workflow `CI`, event `pull_request` on PR #30, head `54e716c1b3ed07d32444db1b558790040ea6ef98`;
+  > job **`ci`**, conclusion **`success`**, runner image `ubuntu-24.04` `20260920.314.1`, Node
+  > `v24.21.0`, pnpm `11.22.0`. The job checked out GitHub's merge ref `f48c3ca` (`54e716c` merged into
+  > `main`'s `1dc0a9b`), whose tree `a36ead7de31c11b82952152e72d455463e17b058` is **identical** to
+  > `54e716c`'s — `1dc0a9b` is an ancestor of `54e716c` — so CI tested exactly the code evaluated on
+  > Windows. Steps, every one `success`:
+  > Install dependencies (5 s) — `pnpm install --frozen-lockfile`, "Lockfile is up to date, resolution
+  > step is skipped", +276 packages, **0** `WARN` / peer lines, "Done in 4.8s using pnpm v11.22.0" ·
+  > Lint (5 s) — eslint, stylelint, "All matched files use Prettier code style!" ·
+  > Typecheck (2 s) — `tsc --build --pretty` ·
+  > Test (12 s) — `node scripts/check-collected-tests.mjs --coverage`: 20 / 20 files, 318 / 318 tests,
+  > "`[check-collected-tests] 20 test file(s) across 6 workspace project(s); 318 assertion(s) passed,
+  > 0 failed.`", per project `apps/game` 1 · `apps/web` 3 · `packages/content` 1 · `packages/game` 7 ·
+  > `packages/protocol` 1 · `packages/ui` 7 — the Windows counts — then `[check-collected-tests] OK`;
+  > coverage "All files" 100 / 100 / 100 / 100 (the text reporter prints percentages only), with
+  > `clock.ts`, `reducer.ts`, `room.ts`, `rules.ts` at 100 on all four and `index.ts`, `types.ts`
+  > printed 0 on all four — the two files REQ-3.12 found at 0 / 0, with no executable code; Vitest
+  > Duration 10.98 s (NFR-3.6 above) ·
+  > Build (12 s) — `pnpm -r build`, 6 of 7 projects, Next 15.5.23, 5 / 5 static pages, routes `/`,
+  > `/_not-found`, `/styleguide`.
+  > Job 52 s (14:11:12 → 14:12:04 UTC); run 58 s (created 14:11:07, last updated 14:12:05).
+  > The one-package difference, 276 on Ubuntu against 275 on Windows, is consistent with `sharp`'s
+  > platform-specific optional binaries in the lockfile (Linux x64 installs `@img/sharp-linux-x64` and
+  > `@img/sharp-libvips-linux-x64`; Windows x64 a single `@img/sharp-win32-x64`); both installs report
+  > the lockfile up to date. Notices elsewhere in the CI log, none from the install step and none an
+  > escape: `pnpm/action-setup`'s "`[WARN] Detected a pnpm v10 installation layout at PNPM_HOME`"
+  > (Install pnpm step, the runner's own tooling); Vite's `configLoader: 'native'` notice about
+  > `vitest.config.ts` (Test step); Next's "No build cache found", "TypeScript project references are
+  > not fully supported" and "The Next.js plugin was not detected in your ESLint configuration"
+  > (Build step).
+  > **The escape list, item by item**, over the Windows clone at `54e716c`, with §8's two Gate 7 greps:
+  > first grep — **4** lines, the pre-phase baseline exactly: `CLAUDE.md:104`, `CLAUDE.md:109`,
+  > `packages/ui/src/styles/press.module.css:48`, `stylelint.config.mjs:19`, every one prose that names a
+  > forbidden word; **0** new lines; **0** directives (`@ts-expect-error`, `@ts-ignore`, `eslint-disable`,
+  > `stylelint-disable`, `v8` / `istanbul` / `c8 ignore`) ·
+  > second grep — only `tsconfig.base.json:12` `skipLibCheck`, the baseline and the one permitted place;
+  > **0** `pnpm.overrides`, `peerDependencyRules` or `strict-peer` ·
+  > coverage — `vitest.config.ts` thresholds **100** on all four metrics, exactly **2** `exclude` entries
+  > (REQ-3.12's `*.test.ts` and `testing/**`) ·
+  > pins — **0** `^` / `~` across all **7** manifests ·
+  > the `ci` job — the `.github/` diff against `main` is empty, the job is still `ci`, and CI reported
+  > it under that name · `scripts/check-collected-tests.mjs` — unchanged against `main`.
 
 ---
 
