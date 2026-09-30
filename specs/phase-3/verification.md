@@ -352,16 +352,27 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   > differs from the start **or** `remainingMs(clock, inactive)` is not 45,000 — so elapsed time
   > applied to the inactive team (mutation M6) is caught here, not only a write to its bank.
 
-- [ ] **REQ-3.4 (A tick that does not end the round changes only `now`):** for every tick in the
+- [x] **REQ-3.4 (A tick that does not end the round changes only `now`):** for every tick in the
   per-length sample and the scripted scenarios that does not end a round, the next state equals the
   previous one with `clock.now` replaced by `now + ms` — deep-equal, nothing else different.
-  > Measured: ticks checked ____ · violations ____
+  > Measured: ticks checked **782,962** · violations **0**
+  > `purity.test.ts`. Of 783,825 ticks consumed — 3,000 per-length sequences (801,972 events under
+  > §2.8's stop rule) and the 13 Table D scenarios (7,082 events, each consumed in full) — the 863
+  > that end a round are excluded, classified from the state *before* the tick by the bank arithmetic
+  > written out in the test, not by what the reducer returned. Each checked tick's result deep-equals
+  > the previous state with only `clock.now` + 100. Bite check (2026-09-30, reverted): a non-ending
+  > tick that also advanced `questionIndex` flagged 782,962 / 782,962.
 
-- [ ] **REQ-3.4 (Additivity):** for every state visited in the 45 s per-length sample, and a pair
+- [x] **REQ-3.4 (Additivity):** for every state visited in the 45 s per-length sample, and a pair
   `(a, b)` drawn uniformly from 0 … 3000 each by `mulberry32(SEED + 1)` in visiting order,
   `reduce(reduce(s, tick a), tick b)` deep-equals `reduce(s, tick (a + b))` — including when the
   pair crosses zero.
-  > Measured: states checked ____ · of which crossing zero ____ · violations ____
+  > Measured: states checked **51,699** · of which crossing zero **1,962** (1,016 of them with the
+  > zero falling between the two ticks) · violations **0**
+  > States: every state the 200 runs visit — the fresh room, the started round, and the state after
+  > each of the 51,299 consumed events. `a` then `b` = `Math.floor(rand() × 3001)` per state.
+  > "Crossing zero": a running clock whose remaining time is ≤ `a + b`. Bite check (2026-09-30,
+  > reverted): testing zero against the pre-tick `now` gave 925 violations.
 
 - [x] **REQ-3.4 / REQ-3.7 (Zero crossing ends the round in the same step):** from a fresh 45 s round,
   `tick(45000)` and `tick(45001)` each yield, in **one** step, `screen 'roundEnd'`, active bank
@@ -391,9 +402,16 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   > `toStrictEqual`s the input with `clock.now` + 1,005,000, and both teams' `remainingMs` are
   > unchanged
 
-- [ ] **Invariants I1–I10 hold at every step:** `assertInvariants` ([specs.md](specs.md) §2.8) passes
+- [x] **Invariants I1–I10 hold at every step:** `assertInvariants` ([specs.md](specs.md) §2.8) passes
   after every step of every sequence of the per-length sample and every scripted scenario.
-  > Measured: states checked ____ · violations ____ (by invariant: ____)
+  > Measured: states checked **815,080** · violations **0** (by invariant: I1 0 · I2 0 · I3 0 · I4 0 ·
+  > I5 0 · I6 0 · I7 0 · I8 0 · I9 0 · I10 0)
+  > States: for each of the 3,013 runs, the fresh room, the started round and the state after every
+  > consumed event (809,054 events). `assertInvariants(state, prev)` gets `prev` at every step; I7
+  > is skipped only on the `startRound` step (the one transition into `play`). The stop rule is
+  > timed by the engine's own terminality until the exact oracle exists (`testing/harness.ts`); per
+  > per-length row the steps consumed equal Table B's column (informational — Gate 6 measures it).
+  > Bite check (2026-09-30, reverted): testing zero against the pre-tick `now` gave I5 967, I10 865.
 
 ---
 
@@ -433,9 +451,11 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   > → 0 and `runningSince` → null. Also: a hint at 1,000 ms leaves the bank at 0, and with team `b`
   > active a skip at 3,000 ends the round on `b`'s bank with `a`'s untouched.
 
-- [ ] **REQ-3.7 (No zero bank in play):** across every state visited in Gate 3's invariant box, no
+- [x] **REQ-3.7 (No zero bank in play):** across every state visited in Gate 3's invariant box, no
   state has `screen 'play'` with `remainingMs(active) === 0` (invariant I5, reported separately).
-  > Measured: states ____ · violations ____
+  > Measured: states **815,080** · violations **0**
+  > Its own test in `purity.test.ts`, over the same states as Gate 3's invariant box. Bite check
+  > (2026-09-30, reverted): testing zero against the pre-tick `now` gave 967.
 
 - [x] **REQ-3.8 (Correct raises the reveal and stops the clock):** in a live round, `correct` yields
   `reveal = { answer: q.a, fact: q.f }` of the current question, `runningSince null`, the active bank
@@ -458,28 +478,45 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   > (e) a live round with `questionPool` replaced by `[]`. `acceptsJudgeActions` is `false` in all
   > 5; control: in a live round it is `true` and hint, skip and correct each return a new object.
 
-- [ ] **REQ-3.8 (The exported predicate and the reducer agree):** for every state visited in the
+- [x] **REQ-3.8 (The exported predicate and the reducer agree):** for every state visited in the
   per-length sample and the scripted scenarios, `acceptsJudgeActions(s)` is `false` **if and only if**
   `skip` and `correct` both return the same object; and whenever it is `false`, `hint` does too.
-  > Measured: states ____ · disagreements ____
+  > Measured: states **815,080** · disagreements **0**
+  > The same states as Gate 3's invariant box; `skip`, `correct` and `hint` each reduced from every
+  > one. Bite check (2026-09-30, reverted): `acceptsJudgeActions` as `screen === 'play'` gave 89,438.
 
 ---
 
 ## 5. Gate 5 — Purity and the public surface (block 2–5; the block blocks Gate 6)
 
-- [ ] **REQ-3.3 (Never mutates its input):** every `(state, action)` pair in the per-length sample and
+- [x] **REQ-3.3 (Never mutates its input):** every `(state, action)` pair in the per-length sample and
   the scripted scenarios is deep-frozen before `reduce` is called. **0** `TypeError`s.
-  > Measured: calls on frozen input ____ · TypeErrors ____
+  > Measured: calls on frozen input **812,067** `(state, action)` pairs, each deep-frozen (state and
+  > action) and then reduced twice — 1,624,134 `reduce` calls · TypeErrors **0**
+  > Pairs = the `startRound` and every consumed event of the 3,013 runs (815,080 states − 3,013 fresh
+  > rooms). The checks' own further `reduce` calls on those frozen states (three per state for the
+  > predicate box, the additivity ticks) pass the same TypeError guard: 0 there too. Bite check
+  > (2026-09-30, reverted): a tick writing `clock.now` in place gave 3,013 TypeErrors ("Cannot
+  > assign to read only property 'now'"), one per run.
 
-- [ ] **REQ-3.3 (Deterministic):** every such call is made twice; the two results are deep-equal.
-  > Measured: pairs ____ · differences ____
+- [x] **REQ-3.3 (Deterministic):** every such call is made twice; the two results are deep-equal.
+  > Measured: pairs **812,067** · differences **0**
+  > Compared by a structural deep-equal with `toStrictEqual`'s strictness (`Object.is` on
+  > primitives, prototypes and own keys) in `testing/invariants.ts`.
 
-- [ ] **REQ-3.3 (No ambient time, randomness or timers — at run time):** with `Date.now`,
+- [x] **REQ-3.3 (No ambient time, randomness or timers — at run time):** with `Date.now`,
   `Math.random`, `performance.now`, `setTimeout` and `setInterval` each replaced by a spy that
   **throws**, the 45 s per-length sample and all scripted scenarios run through `reduce`,
   `createRoom`, `remainingMs`, `displaySeconds`, `currentQuestion` and `acceptsJudgeActions` with
   **0** spy calls.
-  > Measured: calls made ____ · spy invocations ____
+  > Measured: calls made **411,649** — `reduce` 58,594 · `createRoom` 213 · `remainingMs` 117,614 ·
+  > `displaySeconds` 117,614 · `currentQuestion` 58,807 · `acceptsJudgeActions` 58,807, over 213
+  > runs (200 sequences, 13 scenarios; 58,381 events, 58,807 states) · spy invocations **0**
+  > (`Date.now` 0 · `Math.random` 0 · `performance.now` 0 · `setTimeout` 0 · `setInterval` 0)
+  > Each count is asserted equal to what the runs imply, so the whole workload ran under the spies.
+  > Control: after the runs, each of the 5 spies throws when called (5 / 5 live); all 5 restored in a
+  > `finally`. Bite check (2026-09-30, reverted): `Date.now()` in `reduce`'s tick case failed the
+  > test with "Date.now was called during a run of the engine".
 
 - [x] **REQ-3.3 (… and in the source):** the grep of §7 over non-test, non-`testing/` source under
   `packages/game/src/` for `Date`, `Math.random`, `performance`, `setTimeout`, `setInterval`,
