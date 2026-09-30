@@ -119,41 +119,84 @@ The coverage provider is the only new dependency in this phase, and the only par
 with Vitest 4's multi-project configuration and the collected-tests wrapper. Probe it on the
 Phase 1 shell — where 100% is trivial — before there is anything to cover.
 
-- [ ] **NFR-3.3 (Pinned exactly):** root `package.json` `devDependencies` has
+- [x] **NFR-3.3 (Pinned exactly):** root `package.json` `devDependencies` has
   `"@vitest/coverage-v8": "4.1.10"`, character-identical to the `vitest` pin. No `^`/`~` anywhere
   in the 7 manifests; no `pnpm.overrides` or `peerDependencyRules` added; `pnpm install` reports
   **0** peer warnings; `pnpm install --frozen-lockfile` succeeds from a fresh clone.
-  > Measured: provider pin ____ · vitest pin ____ · identical: ____ · floated ranges: ____ ·
-  > peer warnings: ____ · frozen install from fresh clone: ____
+  > Measured: provider pin `"4.1.10"` · vitest pin `"4.1.10"` · identical: **yes** (`===` on the two
+  > manifest strings) · floated ranges: **0** across **7** manifests, and **0** `pnpm.overrides` /
+  > `peerDependencyRules` in any manifest or in `pnpm-workspace.yaml` · peer warnings: **0** (0 lines
+  > matching `peer|WARN` in the output of `pnpm add -D -w -E`, of the settling `pnpm install`, and of
+  > the fresh-clone install) · frozen install from fresh clone: **succeeds** — exit 0, "Lockfile is up
+  > to date", 275 packages
+  > Method, 2026-09-30, Windows: `pnpm add -D -w -E @vitest/coverage-v8@4.1.10` wrote the exact string
+  > itself (no hand fix needed); the follow-up `pnpm install` left the lockfile unchanged. Lockfile
+  > +148 / −2 lines: **17** new package resolutions (the provider and its istanbul / `@babel/parser` /
+  > `@bcoe/v8-coverage` chain), and the `vitest` snapshot re-keyed with the provider as its optional
+  > peer. The provider's lockfile entry records peers `vitest: 4.1.10` and `@vitest/browser: 4.1.10`
+  > with the latter under `peerDependenciesMeta` `optional: true`, as specs.md §2.10 states. Fresh
+  > clone: `git clone --no-local --branch phase-3-run` of the implementation commit before these
+  > ticks were amended in (pre-amend `1c7d959`; the amend adds only this file's ticks, so every
+  > manifest and the lockfile are byte-identical in the final commit).
 
-- [ ] **REQ-3.12 (Wired as specified):** `scripts.test` is
+- [x] **REQ-3.12 (Wired as specified):** `scripts.test` is
   `node scripts/check-collected-tests.mjs --coverage`; `vitest.config.ts` has the `coverage` block
   of [specs.md](specs.md) §2.10 — provider `v8`, the one `include`, **exactly two** `exclude`
   entries, thresholds 100 × 4, `enabled` **not** set. `scripts/check-collected-tests.mjs` is
   unchanged (`git diff` empty). `pnpm vitest run packages/game` does **not** run coverage.
-  > Measured: script ____ · include ____ · excludes (count, list) ____ · thresholds ____ ·
-  > `enabled` present: ____ · wrapper diff: ____ · coverage on an iteration run: ____
+  > Measured: script `node scripts/check-collected-tests.mjs --coverage` · include
+  > `['packages/game/src/**/*.ts']` (provider `v8`, reporters `text`, `json-summary`) · excludes
+  > (count, list) **2** — `packages/game/src/**/*.test.ts`, `packages/game/src/testing/**` ·
+  > thresholds lines 100 · branches 100 · functions 100 · statements 100 · `enabled` present: **no** ·
+  > wrapper diff: **empty** (`git diff --exit-code -- scripts/check-collected-tests.mjs` exit 0) ·
+  > coverage on an iteration run: **none** — with `coverage/` deleted first, `pnpm vitest run
+  > packages/game` exited 0 (1 file, 1 test), printed 0 lines mentioning coverage, and created no
+  > `coverage/` directory
+  > The block sits under the root `test`, beside `projects`; `projects` and the `oxc` override are
+  > byte-identical to before (the diff of `vitest.config.ts` is 18 added lines, 0 removed).
 
-- [ ] **REQ-3.12 (Proven to bite, on the shell):** with a temporary exported function added to
+- [x] **REQ-3.12 (Proven to bite, on the shell):** with a temporary exported function added to
   `packages/game/src/index.ts` that no test calls, `pnpm test` **exits non-zero** and names the
   threshold; with it removed, `pnpm test` is green. *(R2 — if the threshold prints but the exit code
   is 0, this box is red and REQ-3.13 decides.)*
-  > Measured: exit code with the uncovered function ____ · message ____ · exit code after revert ____
+  > Measured: exit code with the uncovered function **1** · message `ERROR: Coverage for lines (50%)
+  > does not meet global threshold (100%)`, and the same line for functions (0%) and statements
+  > (50%), followed by the wrapper's `[check-collected-tests] vitest exited 1` · exit code after
+  > revert **0**
+  > Probe: `export function uncoveredProbe(n: number): number { return n + 1 }` appended to the shell;
+  > the text reporter showed `index.ts | 50 | 100 | 0 | 50 | 7`. Branches stayed 100% (0 / 0 — the
+  > probe has no branch), so three of the four thresholds fired. All 108 assertions still passed:
+  > the non-zero exit came from the thresholds alone. The file was restored from a copy,
+  > `git diff -- packages/game/` was empty before the green re-run, and the probe was never
+  > committed. **R2 does not occur** — the threshold fails the run, it does not merely print.
 
-- [ ] **REQ-3.12 (Not vacuous):** after `pnpm test`, `coverage/coverage-summary.json` lists
+- [x] **REQ-3.12 (Not vacuous):** after `pnpm test`, `coverage/coverage-summary.json` lists
   `packages/game/src/index.ts` by path, and lists **no** file outside `packages/game/src/`. A list
   of zero files means `include` resolved against the wrong root (R1): this box is red.
-  > Measured: files listed ____ · outside `packages/game/src/`: ____
+  > Measured: files listed **1** — `C:\Users\aalsh\Projects\nel3ab\packages\game\src\index.ts`
+  > (statements 1 / 1, lines 1 / 1, functions 0 / 0, branches 0 / 0), beside the `total` key ·
+  > outside `packages/game/src/`: **0**
+  > **R1 does not occur:** `include` resolves against the root config's directory, not a project
+  > root. Corroborated in the fresh clone of NFR-3.3's box, where `pnpm test` exited 0 and the one
+  > file key was that clone's own `…\fresh\packages\game\src\index.ts`.
 
-- [ ] **NFR-3.7 (Output ignored):** `.gitignore` and `.prettierignore` each contain `coverage/`.
+- [x] **NFR-3.7 (Output ignored):** `.gitignore` and `.prettierignore` each contain `coverage/`.
   After `pnpm test`, `git status --porcelain` shows nothing under `coverage/`, and
   `prettier --check .` passes.
-  > Measured: `.gitignore` ____ · `.prettierignore` ____ · untracked coverage files ____ ·
-  > prettier ____
+  > Measured: `.gitignore` `coverage/` (line 14, under a one-line comment) · `.prettierignore`
+  > `coverage/` (line 20, under a one-line comment) · untracked coverage files **0** —
+  > `git status --porcelain -- coverage/` empty with `coverage/coverage-summary.json` on disk;
+  > `git check-ignore -v` names `.gitignore:14:coverage/`; the fresh clone's status was also clean
+  > after its `pnpm test` · prettier **passes** — `pnpm lint`, whose last step is
+  > `prettier --check .`, ran with `coverage/coverage-summary.json` present: "All matched files use
+  > Prettier code style!"
 
-- [ ] **NFR-3.4 (Six projects, with coverage on):** `pnpm test`'s `[check-collected-tests]` line
+- [x] **NFR-3.4 (Six projects, with coverage on):** `pnpm test`'s `[check-collected-tests]` line
   reports **six** workspace projects, each with ≥ 1 collected file.
-  > Measured: ____ file(s) across ____ project(s); per project ____
+  > Measured: **14** file(s) across **6** project(s); per project `apps/game` 1 · `apps/web` 3 ·
+  > `packages/content` 1 · `packages/game` 1 · `packages/protocol` 1 · `packages/ui` 7 — 108
+  > assertions passed, 0 failed, `[check-collected-tests] OK`, with `--coverage` on. Identical to
+  > the pre-change baseline run without coverage, and to the fresh clone's run.
 
 ---
 

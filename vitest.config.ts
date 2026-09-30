@@ -28,6 +28,24 @@ const project = (name: string, root: string) => ({
 export default defineConfig({
   test: {
     passWithNoTests: false,
+    // REQ-3.12 — full coverage of the rules engine, enforced on every test run
+    // (the owner's decision of 2026-09-30, recorded in
+    // specs/phase-3/requirements.md). Root-level, not per-project: coverage is
+    // one report over the whole run. Exactly two exclusions — test files and
+    // the test-support directory; a third is forbidden by REQ-3.13.
+    //
+    // `enabled` is deliberately NOT set. Coverage switches on only through
+    // `--coverage` in the root `test` script, which the collected-tests wrapper
+    // forwards to Vitest. Were it enabled here, an iteration run such as
+    // `pnpm vitest run packages/game/src/clock.test.ts` would be failed by the
+    // thresholds over files that run never loaded (specs/phase-3/specs.md §2.10).
+    coverage: {
+      provider: 'v8',
+      include: ['packages/game/src/**/*.ts'],
+      exclude: ['packages/game/src/**/*.test.ts', 'packages/game/src/testing/**'],
+      reporter: ['text', 'json-summary'],
+      thresholds: { lines: 100, branches: 100, functions: 100, statements: 100 },
+    },
     projects: [
       project('@nel3ab/game', './packages/game'),
       project('@nel3ab/protocol', './packages/protocol'),
