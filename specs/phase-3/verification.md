@@ -676,15 +676,29 @@ the harness reproduce the planning measurement *before* the engine is judged aga
 
 ## 7. Gate 7 — Coverage and the stack verdict (evaluated once, over the finished phase)
 
-- [ ] **REQ-3.12 (100%, over the right files):** `pnpm test` reports **100** for lines, branches,
+- [x] **REQ-3.12 (100%, over the right files):** `pnpm test` reports **100** for lines, branches,
   functions and statements, and `coverage/coverage-summary.json` lists every non-test source file
   under `packages/game/src/` outside `testing/` that has executable code — `clock.ts`, `index.ts`,
   `reducer.ts`, `room.ts`, `rules.ts` — and nothing under `testing/` or matching `*.test.ts`.
   (`types.ts` has no executable code and may appear with zero statements or not at all; record which.)
-  > Measured: lines ____ · branches ____ · functions ____ · statements ____ · files listed ____ ·
-  > `types.ts` ____ · test or testing files listed ____
+  > Measured: lines **100** (72 / 72) · branches **100** (65 / 65) · functions **100** (16 / 16) ·
+  > statements **100** (86 / 86) · files listed **6**, beside the `total` key, every one under
+  > `packages\game\src\` and every one at 100 on all four metrics — `clock.ts` (statements 16 ·
+  > branches 6 · functions 8 · lines 14), `index.ts` (**0 / 0** on all four), `reducer.ts`
+  > (44 · 43 · 3 · 36), `room.ts` (20 · 16 · 5 · 16), `rules.ts` (6 · 0 / 0 · 0 / 0 · 6), `types.ts` ·
+  > `types.ts` **appears, with 0 statements** (0 / 0 statements, branches, functions and lines) ·
+  > test or testing files listed **0** — 0 keys under `testing/`, 0 matching `*.test.ts`, 0 outside
+  > `packages/game/src/`
+  > `pnpm test`, 2026-09-30, Windows, at `83b5f9a` with the engine byte-identical to it: exit 0,
+  > 20 test files across 6 projects, 318 assertions passed, 0 failed, `[check-collected-tests] OK`.
+  > The text table's per-file rows print empty when every file is at 100 %; its summary block read
+  > Statements 100 % (86/86) · Branches 100 % (65/65) · Functions 100 % (16/16) · Lines 100 % (72/72),
+  > and the per-file values above are read from the JSON. `index.ts` now holds only `export … from`
+  > re-exports, in which v8 counts no statement — so, like `types.ts`, it is listed with 0 / 0 (it
+  > was 1 / 1 in Gate 1, when it still declared `PLACEHOLDER`). `git status --porcelain -- coverage/`
+  > was empty afterwards.
 
-- [ ] **REQ-3.12 (Coverage is not the whole story — named mutations are caught):** each mutation below
+- [x] **REQ-3.12 (Coverage is not the whole story — named mutations are caught):** each mutation below
   is applied alone, `pnpm vitest run packages/game` is run, the failing test is recorded, and the
   mutation is reverted and the suite re-run green. A mutation that fails **only** a coverage threshold
   and no assertion does not count as caught.
@@ -702,8 +716,46 @@ the harness reproduce the planning measurement *before* the engine is judged aga
   | M9 | `tick` tests for zero against the pre-tick `now` | Gate 3 "Zero crossing …" |
   | M10 | `startRound` not inert while `screen === 'play'` | Gate 3 "Start is inert in play …" |
 
-  > Measured: caught ____ / 10 · per mutation: M1 ____ · M2 ____ · M3 ____ · M4 ____ · M5 ____ ·
-  > M6 ____ · M7 ____ · M8 ____ · M9 ____ · M10 ____ · all reverted, suite green ____
+  > Measured: caught **10 / 10**, every one by a failing assertion (no coverage ran: each run was
+  > `pnpm vitest run packages/game`, 211 tests) · per mutation (failing tests of 211, then the
+  > named catcher and what it saw):
+  > M1 **caught, 51** — applied at all three engine sites at once (`remainingMs` in `clock.ts`, the
+  > `tick` zero test in `reducer.ts`, `liveQuestion` in `room.ts`; `testing/invariants.ts`, the
+  > checker, left alone); "Starting a round" fails for both
+  > teams on the remaining-after-one-tick line (45,000, expected 44,900), with Zero crossing ×5, Only
+  > the active bank drains ×2, Table D and the 🚦 verdict among the rest ·
+  > M2 **caught, 15** — "A spend re-anchors the clock" fails for both spends (hint 13,000, expected
+  > 23,000; skip 12,000, expected 22,000) ·
+  > M3 **caught, 12** — "Exactly zero …" fails ×3 (skip at exactly 3,000; hint at exactly 2,000; team
+  > `b`), and Table D differs in exactly S4 (ends never, expected 421; `questionIndex` 1) and S5 (ends
+  > never, expected 431; `hintIndex` 1) ·
+  > M4 **caught, 8** — extraction #1 fails (`HINT_COST_MS / 1000` 2.001, expected 2), with the
+  > user-story "−2s" value, Hint ×2, Skip, re-anchor (hint), Exactly zero (hint) and extraction #5;
+  > **Table D S2 does not fail** — see below ·
+  > M5 **caught, 12** — "Inert during a reveal …" fails for `skip` in all 5 of its states, with
+  > extraction #6, the predicate-agreement box, the invariants, Table D and the 🚦 verdict ·
+  > M6 **caught, 9** — "Only the active bank drains" fails for both teams (`inactiveChanges` ≠ 0),
+  > with `clock.test.ts`'s inactive-team case, Starting a round ×2, Table D and the 🚦 verdict ·
+  > M7 **caught, 8** — Table D differs in exactly S5 (`hintIndex` 1, expected 0) and extraction #8
+  > fails, with Exactly zero (hint) ×2 and extraction #5 ·
+  > M8 **caught, 12** — "Display, exhaustively" fails (the 0 … 90,000 sweep, and the 1 ms, 1,001 ms
+  > and 44,001 ms edges), with extraction #11 and both "shows as 1" cases ·
+  > M9 **caught, 26** — "Zero crossing …" fails ×4 (both teams, 45,000 and 45,001), with additivity
+  > (946 violations), I5 (965 states), Table D and the 🚦 verdict ·
+  > M10 **caught, 1** — "Start is inert in play …" (`startRound` while in play did not return the
+  > same object), the only failing test ·
+  > all reverted, suite green **yes** — after each run the six engine files were restored from a copy,
+  > each file's SHA-256 equalled its pre-mutation value and `git diff --exit-code packages/game/src`
+  > was empty; after all ten, `pnpm vitest run packages/game` passed 7 files, 211 / 211 tests
+  > **One deviation from the "Must be caught by" column — M4 / Table D S2.** S2 (hint, then 430 ticks)
+  > ends at step 431 for any hint cost from 2,000 to 2,099 ms: with 2,001 the bank is −1 rather than
+  > 0 after the 430th tick, and both end the round there. No displayed second changes either — every
+  > live bank reads 43,000 − 100j or 42,999 − 100j, which round up to the same second — so Table D,
+  > the exact-oracle comparison and the 🚦 verdict all pass under M4. Extraction #1, the column's first
+  > catcher, fails, so M4 is caught; at 100 ms granularity S2 pins a hint's cost only to that 2,000 –
+  > 2,099 ms window. Every other row's named catcher failed as the column says.
+  > Method, 2026-09-30, Windows: each mutation applied by exact string replacement (one match
+  > required per site), never committed.
 
 - [ ] **NFR-3.6 (Fast enough to stay in `pnpm test`):** the `@nel3ab/game` project's test duration,
   with coverage on, is under **20 s** on the Windows development machine; the CI run's duration is
