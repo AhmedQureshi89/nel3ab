@@ -53,8 +53,17 @@ export function Button({
       {...rest}
     >
       {children}
+      {/* `<br>` + an inline span, exactly as the prototype writes it — NOT a
+          block element, as specs.md §2.7 says. The second line then keeps
+          the button's own 15.5px strut, which is what makes the prototype's
+          action button 88.67px tall; a block sub-label only has its 11px
+          line box and came out 80.67px (Gate 6, finding 2). Owner's ruling
+          of 2026-09-30: the prototype wins (mission.md §5.3). */}
       {variant === 'action' && subLabel != null && (
-        <span className={styles['sub-label']}>{subLabel}</span>
+        <>
+          <br />
+          <span className={styles['sub-label']}>{subLabel}</span>
+        </>
       )}
     </button>
   )

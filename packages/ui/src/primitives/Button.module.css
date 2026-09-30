@@ -93,8 +93,11 @@
   font-weight: 700;
 }
 
+/*
+ * Inline, after a <br> (Button.tsx) — the prototype's own structure. Not
+ * `display: block`: see Button.tsx for the measured 8px it cost.
+ */
 .sub-label {
-  display: block;
   font-size: 11px;
   font-weight: 700;
   opacity: 0.6;

@@ -24,11 +24,26 @@
  * `[data-theme="light"]` container on a device preferring dark would inherit
  * `:root`'s dark values for any token it does not itself redeclare.
  *
- * --font / --font-en are the ONLY declarations that differ from the reference,
- * and only by routing their first family through the variable next/font/local
+ * --font / --font-en are the ONLY values that differ from the reference, and
+ * only by routing their first family through the variable next/font/local
  * defines (specs.md §2.2). The fallback stacks are intact, so this file works
  * standalone under the styleguide and the tests. tokens.test.ts names this
  * exemption explicitly rather than skipping it silently.
+ *
+ * The five --sh-* shadows are ALSO declared in both dark blocks, with values
+ * identical to the light block's. This is not a new value; it is what makes a
+ * dark SUBTREE correct. A custom property's `var()` is substituted where the
+ * property is declared, not where it is used: `--sh-card: 0 4px 0
+ * var(--stroke)` computed on `:root` already holds the light #241c17, and a
+ * `[data-theme="dark"]` panel lower down that changes only --stroke inherits
+ * that stale value. Measured in Gate 6 (verification.md): Panel, Card lg and
+ * selected-Pill shadows painted rgb(36, 28, 23) in the styleguide's dark
+ * section, against the prototype's rgb(13, 12, 19). The reference file has the
+ * same latent defect; the prototypes never show it because they write every
+ * shadow inline. Owner's ruling of 2026-09-30 (option A: fix it in the token
+ * layer, once, for every consumer). tokens.test.ts derives the set of tokens
+ * that must be re-declared from the reference — any token whose value reads a
+ * theme-varying token — so a future composite token cannot repeat this.
  */
 
 :root,
@@ -114,6 +129,14 @@
     --red: #ff5a3c;
 
     /* --sky, --yellow, --leaf are unchanged across themes */
+
+    /* Re-declared, values unchanged: var(--stroke) must resolve in THIS theme.
+       See the header — a dark subtree otherwise inherits the light ink. */
+    --sh-card: 0 4px 0 var(--stroke);
+    --sh-sel: 0 3px 0 var(--stroke);
+    --sh-act: 0 5px 0 var(--stroke);
+    --sh-cta: 0 6px 0 var(--stroke);
+    --sh-hero: 0 8px 0 var(--stroke);
   }
 }
 
@@ -127,4 +150,12 @@
   --red: #ff5a3c;
 
   /* --sky, --yellow, --leaf are unchanged across themes */
+
+  /* Re-declared, values unchanged: var(--stroke) must resolve in THIS theme.
+     See the header — a dark subtree otherwise inherits the light ink. */
+  --sh-card: 0 4px 0 var(--stroke);
+  --sh-sel: 0 3px 0 var(--stroke);
+  --sh-act: 0 5px 0 var(--stroke);
+  --sh-cta: 0 6px 0 var(--stroke);
+  --sh-hero: 0 8px 0 var(--stroke);
 }

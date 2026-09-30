@@ -744,6 +744,29 @@ of the three product pillars are visual, and `renderToStaticMarkup` exercises no
   > 5. ✅ **FIXED in this commit — the styleguide's own sample text.** Its action sub-labels
   >    were attached to the wrong buttons. Now the prototype's: تخطي `−٣ ثوانٍ`, تلميح
   >    `−٢ ثانية · باقي 2`, صحيح `يمرّ الدور`. Content only; no primitive changed.
+  >
+  > **Owner's rulings on 1–4, 2026-09-30 ("go with your recommendations"), and what was done:**
+  > 1. ✅ **FIXED** (`0b9af31`, REQ-2.5) — option A. The five `--sh-*` are re-declared, values
+  >    byte-identical, in both dark blocks of `tokens.css`. `tokens.test.ts` derives the set to
+  >    re-declare from the reference (every light token whose value reads a themed token —
+  >    exactly the five `--sh-*`) and requires both dark blocks to hold 7 + 5 = 12 tokens, no
+  >    other. Re-measured in the browser, all four combinations: device light → dark-section
+  >    Panel / Card md / Card lg / selected Pill / Buttons all `rgb(13, 12, 19)`, light section
+  >    all `rgb(36, 28, 23)`; device dark (`prefers-color-scheme` emulated) → the light section
+  >    still `rgb(36, 28, 23)`, the dark section `rgb(13, 12, 19)`. Matches the prototype.
+  > 2. ✅ **FIXED** (`b800fc1`, REQ-2.10) — the prototype wins over specs.md §2.7's "block
+  >    element". `Button` renders `label<br><span>` with the sub-label inline, exactly the
+  >    prototype's structure, and a test reads that structure from the prototype. Re-measured:
+  >    all **12** action Buttons (3 tones × enabled/disabled × 2 themes) are **88.67px** tall,
+  >    sub-label top **49px**, bottom gap **21px** — identical to the prototype on all three.
+  > 3. ⏭ **DEFERRED to Phase 5** — no change here. The judge-choice pill (`6px 14px`) belongs to
+  >    the setup screen's judge card, which Phase 5 builds; that phase decides whether it is a
+  >    `Pill` variant or a second primitive. `Pill` keeps the player-chip shape REQ-2.9 names.
+  > 4. ✅ **NO CHANGE** — primary stays 20px, the value specs.md §2.7 chose from the prototype's
+  >    own two (19px / 20px); already recorded in `Button.module.css`'s header.
+  > The spec text for 1 and 2 (specs.md §2.3's two dark blocks, §2.7's "block element") is now
+  > behind the implementation, as with the earlier Dot, `composes` and `next.config.ts`
+  > rulings; recording those as amendments is the owner's call and is not done here.
 
 - [x] 👁 **REQ-2.8 (The press):** a primary Button and an action Button are pressed and held next
   to the prototype's. The control moves down and the shadow shrinks by the same amount; it does
