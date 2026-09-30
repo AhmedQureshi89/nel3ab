@@ -202,24 +202,38 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
 
 ## 2. Gate 2 — The state, the constructor and the prototype's numbers (block 2–5; see Gate ordering)
 
-- [ ] **REQ-3.1 (The contract, field for field):** `room.test.ts` enumerates the **22** handoff names
+- [x] **REQ-3.1 (The contract, field for field):** `room.test.ts` enumerates the **22** handoff names
   of [specs.md](specs.md) §2.1's table and asserts each mapped path exists on `createRoom(…)`'s
   result; `Object.keys` of the state is **exactly** the 20 top-level keys, of `clock` exactly its 4,
   of `config` exactly its 2.
-  > Measured: handoff names checked ____ / 22 · unmapped ____ · top-level keys ____ / 20 ·
-  > clock keys ____ / 4 · config keys ____ / 2 · extra keys ____
+  > Measured: handoff names checked 22 / 22 · unmapped 0 · top-level keys 20 / 20 ·
+  > clock keys 4 / 4 · config keys 2 / 2 · extra keys 0
+  > Paths are walked by own property (`Object.hasOwn`), so an inherited name never counts as present;
+  > the table's two `+` rows (`clock.now`, `clock.runningSince`) are asserted present too. The three
+  > expected key sets are derived from the table's paths **and** equal the written-out lists, so a key
+  > added without a table row fails. Bite check (2026-09-30, reverted): an extra top-level key in
+  > `createRoom` failed this test and the initial-state test.
 
-- [ ] **REQ-3.2 (Initial state):** a room created with only `roomCode`, `teamA`, `teamB` has every
+- [x] **REQ-3.2 (Initial state):** a room created with only `roomCode`, `teamA`, `teamB` has every
   value of [specs.md](specs.md) §2.4's table — including `clock` `{ now: 0, active: 'a',
   runningSince: null, banks: { a: { ms: 45000, started: false }, b: { ms: 45000, started: false } } }`
   and `config` `{ roundSeconds: 45, winsNeeded: 3 }`.
-  > Measured: fields asserted ____ · mismatches ____
+  > Measured: fields asserted 20 top-level (27 leaf values: 18 plain fields, `config`'s 2, `clock`'s
+  > `now` / `active` / `runningSince` and both banks' `ms` / `started`) in one `toStrictEqual`, which
+  > distinguishes `null` from `undefined` and rejects an added or missing key · mismatches 0
+  > A second test confirms `roomCode`, `teamA` and `teamB` are passed through from the input as given.
 
-- [ ] **REQ-3.2 (Configuration range):** all **15** of 20, 25 … 90 are accepted as `roundSeconds`,
+- [x] **REQ-3.2 (Configuration range):** all **15** of 20, 25 … 90 are accepted as `roundSeconds`,
   and each accepted value yields banks of `roundSeconds × 1000`; `15, 19, 21, 44, 46, 47, 95, 0, −45,
   45.5, NaN` each throw `RangeError`. `2, 3, 4` are accepted as `winsNeeded`; `1, 5, 0, 3.5, NaN` each
   throw `RangeError`. Nothing is clamped.
-  > Measured: accepted ____ / 15 and ____ / 3 · rejected ____ / 11 and ____ / 5 · error type ____
+  > Measured: accepted 15 / 15 and 3 / 3 · rejected 11 / 11 and 5 / 5 · error type `RangeError`
+  > One `test.for` case per value (34 cases). Each accepted `roundSeconds` yields both banks
+  > `{ ms: roundSeconds × 1000, started: false }`; each rejection's message names the field
+  > (`roundSeconds must be one of` / `winsNeeded must be one of`) and the value (`got NaN`, `got -45`,
+  > `got 45.5`, …). The case lists are written out in the test, not imported from `rules.ts`. Bite
+  > check (2026-09-30, reverted): replacing the membership test with a 20–90 range check failed the
+  > 21, 44, 46, 47 and 45.5 cases.
 
 - [ ] **REQ-3.10 (Numbers read from the prototype):** `rules.test.ts` extracts each of the following
   from `design/designs/Nel3ab - Arcade.dc.html` at run time, asserts its **match count**, and asserts
@@ -257,9 +271,13 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   > Measured: values checked ____ / 90,001 · mismatches ____ · edges ____ / 7 · negatives
   > `Object.is` 0 ____ / 4 · non-finite throws ____ / 3
 
-- [ ] **REQ-3.6 (Current question):** `currentQuestion` returns `null` on an empty pool (a fresh
+- [x] **REQ-3.6 (Current question):** `currentQuestion` returns `null` on an empty pool (a fresh
   room), and `pool[i mod n]` otherwise — for a pool of 3, indices 0…6 yield entries 0,1,2,0,1,2,0.
-  > Measured: empty pool ____ · wrap sequence ____
+  > Measured: empty pool `null` (a fresh room at index 0, and the same room at index 4) · wrap
+  > sequence 0, 1, 2, 0, 1, 2, 0 — by identity (`pool.indexOf` of the returned object), over states
+  > built by spreading a created room with a synthetic three-question pool
+  > `room.ts` alone under `pnpm test`: statements 12 / 12, branches 10 / 10, functions 3 / 3,
+  > lines 11 / 11 — both sides of `?? null` reached, with no `!`.
 
 ---
 
