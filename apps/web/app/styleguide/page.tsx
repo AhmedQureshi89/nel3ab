@@ -85,24 +85,24 @@ function Samples({ theme }: { theme: 'light' | 'dark' }) {
             <span>▶</span>
           </Button>
           <div className={styles.actions}>
-            <Button variant="action" subLabel="يمرّ الدور">
+            <Button variant="action" subLabel="−٣ ثوانٍ">
               تخطي ⏭
             </Button>
-            <Button variant="action" data-tone="yellow" subLabel="−٣ ثوانٍ">
+            <Button variant="action" data-tone="yellow" subLabel="−٢ ثانية · باقي 2">
               تلميح 💡
             </Button>
-            <Button variant="action" data-tone="leaf">
+            <Button variant="action" data-tone="leaf" subLabel="يمرّ الدور">
               صحيح ✔
             </Button>
           </div>
           <div className={styles.actions}>
-            <Button variant="action" disabled subLabel="يمرّ الدور">
+            <Button variant="action" disabled subLabel="−٣ ثوانٍ">
               تخطي ⏭
             </Button>
-            <Button variant="action" data-tone="yellow" disabled subLabel="−٣ ثوانٍ">
+            <Button variant="action" data-tone="yellow" disabled subLabel="−٢ ثانية · باقي 2">
               تلميح 💡
             </Button>
-            <Button variant="action" data-tone="leaf" disabled>
+            <Button variant="action" data-tone="leaf" disabled subLabel="يمرّ الدور">
               صحيح ✔
             </Button>
           </div>

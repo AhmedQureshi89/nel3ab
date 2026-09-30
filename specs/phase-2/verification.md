@@ -686,32 +686,117 @@ dark, and a button press visually matches the prototype exactly."* Nothing above
 of the three product pillars are visual, and `renderToStaticMarkup` exercises no CSS, no
 `:active`, no `:focus-visible`, no `@media` and no bidi (specs.md §4, R6).
 
-- [ ] 👁 **REQ-2.11 (Side-by-side comparison):** with the prototype open in one window and
+> **Who performed Gate 6, recorded so it is not mistaken for something else.** On 2026-09-30 the
+> owner directed Claude (`claude-opus-5-5`) to perform this pass itself ("check it your self").
+> It was performed in the Claude desktop app's built-in Chromium browser, not by a human eye:
+> `/styleguide` from `next dev` at `fefcc02`, beside `design/designs/Nel3ab - Arcade.dc.html`
+> served by `python -m http.server` from `design/designs/` (read-only; the prototype needs its
+> `support.js` runtime, which a `file://` snapshot does not execute). Where a human would judge
+> by eye, the comparison used **computed styles** of matched elements on both pages — what the
+> browser actually paints — plus screenshots. Both pages render at the same device-pixel ratio,
+> so Chromium's border snapping (3px → 2.667px, 2.5px → 2px) is identical on both sides and
+> cancels out. The owner may re-perform any box by eye; nothing here stops that.
+
+- [x] 👁 **REQ-2.11 (Side-by-side comparison):** with the prototype open in one window and
   `/styleguide` in another, each primitive is compared against its prototype counterpart on
   **colour, radius, border width, shadow offset, padding and type size**, in both themes. Every
   deviation found is written down here — including the ones that were fixed.
-  > Observed: ____
+  > Observed: counterparts, all measured from the live prototype — Panel ↔ the setup cards
+  > (`var(--r)`); Card lg ↔ the play-screen question card; Pill ↔ the player chips and the judge
+  > choices; Dot ↔ the play timer dots (9px) and round-end score dots (11px); Button primary ↔
+  > the setup / ready / round-end CTAs; action ↔ تخطي / تلميح / صحيح; secondary ↔ رجوع للإعداد.
+  > **Identical in both themes** on border width, border colour, radius, fill, text colour,
+  > padding, type size/weight and shadow offset: Panel (3px · 20px · 14px · `0 4px 0`), Card lg
+  > (24px · `0 6px 0` · `overflow: hidden` · 0 padding), the player chip (2.5px · 999px ·
+  > `4px 8px 4px 12px` physical under RTL · 13.5px/700 · red/sky on white), Dot sm and md (9px /
+  > 11px, won `--yellow`, not won `--sunken` in both themes), primary (3px · 18px · `17px 20px` ·
+  > 800 · `space-between` · `0 6px 0`), action ×3 tones (3px · 18px · `15px 8px` · 15.5px/800 ·
+  > `0 5px 0` · `nowrap`; sub-label 11px/700/.6; leaf text `#0d2b1b`), secondary (2.5px · 16px ·
+  > 13px · 15px/700 · no shadow). Page ground `#fff3df` / `#1c1a25` and `--muted` match.
+  > **Deviations — 1 fixed, 4 open:**
+  > 1. 🔴 **OPEN — dark-subtree shadows use the light ink (REQ-2.5 defect).** In the
+  >    `[data-theme="dark"]` section, Panel, Card lg and selected-Pill shadows render
+  >    `rgb(36, 28, 23)` (light `--stroke`); the prototype's dark shadows are all
+  >    `rgb(13, 12, 19)`. Buttons are correct. Cause: `--sh-card` / `--sh-sel` / `--sh-cta` are
+  >    declared as `0 Npx 0 var(--stroke)` in the light block only, and a custom property's
+  >    `var()` is resolved **where it is declared** — so the value inherited into a dark subtree
+  >    already holds the light `--stroke`. `press.module.css` writes `var(--stroke)` directly,
+  >    which is why Buttons escape it. Whole-page dark (`@media` on `:root`, the product today)
+  >    is **not** affected; any `data-theme="dark"` below the root is. Inherited from
+  >    `design/arcade-tokens.css` itself; the prototype never shows it because it writes every
+  >    shadow inline. Gate 2's "Themes nest" box asserted selectors, not resolution, and could
+  >    not see this. Owner's ruling needed on the fix (see the phase's open rulings).
+  > 2. 🟡 **OPEN — the action sub-label sits 8px shorter than the prototype's.** Action buttons
+  >    measure **80.67px** tall here against **88.67px** in the prototype, sub-label top at
+  >    44.33px against 49px. Every declared value matches; the geometry does not. The prototype
+  >    writes `label<br><span>sub</span>`, so the sub-label shares a line box whose strut is the
+  >    button's 15.5px font; specs.md §2.7 specifies "a block element", whose line box is the
+  >    11px span's alone. Spec and prototype disagree; `mission.md` §5.3 says the prototype
+  >    wins. Owner's ruling needed.
+  > 3. 🟡 **OPEN — the prototype has two pill shapes; `Pill` implements one.** The player chip
+  >    is `4px 8px 4px 12px`; the judge choice (unselected panel, selected `--yellow` +
+  >    `0 3px 0`) is `6px 14px`, 13.5px/700. `Pill selected` reproduces the selected judge
+  >    choice's fill and shadow, but with the chip's padding. REQ-2.9 names only the one shape.
+  >    Owner's ruling needed.
+  > 4. 🟡 **OPEN — primary CTA text size varies inside the prototype.** 20px on setup, **19px**
+  >    on ready and round end (measured). specs.md §2.7 chose 20px; already noted in
+  >    `Button.module.css`'s header. Recorded here as observed.
+  > 5. ✅ **FIXED in this commit — the styleguide's own sample text.** Its action sub-labels
+  >    were attached to the wrong buttons. Now the prototype's: تخطي `−٣ ثوانٍ`, تلميح
+  >    `−٢ ثانية · باقي 2`, صحيح `يمرّ الدور`. Content only; no primitive changed.
 
-- [ ] 👁 **REQ-2.8 (The press):** a primary Button and an action Button are pressed and held next
+- [x] 👁 **REQ-2.8 (The press):** a primary Button and an action Button are pressed and held next
   to the prototype's. The control moves down and the shadow shrinks by the same amount; it does
   not scale, fade or blur. A disabled Button does not move.
-  > Observed: ____
+  > Observed: all **20** Buttons on the page, both themes. The served `:active` rule —
+  > `.press_press__…:active:not(:disabled, [aria-disabled="true"]) { transform:
+  > translateY(var(--press-travel)); box-shadow: 0 calc(var(--press-rest) -
+  > var(--press-travel)) 0 var(--stroke) }` — was copied verbatim onto a `[data-sim-active]`
+  > selector and applied to each Button in turn: primary moves **4px**, shadow `0 6px 0` →
+  > `0 2px 0`; action (panel, yellow, leaf) moves **3px**, `0 5px 0` → `0 2px 0` — the prototype's
+  > own `style-active` pairs. Width and height unchanged (no scale), opacity unchanged, `filter:
+  > none`; the pressed shadow is `--stroke` in each theme (`rgb(36,28,23)` / `rgb(13,12,19)`).
+  > Every disabled Button: **0px**, shadow unchanged. Secondary: 0px, no shadow at rest or
+  > pressed. **Limit:** the browser tool cannot hold a physical pointer down while it captures,
+  > so the pressed state was produced by the page's own rule under a copied selector, not by a
+  > held click; the same cascade and the same custom properties resolved it.
 
-- [ ] 👁 **REQ-2.7 (Bidi, in a browser):** an Arabic sentence containing an `.ltr-num` run
+- [x] 👁 **REQ-2.7 (Bidi, in a browser):** an Arabic sentence containing an `.ltr-num` run
   (a room code and a two-digit clock) renders with the Latin run in Archivo, in Latin order,
   without dragging its neighbouring Arabic or punctuation out of place. Checked in both themes.
-  > Observed: ____
+  > Observed: `رمز الغرفة SKZJ62، وبقي 45 ثانية.`, both themes, positions read from
+  > `Range.getBoundingClientRect()`. Visual order right to left is exactly `رمز الغرفة` →
+  > `SKZJ62` → `، وبقي` → `45` → `ثانية.`, the logical order. Inside the runs, `S K Z J 6 2` and
+  > `4 5` advance left to right. The Arabic comma sits flush against the code's left edge (gap
+  > **0px**), not stranded at the far end. Computed family: `archivo` on both runs, `baloo` on
+  > the sentence; `direction: ltr` and `unicode-bidi: isolate` on the runs. Screenshot agrees.
 
-- [ ] 👁 **REQ-2.6 (Focus ring):** tabbing through the styleguide shows the 3px red
+- [x] 👁 **REQ-2.6 (Focus ring):** tabbing through the styleguide shows the 3px red
   `:focus-visible` ring with 3px offset on every focusable control, and **no default browser ring
   anywhere**. Clicking a control with a mouse does not show it.
-  > Observed: ____
+  > Observed: **18** real `Tab` key presses from the top of the page visited all **12**
+  > focusable controls (5 enabled Buttons and the link, per theme; disabled Buttons are skipped),
+  > then wrapped. Every one matched `:focus-visible` with `outline: solid 3px` (painted 2.667px)
+  > at offset 3px, in `--red` for its own theme — `rgb(236, 48, 19)` light, `rgb(255, 90, 60)`
+  > dark. **0** default browser rings. The one ring-less stop was Next's dev-tools portal
+  > (`NEXTJS-PORTAL`), which is not page content and is absent from a production build. Mouse:
+  > with focus cleared, a click on the primary Button focused it with `:focus-visible` **false**
+  > and `outline-style: none`. (A first attempt clicked the Button already focused by Tab, which
+  > correctly keeps its ring; it was discarded as an invalid test and repeated as above.)
 
-- [ ] 👁 **R5 (Reference vs prototype discrepancies):** any value the prototypes use that
+- [x] 👁 **R5 (Reference vs prototype discrepancies):** any value the prototypes use that
   `design/arcade-tokens.css` does not carry, noticed during the comparison, is recorded here.
   `mission.md` §5.3 says the prototype wins, so each one is a spec amendment to raise — **not** a
   token to add during this phase (requirements §4).
-  > Observed: ____
+  > Observed: **no new token** was found missing — every colour, radius, border and shadow
+  > offset measured on the prototype's setup, ready, play and round-end screens is a value
+  > `arcade-tokens.css` carries. What the comparison did find is recorded under Side-by-side
+  > comparison above and raised, not added: (1) the reference's `--sh-*` tokens mis-resolve in a
+  > dark subtree — a defect in how the reference composes tokens, invisible in the prototype
+  > because it writes shadows inline; (2) the sub-label's line geometry, a spec-vs-prototype
+  > disagreement; (3) the judge-choice pill's `6px 14px` padding, a shape REQ-2.9 does not name;
+  > (4) the 19px / 20px primary CTA. The prototype's debug top bar (12px pills, `5px 14px`) was
+  > seen and ignored — `roadmap.md` Phase 5 removes it as not part of the product.
 
 ---
 
