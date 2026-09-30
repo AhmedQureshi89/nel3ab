@@ -245,7 +245,7 @@ function checkEveryStep(): Tally {
     }
 
     try {
-      runEngine(run, visit, { ...ENGINE, reduce: frozenTwice })
+      runEngine(run, { visit, engine: { ...ENGINE, reduce: frozenTwice } })
     } catch (error) {
       if (!(error instanceof FrozenInputWrite)) throw error
     }
@@ -388,11 +388,11 @@ describe('REQ-3.3: no ambient time, randomness or timers — at run time', () =>
     let live: boolean[]
     try {
       for (const sequence of sequences(sample)) {
-        steps += runEngine(generatedRun(sample, sequence), visit, counted).stepsConsumed
+        steps += runEngine(generatedRun(sample, sequence), { visit, engine: counted }).stepsConsumed
         runs += 1
       }
       for (const scenario of SCENARIOS) {
-        steps += runEngine(scenarioRun(scenario), visit, counted).stepsConsumed
+        steps += runEngine(scenarioRun(scenario), { visit, engine: counted }).stepsConsumed
         runs += 1
       }
       during = Object.fromEntries(

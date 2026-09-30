@@ -571,39 +571,80 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
 The ordinary boxes come first and in this order: they prove that the generator, the two oracles and
 the harness reproduce the planning measurement *before* the engine is judged against any of them.
 
-- [ ] **REQ-3.11 (Generator fingerprint):** `mulberry32(SEED)` and the verdict sample's sequence 0
+- [x] **REQ-3.11 (Generator fingerprint):** `mulberry32(SEED)` and the verdict sample's sequence 0
   reproduce Table C exactly.
-  > Measured: first three draws ____ · sequence 0 first six non-tick events ____
+  > Measured: first three draws **0.6190389520 · 0.3909395928 · 0.0691457547** (`toFixed(10)` of
+  > 0.6190389520488679, 0.3909395928494632, 0.06914575467817485) · sequence 0 first six non-tick
+  > events **100 correct · 159 hint · 174 skip · 199 skip · 272 skip · 303 correct** (rate 0.01,
+  > starting team `a`)
+  > `prototype-equivalence.test.ts`: one `toStrictEqual` against Table C written out, with `SEED`
+  > asserted to be `0x20260930`; sequence 0 is the first yielded by `sequences(VERDICT_SAMPLE)`, the
+  > sample's shared generator.
 
-- [ ] **REQ-3.11 (Oracle anchors):** the float oracle reproduces **every** float row of Table A —
+- [x] **REQ-3.11 (Oracle anchors):** the float oracle reproduces **every** float row of Table A —
   including the one-tick-late ends at 80, 85 and 90 s and the wrong-second counts at 65–90 s — and the
   exact oracle every exact row. An oracle that does not reproduce the prototype's known defects is not
   transcribing the prototype (R3).
-  > Measured: float rows matched ____ / 30 · exact rows matched ____ / 30
+  > Measured: float rows matched **30** / 30 · exact rows matched **30** / 30
+  > Float: ticks to end 200 … 750 at 20–75 s and **801 · 851 · 901** at 80 · 85 · 90 s; wrong-second
+  > ticks 0 at 20–60 s and **4 · 29 · 54 · 80 · 85 · 90** at 65–90 s. Exact: ticks to end 10·S at every
+  > length; wrong-second ticks 0 everywhere. `testing/prototype-oracle.ts`, one function with the two
+  > arithmetics of specs.md §2.8, driven by 'tick' alone from a full bank; a wrong-second tick is one
+  > after which the oracle's own bank is still above zero and its displayed second is not
+  > `Math.ceil((10·S − k) / 10)` — the definition above Table A. Bite check (2026-09-30, reverted): a
+  > float display that rounds its drift away (`Math.ceil(Math.round(v * 10) / 10)`) matched 24 / 30,
+  > the six non-zero wrong-second counts going to 0.
 
-- [ ] **REQ-3.11 (Oracle against oracle):** the float and exact oracles, run through the harness,
+- [x] **REQ-3.11 (Oracle against oracle):** the float and exact oracles, run through the harness,
   reproduce Table B — every diverging-sequence count and every steps-consumed total, for all 16
   rows. If Table C matched and this does not, the harness departs from [specs.md](specs.md) §2.8: fix
   the harness, never the table. If the harness is shown to match §2.8 and the numbers still differ,
   **stop and record** — the planning measurement itself was wrong, and the verdict below would rest
   on it.
-  > Measured: rows matched ____ / 16 · diverging counts ____ · steps consumed ____
+  > Measured: rows matched **16** / 16 · diverging counts **0** (verdict) · 51 · 1 · 0 · 0 · 0 · 0 · 0 ·
+  > 0 · 0 · 165 · 192 · 193 · 192 · 191 · 189 (per-length, 20 … 90 s) · steps consumed **2,422,066**
+  > (verdict) · 30,373 · 34,012 · 38,528 · 42,157 · 45,306 · 51,299 · 52,582 · 54,604 · 57,798 · 59,370 ·
+  > 63,901 · 62,545 · 65,081 · 72,902 · 71,514 — every value equal to Table B's.
+  > 13,000 sequences (10,000 + 15 × 200), each run once through `testing/harness.ts`, the two oracles
+  > in lockstep, with the stop rule timed by the **exact oracle's** first terminal step as §2.8
+  > specifies (this commit switches the trigger from the engine stand-in used until the oracle
+  > existed). Bite checks (2026-09-30, each reverted): timing the stop rule by the float oracle instead
+  > matched 11 / 16 rows; consuming `TAIL` + 1 events after the trigger matched 0 / 16.
 
-- [ ] **REQ-3.4 (The engine is exact arithmetic):** across the 13 scripted scenarios, all 3,000
+- [x] **REQ-3.4 (The engine is exact arithmetic):** across the 13 scripted scenarios, all 3,000
   per-length sequences and all 10,000 verdict sequences, the engine's observation equals the **exact**
   oracle's at every consumed step, and the losing team is the same in every sequence that ends. This
   is the engine's correctness box: a failure here is an engine bug — fix it before anything below.
-  > Measured: sequences ____ · steps ____ · diverging sequences **____** · loser mismatches ____
+  > Measured: sequences **13,013** (13 scenarios + 3,000 per-length + 10,000 verdict) · steps
+  > **3,231,120** (7,082 + 801,972 + 2,422,066, each one compared) · diverging sequences **0**
+  > (scenarios 0, per-length 0, verdict 0) · loser mismatches **0**, over 5,694 sequences whose round
+  > ends (11 scenarios, 1,266 per-length, 4,417 verdict)
+  > After every consumed event the engine's observation — `displaySeconds(remainingMs(…))` for each
+  > team, `screen === 'roundEnd'`, `reveal !== null` and the two indices — is compared entry by entry
+  > (`Object.is`) with the exact oracle's. No engine change was needed: `reducer.ts`, `clock.ts`,
+  > `room.ts`, `rules.ts`, `types.ts` and `index.ts` have empty diffs. Bite check (2026-09-30,
+  > reverted): a `skip` that kept `hintIndex` instead of resetting it failed this box and Table D's.
 
-- [ ] **REQ-3.11 (Scripted scenarios):** the engine reproduces Table D exactly — the step at which
+- [x] **REQ-3.11 (Scripted scenarios):** the engine reproduces Table D exactly — the step at which
   each round ends, the final indices, and team `b` reading 45 throughout.
-  > Measured: scenarios matched ____ / 13 (S1–S12 with S9′)
+  > Measured: scenarios matched **13** / 13 (S1–S12 with S9′)
+  > Ends at 450 · 431 · 392 · 421 · 431 · 441 · 413 · never · never · 450 · 403 · 363 · 336; final
+  > indices as the table; team `b` reads 45 at every state from the started round on, in all 13. From
+  > the table's last column as well: S8 ends with the reveal up and team `a` reading 35 at every state
+  > from the reveal on; S9 is live with team `a` reading 1; each of the 11 rounds that end leaves its
+  > bank at exactly 0. Every scenario is consumed in full (7,082 events — S8's final hint, skip and
+  > correct come 1,000 ticks after its reveal). The exact oracle, run alone through each scenario,
+  > reproduces the same 13 rows. The float oracle is not stepped on any scenario.
 
-- [ ] **REQ-3.4 (The decision's cost, recorded):** the engine's diverging-sequence count against the
+- [x] **REQ-3.4 (The decision's cost, recorded):** the engine's diverging-sequence count against the
   **float** oracle, per per-length row, equals Table B's float-vs-exact count for that row — the cost
   of the owner's 2026-09-30 decision, measured on the engine itself rather than on a stand-in.
-  > Measured: 20 ____ · 25 ____ · 30 ____ · 35 ____ · 40 ____ · 45 ____ · 50 ____ · 55 ____ ·
-  > 60 ____ · 65 ____ · 70 ____ · 75 ____ · 80 ____ · 85 ____ · 90 ____ · rows equal to Table B ____ / 15
+  > Measured: 20 **51** · 25 **1** · 30 **0** · 35 **0** · 40 **0** · 45 **0** · 50 **0** · 55 **0** ·
+  > 60 **0** · 65 **165** · 70 **192** · 75 **193** · 80 **192** · 85 **191** · 90 **189** · rows equal to Table B **15** / 15
+  > Per-length sample only (`SEED + roundSeconds`, 200 each). In every row the diverging sequences are
+  > the same ones, by index, as the float-vs-exact ones of the "Oracle against oracle" box: the engine
+  > departs from the prototype's arithmetic exactly where exact arithmetic does. The verdict sample and
+  > the scripted scenarios were not compared with the float oracle.
 
 - [ ] 🚦 **REQ-3.11 (A 45-second round ends as it does in the prototype) (VERDICT GATE — no retry):**
   with every box above in this gate ticked, the engine and the **float** oracle — the prototype's
