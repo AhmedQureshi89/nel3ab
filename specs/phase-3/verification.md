@@ -481,27 +481,51 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   **0** spy calls.
   > Measured: calls made ____ · spy invocations ____
 
-- [ ] **REQ-3.3 (… and in the source):** the grep of §7 over non-test, non-`testing/` source under
+- [x] **REQ-3.3 (… and in the source):** the grep of §7 over non-test, non-`testing/` source under
   `packages/game/src/` for `Date`, `Math.random`, `performance`, `setTimeout`, `setInterval`,
   `setImmediate`, `queueMicrotask`, `crypto`, `process`, `fetch`, `console` finds **0** occurrences
   in code. Any occurrence inside a comment is listed here and classified, not filtered away.
-  > Measured: hits in code ____ · hits in comments ____ (listed: ____)
+  > Measured: hits in code **0** · hits in comments **0** (listed: none — the grep printed no line)
+  > The word-boundary grep as written in §8 (the box's "§7"), over the 6 files it covers — `clock.ts`,
+  > `index.ts`, `reducer.ts`, `room.ts`, `rules.ts`, `types.ts`; no `testing/` exists yet. A broader
+  > case-insensitive substring sweep of the same files, with no word boundaries, finds 3 comment
+  > lines and 0 code lines, none a hit of the gate's pattern, all prose: `index.ts:6` and
+  > `reducer.ts:5` ("random number", stating the purity rule) and `room.ts:45` ("unvalidated").
 
-- [ ] **NFR-3.2 (Dependency-free):** `packages/game/package.json` has no `dependencies`,
+- [x] **NFR-3.2 (Dependency-free):** `packages/game/package.json` has no `dependencies`,
   `devDependencies` or `peerDependencies` key; every `import … from` in non-test, non-`testing/`
   source under `packages/game/src/` is a relative path.
-  > Measured: dependency keys ____ · non-relative imports ____
+  > Measured: dependency keys **0** · non-relative imports **0**
+  > The manifest's keys are `name`, `version`, `private`, `type`, `main`, `types`, `exports`,
+  > `scripts` (no `optionalDependencies` either), unchanged since the phase plan (`git diff b7c46e0`
+  > empty). §8's import grep printed nothing; all 13 `import`/`export … from` statements in the 6
+  > files are `./`-relative (`clock.ts` 1, `index.ts` 5, `reducer.ts` 4, `room.ts` 3), and there is no
+  > `import(` or `require(`.
 
-- [ ] **NFR-3.5 (Exact public surface):** `index.test.ts` asserts the sorted `Object.keys` of the
+- [x] **NFR-3.5 (Exact public surface):** `index.test.ts` asserts the sorted `Object.keys` of the
   package equal the **12** names of [specs.md](specs.md) §2.6 exactly; `PLACEHOLDER` is absent; no
   export comes from `clock.ts`'s internal table or from `testing/`.
-  > Measured: runtime exports ____ / 12 · extra ____ · missing ____ · `PLACEHOLDER` present ____
+  > Measured: runtime exports **12** / 12 · extra **0** · missing **0** · `PLACEHOLDER` present **no**
+  > `index.test.ts`, 4 tests: the sorted keys `toStrictEqual` the 12 names written out; the `typeof`
+  > of every export in one `toStrictEqual` (6 `function`, 4 `number`, 2 `object` — the option lists);
+  > `'PLACEHOLDER' in game` is `false`; `roundMs`, `startClock`, `settleActive`, `stopClock`,
+  > `zeroActive` and room.ts's `liveQuestion` are each present in their own module and absent from the
+  > package (6 / 6). No `testing/` exists; the exact list admits nothing from it. Types: all 14 of
+  > §2.1 are `export type`d — a scratch file outside the repo importing all 14 through
+  > `packages/game/src/index.js` typechecks (exit 0), and a control importing `roundMs` fails TS2305.
+  > Bite checks (2026-09-30, each reverted, `index.ts` SHA-256 identical after): leaking `roundMs`
+  > failed 3 of 4 tests; restoring `PLACEHOLDER` failed 3 of 4; dropping `remainingMs` failed 2 of 4.
 
-- [ ] **NFR-3.4 (The two broken tests were updated, not deleted):** `packages/game/src/index.test.ts`
+- [x] **NFR-3.4 (The two broken tests were updated, not deleted):** `packages/game/src/index.test.ts`
   and `apps/game/src/index.test.ts` both exist and pass; the latter imports `createRoom` from
   `@nel3ab/game` and still asserts that `@nel3ab/protocol` and `@nel3ab/content` resolve.
   `apps/game/src/index.ts` is unchanged.
-  > Measured: both present ____ · both pass ____ · `apps/game/src/index.ts` diff ____
+  > Measured: both present **yes** · both pass **yes** — 4 tests and 2 tests, inside `pnpm test`'s 18
+  > files across 6 projects (`packages/game` 5 files, `apps/game` 1) · `apps/game/src/index.ts` diff
+  > **empty** (`git diff --exit-code` exit 0)
+  > The apps/game test now asserts `[typeof createRoom, PROTOCOL, CONTENT]` equals
+  > `['function', true, true]`; its name and its shell-export test are unchanged, and
+  > `packages/protocol`, `packages/content` and both app/package manifests have empty diffs.
 
 ---
 
