@@ -235,7 +235,7 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   > check (2026-09-30, reverted): replacing the membership test with a 20–90 range check failed the
   > 21, 44, 46, 47 and 45.5 cases.
 
-- [ ] **REQ-3.10 (Numbers read from the prototype):** `rules.test.ts` extracts each of the following
+- [x] **REQ-3.10 (Numbers read from the prototype):** `rules.test.ts` extracts each of the following
   from `design/designs/Nel3ab - Arcade.dc.html` at run time, asserts its **match count**, and asserts
   it against the engine. Counts verified against the file on 2026-09-30:
 
@@ -258,11 +258,33 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   And from `design/user-stories.md`'s numeric rules (lines beginning `- **`): **4** values —
   `45s`, `−2s`, `−3s`, `3` — against `ROUND_SECONDS_DEFAULT`, `HINT_COST_MS`, `SKIP_COST_MS`,
   `WINS_NEEDED_DEFAULT`. (The minus sign in that file is U+2212, not a hyphen.)
-  > Measured: extractions found ____ / 13 (+ ____ / 4) · count mismatches ____ · value mismatches ____
+  > Measured: extractions found **13** / 13 (+ **4** / 4) · count mismatches **0** · value mismatches **0**
+  > As found (count × value): #1 1 × `2` · #2 1 × `3` · #3 1 × `0.1` · #4 1 × `100` · #5 2 × `<=`, one
+  > in `startClock` (the tick) and one in `spend` · #6 3, one each in `markCorrect`, `markSkip`,
+  > `giveHint`; all 3 file-wide occurrences lie inside a class member and the other 32 of its 35 members
+  > hold none · #7, #8, #9 each landmark 1, in the table's order · #10 1 × `q.a`, `q.f` · #11 2 × `ceil`
+  > (teams `a`, `b`) · #12 1 × default 45, min 20, max 90, step 5 · #13 1 × default `"3"`, options
+  > `["2","3","4"]` · user stories: 4 `- **` lines, `45s`, `−2s`, `−3s` (U+2212), `3`, each matched to
+  > its rule by the line's own words, not its position.
+  > Against the engine, each driven by the extracted value: a hint drains 2,000 ms and a skip 3,000 ms;
+  > 0.1 × 1000 = 100, `tick(100)` drains 100 ms and the 450th ends a 45 s round; exactly 0 ends the round
+  > by tick and by spend (hint at 2,000 ms, skip at 3,000 ms left; 1 ms more stays live); correct, skip,
+  > hint inert 9 / 9 (reveal, setup, round end) against a live-round control; an exhausted hint is inert
+  > even at exactly its cost; a round-ending hint / skip leaves `hintIndex` / `questionIndex` at 1; the
+  > reveal is `{ answer: q.a, fact: q.f }`; `displaySeconds` equals `Math.ceil(ms / 1000)` at 1,810 / 1,810
+  > points; `createRoom` defaults to 45 / 3, accepts 15 / 15 and 3 / 3, rejects 15, 95, 44, 46 and 1, 5.
+  > `data-props` is decoded (`&quot;`, its only entity) and `JSON.parse`d; only the key counts are read
+  > off the decoded text. The tally is one `toStrictEqual`. `rules.test.ts`: 40 tests, readers checked
+  > first (1 script element, 1 class, 1 `data-props`, 35 members partitioning the class body).
 
-- [ ] **REQ-3.10 (Proven to bite):** changing `HINT_COST_MS` to `2100` fails `rules.test.ts` on
+- [x] **REQ-3.10 (Proven to bite):** changing `HINT_COST_MS` to `2100` fails `rules.test.ts` on
   extraction #1; changing it back is green.
-  > Measured: failing test ____ · message ____ · green after revert ____
+  > Measured: failing test **`extraction #1: HINT_COST_MS / 1000 is giveHint’s spend, and a hint drains
+  > exactly spend × 1000 ms`** (3 of 40 failed; the other two: the user story's `−2s`, and extraction #5's
+  > "1 ms above the cost stays live") · message `AssertionError: expected 2.1 to be 2 // Object.is
+  > equality` · green after revert **yes** — `rules.ts` restored from a copy, byte-identical (SHA-256
+  > `a37fcb91…3a970a3e` before and after, `git diff` empty), `pnpm vitest run packages/game` 5 files,
+  > 192 tests passed
 
 - [x] **REQ-3.9 (Display, exhaustively):** for every integer `ms` in 0 … 90,000,
   `displaySeconds(ms) === Math.floor((ms + 999) / 1000)`. At the edges: 0→0, 1→1, 999→1, 1000→1,
