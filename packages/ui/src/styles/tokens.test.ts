@@ -134,13 +134,65 @@ test('every reference :root token is ported to the shipped light block, value fo
   }
 })
 
+// --- tokens that must be re-declared in each theme ----------------------------
+// A custom property's `var()` is substituted where the property is DECLARED, not
+// where it is used. So a light-block token whose value reads a theme-varying
+// token — `--sh-card: 0 4px 0 var(--stroke)` — is frozen with the light value at
+// `:root`, and a `[data-theme="dark"]` subtree that changes only --stroke
+// inherits the stale shadow. Gate 6 measured exactly that (verification.md):
+// dark-section Panel, Card lg and selected-Pill shadows painted the light ink.
+// Owner's ruling of 2026-09-30: fix it in the token layer, by re-declaring each
+// such token, value unchanged, in both dark blocks.
+//
+// The set is DERIVED from the reference, not typed in, so a composite token
+// added to design/arcade-tokens.css later is covered without editing this test.
+const THEMED = new Set(referenceDark.declarations.keys())
+const REDECLARED = new Map(
+  [...referenceLight.declarations].filter(([, value]) =>
+    [...value.matchAll(/var\((--[\w-]+)/g)].some(([, name]) => THEMED.has(name!)),
+  ),
+)
+// Knowable in advance, so the derivation cannot pass vacuously: the five --sh-*.
+const REFERENCE_REDECLARED_TOKENS = 5
+
+test('the tokens that read a themed token are found — the derivation is not vacuous', () => {
+  expect(REDECLARED.size).toBe(REFERENCE_REDECLARED_TOKENS)
+  expect([...REDECLARED.keys()]).toStrictEqual([
+    '--sh-card',
+    '--sh-sel',
+    '--sh-act',
+    '--sh-cta',
+    '--sh-hero',
+  ])
+})
+
 test('every reference dark token is ported to BOTH shipped dark blocks, value for value', () => {
   for (const block of [shippedDarkMedia, shippedDarkAttribute]) {
-    expect(block.declarations.size).toBe(REFERENCE_DARK_TOKENS)
-
     for (const [name, value] of referenceDark.declarations) {
       expect(block.declarations.get(name), `${name} missing from ${block.selector}`).toBe(value)
     }
+  }
+})
+
+test('both dark blocks re-declare every token that reads a themed token, value unchanged', () => {
+  for (const block of [shippedDarkMedia, shippedDarkAttribute]) {
+    for (const [name, value] of REDECLARED) {
+      expect(
+        block.declarations.get(name),
+        `${name} must be re-declared in ${block.selector}, or a dark subtree inherits the light value`,
+      ).toBe(value)
+    }
+  }
+})
+
+test('the dark blocks declare nothing else — the re-declarations are the only addition', () => {
+  // "Adds nothing" (REQ-2.4) still holds for the dark blocks: every name in them
+  // is either a reference dark token or a re-declared reference light token,
+  // and every value is the reference's own.
+  const allowed = [...referenceDark.declarations.keys(), ...REDECLARED.keys()].sort()
+  for (const block of [shippedDarkMedia, shippedDarkAttribute]) {
+    expect(block.declarations.size).toBe(REFERENCE_DARK_TOKENS + REFERENCE_REDECLARED_TOKENS)
+    expect([...block.declarations.keys()].sort(), block.selector).toStrictEqual(allowed)
   }
 })
 
@@ -191,7 +243,8 @@ test('the dark palette is declared twice: by device preference AND by attribute'
   expect(shippedDarkMedia.atRules).toContain('@media (prefers-color-scheme: dark)')
 
   // Unqualified, and at top level — a nested [data-theme="dark"] panel inside a
-  // light page re-themes itself and inherits the other 37 tokens by cascade.
+  // light page re-themes itself and inherits the other 32 tokens by cascade
+  // (44, less the 7 themed and the 5 re-declared shadows).
   expect(shippedDarkAttribute.selector).toBe("[data-theme='dark']")
   expect(shippedDarkAttribute.atRules).toStrictEqual([])
 })
