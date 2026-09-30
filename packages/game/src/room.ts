@@ -1,5 +1,5 @@
-// The room constructor and the current question (Phase 3) — REQ-3.1, REQ-3.2,
-// REQ-3.6. See specs/phase-3/specs.md §2.4.
+// The room constructor, the current question and when the judge may act
+// (Phase 3) — REQ-3.1, REQ-3.2, REQ-3.6, REQ-3.8. See specs/phase-3/specs.md §2.4.
 //
 // A room is constructed valid. Its configuration is checked by MEMBERSHIP of
 // the prototype's own option lists, not by a range check, so 47, 45.5 and NaN
@@ -83,4 +83,36 @@ export function createRoom(input: CreateRoomInput): RoomState {
  */
 export function currentQuestion(state: RoomState): Question | null {
   return state.questionPool[state.questionIndex % state.questionPool.length] ?? null
+}
+
+/**
+ * The question the judge may act on, or `null` when hint, skip and correct
+ * are all inert (REQ-3.8) — the single definition of "the judge may act".
+ * Internal: exported from this module for the reducer, never from index.ts.
+ *
+ * The three conditions, in this order (specs.md §2.4):
+ * 1. no round in play, or the round has ended;
+ * 2. the clock is stopped — compared with `=== null`, never by truthiness,
+ *    because a round started at engine time 0 runs with `runningSince` 0; in
+ *    every state an action can produce, this already covers a reveal;
+ * 3. a reveal is up — a defence: it blocks the judge even in an inconsistent
+ *    state whose clock is still running. No action produces that state; a
+ *    hand-built one reaches this branch (the coverage rule above).
+ * Then the current question, which is `null` for an empty pool.
+ */
+export function liveQuestion(state: RoomState): Question | null {
+  if (state.screen !== 'play') return null
+  if (state.clock.runningSince === null) return null
+  if (state.reveal !== null) return null
+  return currentQuestion(state)
+}
+
+/**
+ * Whether hint, skip and correct count right now (REQ-3.8). Public, so that a
+ * screen disables its buttons by the same rule the reducer applies: the
+ * reducer calls `liveQuestion`, this is `liveQuestion(state) !== null`, and
+ * the two cannot disagree.
+ */
+export function acceptsJudgeActions(state: RoomState): boolean {
+  return liveQuestion(state) !== null
 }

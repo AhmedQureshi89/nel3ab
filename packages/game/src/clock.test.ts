@@ -1,9 +1,21 @@
 import { describe, expect, test } from 'vitest'
 
-import { displaySeconds } from './clock.js'
+import {
+  displaySeconds,
+  remainingMs,
+  settleActive,
+  startClock,
+  stopClock,
+  zeroActive,
+} from './clock.js'
+import type { ClockState } from './types.js'
 
 // REQ-3.9 — verification.md Gate 2, "Display, exhaustively". See
 // specs/phase-3/specs.md §2.3 (the `displaySeconds` row).
+//
+// REQ-3.4, REQ-3.7 — `remainingMs` and the four internal transitions, at the
+// end of this file. Their behaviour inside a round, through the reducer, is
+// verification.md Gates 3 and 4, in reducer.test.ts.
 //
 // The reference below is integer arithmetic — `Math.floor((ms + 999) / 1000)`
 // is the ceiling of ms / 1000 for any non-negative integer ms — so the
@@ -68,5 +80,89 @@ describe('REQ-3.9: displaySeconds — whole seconds, rounded up, clamped at zero
   test.for([NaN, Infinity, -Infinity])('%s throws a RangeError', (ms) => {
     expect(() => displaySeconds(ms)).toThrow(RangeError)
     expect(() => displaySeconds(ms)).toThrow(`got ${ms}`)
+  })
+})
+
+// --- REQ-3.4, REQ-3.7: remainingMs and the internal transitions --------------
+
+/** A clock with team `a` started and a full 45 s bank each; `over` replaces any field. */
+const clock = (over: Partial<ClockState> = {}): ClockState => ({
+  now: 0,
+  active: 'a',
+  runningSince: null,
+  banks: { a: { ms: 45_000, started: true }, b: { ms: 45_000, started: false } },
+  ...over,
+})
+
+describe('REQ-3.4: remainingMs — only the active bank runs, and only while the clock runs', () => {
+  test('active and running: the bank less the elapsed time, now − runningSince', () => {
+    expect(remainingMs(clock({ now: 1_300, runningSince: 300 }), 'a')).toBe(44_000)
+  })
+
+  test('running since engine time 0 — the value zero, which is not a stopped clock', () => {
+    expect(remainingMs(clock({ now: 100, runningSince: 0 }), 'a')).toBe(44_900)
+  })
+
+  test('the inactive team: its bank as stored, whatever time has elapsed', () => {
+    expect(remainingMs(clock({ now: 30_000, runningSince: 0 }), 'b')).toBe(45_000)
+    expect(remainingMs(clock({ now: 30_000, runningSince: 0, active: 'b' }), 'a')).toBe(45_000)
+  })
+
+  test('stopped: the bank as stored, whatever the engine time', () => {
+    expect(remainingMs(clock({ now: 30_000 }), 'a')).toBe(45_000)
+  })
+
+  test('a hand-built overdrawn clock reads +0, never negative', () => {
+    // No action produces this state — a tick that reaches zero ends the round
+    // in the same step — so the clamp is exercised by hand.
+    expect(Object.is(remainingMs(clock({ now: 50_000, runningSince: 0 }), 'a'), 0)).toBe(true)
+  })
+})
+
+describe('REQ-3.4, REQ-3.7: the internal clock transitions', () => {
+  test.for([
+    ['a', { a: true, b: false }],
+    ['b', { a: false, b: true }],
+  ] as const)(
+    'startClock(now, %s, full): both banks full, only that team started, running from now',
+    ([team, started]) => {
+      expect(startClock(1_234, team, 20_000)).toStrictEqual({
+        now: 1_234,
+        active: team,
+        runningSince: 1_234,
+        banks: { a: { ms: 20_000, started: started.a }, b: { ms: 20_000, started: started.b } },
+      })
+    },
+  )
+
+  // Team `b` active, so a transition that wrote to `a` by mistake shows here.
+  const running = clock({
+    now: 1_300,
+    active: 'b',
+    runningSince: 300,
+    banks: { a: { ms: 45_000, started: true }, b: { ms: 30_000, started: true } },
+  })
+
+  test('settleActive: the active bank settled to its remaining time; runningSince unchanged', () => {
+    expect(settleActive(running)).toStrictEqual({
+      ...running,
+      banks: { a: { ms: 45_000, started: true }, b: { ms: 29_000, started: true } },
+    })
+  })
+
+  test('stopClock: settled, then runningSince null', () => {
+    expect(stopClock(running)).toStrictEqual({
+      ...running,
+      runningSince: null,
+      banks: { a: { ms: 45_000, started: true }, b: { ms: 29_000, started: true } },
+    })
+  })
+
+  test('zeroActive: the active bank at exactly 0 and stopped; the other bank untouched', () => {
+    expect(zeroActive(running)).toStrictEqual({
+      ...running,
+      runningSince: null,
+      banks: { a: { ms: 45_000, started: true }, b: { ms: 0, started: true } },
+    })
   })
 })

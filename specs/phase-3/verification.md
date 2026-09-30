@@ -291,25 +291,44 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
 
 ## 3. Gate 3 — The clock (block 2–5; see Gate ordering)
 
-- [ ] **REQ-3.5 (Starting a round):** from a fresh room at `now = 0`, `startRound('a', pool)` yields
+- [x] **REQ-3.5 (Starting a round):** from a fresh room at `now = 0`, `startRound('a', pool)` yields
   `screen 'play'`, `clock.active 'a'`, `clock.runningSince` **equal to `0`** (the value zero — not
   `null`, not "falsy-but-fine"), banks `a { 45000, started: true }` and `b { 45000, started: false }`,
   `questionPool` the given pool, both indices 0, `reveal null`; and `round`, `tallyA`, `tallyB`,
   `log`, `categoryId`, `usedCategories` unchanged. The same with `'b'`. After **one** `tick(100)`,
   `remainingMs(clock, 'a')` is **44,900** — the round started at engine time zero really runs.
-  > Measured: fields asserted (a) ____ · (b) ____ · `runningSince` ____ · remaining after one tick ____
+  > Measured: fields asserted (a) 20 / 20 top-level in one `toStrictEqual` against the fresh room with
+  > the six started-round fields replaced (so the other 14, the six Phase 4 fields among them, are
+  > asserted unchanged), mismatches 0 · (b) 20 / 20, the same, with bank `b` started and `a` not ·
+  > `runningSince` **0** (`toBe`, i.e. `Object.is` — not `null`); `questionPool` is the given array
+  > by identity · remaining after one tick **44,900** for the starting team, **45,000** for the
+  > other, both teams; `acceptsJudgeActions` `true`
+  > `reducer.test.ts`. A second test starts a round from a hand-built `roundEnd` state at
+  > `now = 60,000` with `roundSeconds 20`, round 2, a tally, a log entry, a category and non-zero
+  > indices: `runningSince` 60,000, both banks **20,000** (milliseconds, not seconds), indices 0,
+  > round / tallies / log / `categoryId` / `usedCategories` unchanged, and 19,900 after one tick.
 
-- [ ] **REQ-3.5 / REQ-3.3 (Start is inert in play, malformed start throws):** `startRound` while
+- [x] **REQ-3.5 / REQ-3.3 (Start is inert in play, malformed start throws):** `startRound` while
   `screen === 'play'` returns the **same object** (`toBe`), including while a reveal is up.
   `startRound` with `questions: []` and with `startingTeam: 'c'` each throw `RangeError` — in `setup`
   and in `play` alike (validation precedes inertness).
-  > Measured: inert in play ____ · inert in reveal ____ · empty pool throws ____ (setup) ____ (play) ·
-  > bad team throws ____ (setup) ____ (play)
+  > Measured: inert in play **same object** (for `startRound('b')` and for `startRound('a', [another
+  > question])`) · inert in reveal **same object** (reveal raised by `correct`, screen still `play`) ·
+  > empty pool throws **RangeError** (setup) **RangeError** (play) · bad team throws **RangeError**
+  > (setup) **RangeError** (play)
+  > Each throw also asserts its message (`got an empty array`, `startingTeam 'a' or 'b'; got c`). A
+  > third malformed start, `questions` missing (not an array), throws `RangeError` (`got undefined`)
+  > in both screens too: 6 / 6 cases.
 
-- [ ] **REQ-3.4 (Only the active bank drains):** after `k` × `tick(100)` for k = 1 … 449 from a
+- [x] **REQ-3.4 (Only the active bank drains):** after `k` × `tick(100)` for k = 1 … 449 from a
   started round, `remainingMs(active) = 45,000 − 100k` exactly and the inactive bank is deep-equal
   to its value at the start.
-  > Measured: k checked ____ / 449 · mismatches ____ · inactive bank changes ____
+  > Measured: k checked **449 / 449** · mismatches **0** · inactive bank changes **0** — for each
+  > starting team (`a` and `b`, 898 steps in all), counted in the loop and asserted in one
+  > `toStrictEqual`; the round is still `play` after step 449
+  > "Inactive bank changes" counts a step at which the inactive bank's stored `ms` or `started`
+  > differs from the start **or** `remainingMs(clock, inactive)` is not 45,000 — so elapsed time
+  > applied to the inactive team (mutation M6) is caught here, not only a write to its bank.
 
 - [ ] **REQ-3.4 (A tick that does not end the round changes only `now`):** for every tick in the
   per-length sample and the scripted scenarios that does not end a round, the next state equals the
@@ -322,20 +341,33 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   pair crosses zero.
   > Measured: states checked ____ · of which crossing zero ____ · violations ____
 
-- [ ] **REQ-3.4 / REQ-3.7 (Zero crossing ends the round in the same step):** from a fresh 45 s round,
+- [x] **REQ-3.4 / REQ-3.7 (Zero crossing ends the round in the same step):** from a fresh 45 s round,
   `tick(45000)` and `tick(45001)` each yield, in **one** step, `screen 'roundEnd'`, active bank
   `ms 0` (not −1), `runningSince null`, and `clock.now` 45,000 / 45,001 respectively. `tick(44999)`
   yields a live round with 1ms left and `displaySeconds` **1**.
-  > Measured: 45000 ____ · 45001 ____ · 44999 ____
+  > Measured: 45000 **one step → `roundEnd`, active bank 0, `runningSince` null, `now` 45,000** ·
+  > 45001 **one step → `roundEnd`, active bank 0 (not −1), `runningSince` null, `now` 45,001** ·
+  > 44999 **live (`play`), 1 ms left, `displaySeconds` 1**, the state otherwise the started one with
+  > only `now` replaced
+  > Each round-end result is one `toStrictEqual` against the started state with `screen` and `clock`
+  > replaced, so `reveal` null, indices, `active` (the team whose bank emptied) and the other bank are
+  > asserted unchanged. The two round-ending ticks are run for each starting team (4 / 4).
 
-- [ ] **REQ-3.3 (Malformed ticks throw; a zero tick is inert):** `tick` with `−1`, `1.5`, `NaN`,
+- [x] **REQ-3.3 (Malformed ticks throw; a zero tick is inert):** `tick` with `−1`, `1.5`, `NaN`,
   `Infinity`, `2**53`, and an `ms` for which `now + ms` is not a safe integer each throw `RangeError`,
   in `setup`, `play` and `roundEnd`. `tick(0)` returns the **same object**.
-  > Measured: throws ____ / 18 · `tick(0)` same object ____
+  > Measured: throws **18 / 18** `RangeError`, each message naming the value (`got …`) · `tick(0)`
+  > same object **yes** — in `setup`, `play`, `roundEnd`, and with a reveal up (4 / 4)
+  > Every state has `now > 0` (setup after one tick, play after one tick, roundEnd at 45,000), so the
+  > sixth value, `Number.MAX_SAFE_INTEGER − now + 1`, is itself a non-negative safe integer (asserted)
+  > whose sum with `now` is not — it isolates the engine-time check.
 
-- [ ] **REQ-3.4 (A stopped clock drains nothing):** ticks in `setup`, after a round end and during a
+- [x] **REQ-3.4 (A stopped clock drains nothing):** ticks in `setup`, after a round end and during a
   reveal leave both banks deep-equal and advance only `clock.now`.
-  > Measured: setup ____ · roundEnd ____ · reveal ____
+  > Measured: setup **banks deep-equal, only `now` advanced** · roundEnd **the same** · reveal (raised
+  > by `correct`) **the same** — each after 50 × `tick(100)` and one `tick(1,000,000)`: the result
+  > `toStrictEqual`s the input with `clock.now` + 1,005,000, and both teams' `remainingMs` are
+  > unchanged
 
 - [ ] **Invariants I1–I10 hold at every step:** `assertInvariants` ([specs.md](specs.md) §2.8) passes
   after every step of every sequence of the per-length sample and every scripted scenario.
@@ -345,43 +377,64 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
 
 ## 4. Gate 4 — The judge's actions (block 2–5; see Gate ordering)
 
-- [ ] **REQ-3.6 (Hint):** in a live round, `hint` drains exactly 2,000ms and advances `hintIndex` by
+- [x] **REQ-3.6 (Hint):** in a live round, `hint` drains exactly 2,000ms and advances `hintIndex` by
   one. On a two-hint question the third `hint` returns the **same object** and costs nothing. On a
   question whose `h` is empty, the first `hint` returns the same object.
-  > Measured: drain ____ · index ____ · third hint same object ____ · hintless same object ____
+  > Measured: drain **2,000** ms (41,300 → 39,300 at `now` 3,700, re-anchored there) · index **0 → 1**
+  > · third hint same object **yes** (bank stays 41,000, `hintIndex` 2) · hintless same object **yes**
+  > The drain is one `toStrictEqual` of the whole next state (bank, `runningSince`, `hintIndex`
+  > replaced; nothing else different).
 
-- [ ] **REQ-3.6 (Skip):** in a live round, `skip` drains exactly 3,000ms, advances `questionIndex` by
+- [x] **REQ-3.6 (Skip):** in a live round, `skip` drains exactly 3,000ms, advances `questionIndex` by
   one and resets `hintIndex` to 0. On a pool of three, the third skip makes `currentQuestion` the
   pool's first entry again.
-  > Measured: drain ____ · indices ____ · wrap ____
+  > Measured: drain **3,000** ms (38,000 → 35,000 at `now` 5,000, re-anchored from 3,700 to 5,000) ·
+  > indices `questionIndex` **0 → 1**, `hintIndex` **1 → 0** · wrap **yes** — current question after
+  > 0, 1, 2, 3 skips is pool entry 0, 1, 2, **0** (by identity), `questionIndex` 3
 
-- [ ] **REQ-3.4 / REQ-3.6 (A spend re-anchors the clock):** from a fresh 45 s round: 100 × `tick(100)`,
+- [x] **REQ-3.4 / REQ-3.6 (A spend re-anchors the clock):** from a fresh 45 s round: 100 × `tick(100)`,
   `hint`, 100 × `tick(100)` leaves exactly **23,000ms** (45,000 − 10,000 − 2,000 − 10,000); the same
   with `skip` leaves exactly **22,000ms**. *(This is the box a missing re-anchor fails — mutation M2.)*
-  > Measured: after hint ____ · after skip ____
+  > Measured: after hint **23,000** ms · after skip **22,000** ms — both at `now` 20,000, still `play`
+  > Bite check (2026-09-30, reverted): dropping `runningSince: clock.now` from the spend (M2) failed
+  > both cases.
 
-- [ ] **REQ-3.7 (Exactly zero, past zero, and one millisecond above):** with the active bank at
+- [x] **REQ-3.7 (Exactly zero, past zero, and one millisecond above):** with the active bank at
   exactly 3,000ms, `skip` ends the round in that step with `questionIndex` unchanged; at exactly
   2,000ms, `hint` ends it with `hintIndex` unchanged; at 1,000ms, `skip` ends it with the bank at
   **0**, not −2,000; at 3,001ms, `skip` leaves a **live** round with 1ms and `displaySeconds` 1.
-  > Measured: skip at 3000 ____ · hint at 2000 ____ · skip at 1000 → bank ____ · skip at 3001 ____
+  > Measured: skip at 3000 **ends the round in that step, `questionIndex` stays 1** · hint at 2000
+  > **ends it, `hintIndex` stays 1** · skip at 1000 → bank **0** · skip at 3001 **live, 1 ms,
+  > `displaySeconds` 1, `questionIndex` 1**
+  > Each index was made 1 by an earlier spend, so "unchanged" is not "still 0". Every round end is
+  > one `toStrictEqual` against the pre-spend state with only `screen` → `roundEnd`, the active bank
+  > → 0 and `runningSince` → null. Also: a hint at 1,000 ms leaves the bank at 0, and with team `b`
+  > active a skip at 3,000 ends the round on `b`'s bank with `a`'s untouched.
 
 - [ ] **REQ-3.7 (No zero bank in play):** across every state visited in Gate 3's invariant box, no
   state has `screen 'play'` with `remainingMs(active) === 0` (invariant I5, reported separately).
   > Measured: states ____ · violations ____
 
-- [ ] **REQ-3.8 (Correct raises the reveal and stops the clock):** in a live round, `correct` yields
+- [x] **REQ-3.8 (Correct raises the reveal and stops the clock):** in a live round, `correct` yields
   `reveal = { answer: q.a, fact: q.f }` of the current question, `runningSince null`, the active bank
   settled to exactly its remaining time, and nothing else changed. Then 1,000 × `tick(100)` drain
   **nothing** and advance `clock.now` by 100,000.
-  > Measured: reveal ____ · bank settled to ____ · drained during reveal ____ · `now` advanced ____
+  > Measured: reveal **`{ answer, fact }` of the current question** (question 1 of the pool, after a
+  > skip — `a` and `f` by value) · bank settled to **38,300** ms (its remaining time at `now` 3,700),
+  > `runningSince` null, nothing else changed (one `toStrictEqual`) · drained during reveal **0** ms
+  > (team `a` 38,300, team `b` 45,000) · `now` advanced **100,000** (the state after 1,000 ticks
+  > equals the reveal state with only `clock.now` replaced)
 
-- [ ] **REQ-3.8 (Inert during a reveal and with the clock stopped):** `hint`, `skip` and `correct` each
+- [x] **REQ-3.8 (Inert during a reveal and with the clock stopped):** `hint`, `skip` and `correct` each
   return the **same object** (a) during a reveal — so a double-tapped `correct` scores nothing twice —
   (b) in `setup`, (c) after a round end, and (d) in a hand-built state with a running clock **and** a
   reveal (the defence of [specs.md](specs.md) §2.4), and (e) in a hand-built `play` state with an
   empty pool.
-  > Measured: 3 actions × 5 states = ____ / 15 same object
+  > Measured: 3 actions × 5 states = **15 / 15** same object
+  > States: (a) a reveal raised by `correct`; (b) a fresh room; (c) after `tick(45000)`; (d) a live
+  > round after a hint (`runningSince` 1,000, a hint still available) with a reveal added by hand;
+  > (e) a live round with `questionPool` replaced by `[]`. `acceptsJudgeActions` is `false` in all
+  > 5; control: in a live round it is `true` and hint, skip and correct each return a new object.
 
 - [ ] **REQ-3.8 (The exported predicate and the reducer agree):** for every state visited in the
   per-length sample and the scripted scenarios, `acceptsJudgeActions(s)` is `false` **if and only if**
