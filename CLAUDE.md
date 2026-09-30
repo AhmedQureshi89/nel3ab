@@ -9,15 +9,17 @@ room. One host runs a "judge" screen; players join from their phones with a 6-ch
 code, no account and no app install. See `specs/mission.md` for the product constitution
 and `specs/tech-specs.md` for the target architecture.
 
-The repo is currently a **greenfield monorepo skeleton**. Phase 1 (repo, toolchain, CI)
-is **complete** as of 2026-08-19 — 38/38 verification boxes with measured values, and its
-🚦 stack-compatibility verdict gate returned PASS. Phase 2 (Arcade design system) is **in
-progress** since 2026-08-20: its triad is written and 1 of 35 boxes is ticked — Gate 0, the
-font redistribution licence verdict gate, returned PASS (both families are SIL OFL 1.1, read
-from their own upstreams; the two licence texts are committed at `apps/web/app/fonts/` and no
-font binary is committed yet). Every workspace package is still a deliberate shell exporting
-`PLACEHOLDER`: the rules engine, protocol, content and UI primitives are owned by later
-phases and are intentionally absent — do not "fill them in" outside their phase.
+Phase 1 (repo, toolchain, CI) is **complete** as of 2026-08-19 — 38/38 verification boxes
+with measured values, and its 🚦 stack-compatibility verdict gate returned PASS. Phase 2
+(Arcade design system) is **complete** as of 2026-09-30 — 35/35 boxes with measured values,
+both 🚦 verdict gates PASS (the font licence, and the stack verdict for a source-consumed
+React + CSS Modules package). `@nel3ab/ui` now ships the token layer, globals, `.ltr-num`,
+the press mechanism and five primitives; `apps/web` self-hosts both font families and has a
+dev-only `/styleguide` that 404s in production. What Phase 2 carried forward is listed under
+"Completed Work" in `specs/roadmap.md`. The other three packages — `@nel3ab/game`,
+`@nel3ab/protocol`, `@nel3ab/content` — and `apps/game` are still deliberate shells exporting
+`PLACEHOLDER`: the rules engine, protocol and content are owned by later phases and are
+intentionally absent — do not "fill them in" outside their phase.
 
 ## Commands
 
