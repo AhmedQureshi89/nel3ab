@@ -350,7 +350,7 @@ describe('Button', () => {
         صحيح
       </Button>,
     ).markup
-    expect(action).toMatch(/>صحيح<span class="[^"]*">يمرّ الدور<\/span><\/button>$/)
+    expect(action).toMatch(/>صحيح<br\/><span class="[^"]*">يمرّ الدور<\/span><\/button>$/)
     expect(root(<Button subLabel="يمرّ الدور">صحيح</Button>).markup).not.toContain('يمرّ الدور')
     expect(
       root(
@@ -409,11 +409,33 @@ test('Button action: 3px, 18px, 15px 8px, 15.5px/800, 5px rest / 3px travel, 11p
     color: '#0d2b1b',
   })
   expect(button('.sub-label')).toStrictEqual({
-    display: 'block',
     'font-size': '11px',
     'font-weight': '700',
     opacity: '0.6',
   })
+})
+
+test('the action sub-label follows the prototype’s structure: <br> then an inline span', () => {
+  // Gate 6 finding 2, owner's ruling 2026-09-30. Every declared value matched
+  // and the button still rendered 8px short, because the sub-label was a block.
+  // The structure is read from the prototype, not typed in: each of its three
+  // action buttons is `label<br><span style="font-size:11px;…">`.
+  const prototype = read('design/designs/Nel3ab - Arcade.dc.html')
+  const actions = [
+    ...prototype.matchAll(
+      /(تخطي|تلميح|صحيح) \S+<br><span style="font-size:11px;font-weight:700;opacity:\.6;">/g,
+    ),
+  ]
+  expect(actions.map(([, label]) => label)).toStrictEqual(['تخطي', 'تلميح', 'صحيح'])
+
+  const markup = root(
+    <Button variant="action" subLabel="يمرّ الدور">
+      صحيح ✔
+    </Button>,
+  ).markup
+  expect(markup).toContain('صحيح ✔<br/><span')
+  // Inline: nothing in Button.module.css may make the sub-label a block again.
+  expect(Object.keys(button('.sub-label'))).not.toContain('display')
 })
 
 test('Button secondary: 2.5px, 16px, 13px, 15px/700, panel — and no shadow, no press inputs', () => {
