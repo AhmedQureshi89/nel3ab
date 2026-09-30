@@ -264,12 +264,20 @@ Phase 1 shell — where 100% is trivial — before there is anything to cover.
   extraction #1; changing it back is green.
   > Measured: failing test ____ · message ____ · green after revert ____
 
-- [ ] **REQ-3.9 (Display, exhaustively):** for every integer `ms` in 0 … 90,000,
+- [x] **REQ-3.9 (Display, exhaustively):** for every integer `ms` in 0 … 90,000,
   `displaySeconds(ms) === Math.floor((ms + 999) / 1000)`. At the edges: 0→0, 1→1, 999→1, 1000→1,
   1001→2, 44,001→45, 45,000→45. For −1, −999, −1000 and −10⁹ the result is `+0`, asserted with
   `Object.is(…, 0)`. `NaN`, `Infinity` and `−Infinity` each throw `RangeError`.
-  > Measured: values checked ____ / 90,001 · mismatches ____ · edges ____ / 7 · negatives
-  > `Object.is` 0 ____ / 4 · non-finite throws ____ / 3
+  > Measured: values checked 90,001 / 90,001 · mismatches 0 · edges 7 / 7 · negatives
+  > `Object.is` 0 4 / 4 · non-finite throws 3 / 3
+  > `clock.test.ts`, 17 tests: the exhaustive loop counts every value and compares with `Object.is`,
+  > then asserts `{ checked: 90001, mismatches: 0, first: [] }` in one `toStrictEqual`; one `test.for`
+  > case per edge, negative and non-finite value, each non-finite throw also naming the value
+  > (`got NaN`). The test also shows the clamp is not vacuous: `Math.ceil(-1 / 1000)` is `-0`.
+  > Bite checks (2026-09-30, each reverted, `clock.ts` restored byte-identical and the suite green):
+  > `Math.ceil` → `Math.round` (mutation M8) failed the exhaustive test with **44,910** mismatches
+  > (first `[1, 0, 1]`) and the 1→1, 1001→2, 44,001→45 edges; dropping `Math.max(0, …)` failed all
+  > 4 negatives; dropping the finite guard failed all 3 non-finite cases.
 
 - [x] **REQ-3.6 (Current question):** `currentQuestion` returns `null` on an empty pool (a fresh
   room), and `pool[i mod n]` otherwise — for a pool of 3, indices 0…6 yield entries 0,1,2,0,1,2,0.
