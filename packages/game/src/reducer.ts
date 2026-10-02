@@ -19,22 +19,35 @@
 // clock (`runningSince = now`): the bank now holds its value as of `now`, and
 // without the re-anchor the next reading would subtract the time already
 // elapsed a second time (specs.md §2.3).
+//
+// Phase 4 adds the match flow (specs/phase-4/specs.md §2.6): `startMatch`,
+// `nextRound` and `resetMatch`, built from match.ts, and `passTurn`, built from
+// clock.ts's `passClock`. The same two rules hold. A round's draws arrive in the
+// payload and are checked before anything else, so a bad draw throws on every
+// screen (REQ-4.1); a round of a match is scored in the same step it ends
+// (REQ-4.7); and the turn passes only once the reveal has been up
+// `REVEAL_HOLD_MS` of engine time (REQ-4.6).
 
-import { remainingMs, roundMs, startClock, stopClock, zeroActive } from './clock.js'
+import { passClock, remainingMs, roundMs, startClock, stopClock, zeroActive } from './clock.js'
+import { assertRoundPayload, beginRound, nextJudgeIndex, scoreRound } from './match.js'
 import { liveQuestion } from './room.js'
-import { HINT_COST_MS, SKIP_COST_MS } from './rules.js'
+import { HINT_COST_MS, REVEAL_HOLD_MS, SKIP_COST_MS } from './rules.js'
 import type { Action, ClockState, RoomState } from './types.js'
 
 /**
  * The round ends (REQ-3.7): the active bank at exactly 0, the clock stopped,
  * the screen at `roundEnd`. The ONE function all three round-ending paths use
- * — a tick, a hint and a skip. Nothing else changes: `reveal` stays `null`,
- * and `active` still names the team whose bank emptied, which is how that team
- * is identifiable as the round's loser. Phase 4 extends this function with the
- * tally, the log and the match end.
+ * — a tick, a hint and a skip. `reveal` stays `null`, and `active` still names
+ * the team whose bank emptied, which is how that team is identifiable as the
+ * round's loser.
+ *
+ * Then, in the same step, `scoreRound` (Phase 4 — REQ-4.7, REQ-4.8): a round
+ * of a match adds the winner's tally and its log entry, and moves to `match`
+ * when the match is over. A round with no category — Phase 3's `startRound` —
+ * comes back exactly as Phase 3 ended it.
  */
 function endRound(state: RoomState, clock: ClockState): RoomState {
-  return { ...state, clock: zeroActive(clock), screen: 'roundEnd' }
+  return scoreRound({ ...state, clock: zeroActive(clock), screen: 'roundEnd' })
 }
 
 /**
@@ -99,6 +112,7 @@ export function reduce(state: RoomState, action: Action): RoomState {
         questionIndex: 0,
         hintIndex: 0,
         reveal: null,
+        revealedAt: null, // cleared with the reveal (REQ-4.11)
         clock: startClock(state.clock.now, startingTeam, roundMs(state.config)),
       }
     }
@@ -121,14 +135,87 @@ export function reduce(state: RoomState, action: Action): RoomState {
     }
 
     case 'correct': {
-      // The reveal stays up: the 1000ms hold, the reveal coming down and the
-      // turn passing are Phase 4's (requirements.md §1.3).
+      // The clock stops and the reveal goes up. It stays up — every tick drains
+      // nothing and every judge action is inert — until a `passTurn` at least
+      // `REVEAL_HOLD_MS` of engine time later brings it down and passes the
+      // turn (Phase 4 — REQ-4.6, the `passTurn` case below).
       const question = liveQuestion(state)
       if (question === null) return state
       return {
         ...state,
         clock: stopClock(state.clock),
         reveal: { answer: question.a, fact: question.f },
+        // The engine time the reveal went up: the hold before the turn may pass
+        // is measured from here (REQ-4.6, REQ-4.11).
+        revealedAt: state.clock.now,
+      }
+    }
+
+    case 'startMatch': {
+      // REQ-4.4 — round 1 of a match, on room-ready ("ابدأ الجولة الأولى", the
+      // prototype's `goWheel`) and on match end (a rematch, its `rematch`).
+      assertRoundPayload('startMatch', state, action)
+      if (state.screen !== 'ready' && state.screen !== 'match') return state
+      // A rematch first clears what the last match left; on `ready` these
+      // already hold these values (requirements.md, reading 2). Players, names,
+      // the judge, the rotation toggle, the selection and the configuration
+      // are kept — "نفس الفرق". The judge does not rotate.
+      const fresh: RoomState = { ...state, tallyA: 0, tallyB: 0, log: [], usedCategories: [] }
+      return beginRound(fresh, 1, action.categoryId, action.questions)
+    }
+
+    case 'nextRound': {
+      // REQ-4.9 — the next round, on round end only. The one place the judge
+      // rotates.
+      assertRoundPayload('nextRound', state, action)
+      if (state.screen !== 'roundEnd') return state
+      return beginRound(
+        { ...state, judgeIndex: nextJudgeIndex(state) },
+        state.round + 1,
+        action.categoryId,
+        action.questions,
+      )
+    }
+
+    case 'passTurn': {
+      // REQ-4.6 — صحيح → the reveal held `REVEAL_HOLD_MS` → the other team's
+      // turn; the prototype's `passTurn`. Inert until the reveal has been up the
+      // whole hold, so no driver can pass the turn early.
+      //
+      // Only `revealedAt` is tested (specs/phase-4/specs.md §2.6): in every state
+      // an action can produce it is non-null exactly when the screen is `play`,
+      // a reveal is up and the clock is stopped, so it is the whole rule.
+      // Testing `screen` or `reveal` as well would add branches only a
+      // hand-built inconsistent state could reach.
+      const { revealedAt } = state
+      if (revealedAt === null || state.clock.now - revealedAt < REVEAL_HOLD_MS) return state
+      return {
+        ...state,
+        clock: passClock(state.clock, roundMs(state.config)),
+        questionIndex: state.questionIndex + 1,
+        hintIndex: 0,
+        reveal: null,
+        revealedAt: null,
+      }
+    }
+
+    case 'resetMatch': {
+      // REQ-4.10 — back to setup, on round end and match end: the match is
+      // cleared, the room is kept. The banks, the active team, the question
+      // pool and its indices are left as they were — none is visible on setup,
+      // and the next round overwrites them all (requirements.md, reading 5).
+      if (state.screen !== 'roundEnd' && state.screen !== 'match') return state
+      return {
+        ...state,
+        screen: 'setup',
+        round: 1,
+        tallyA: 0,
+        tallyB: 0,
+        log: [],
+        usedCategories: [],
+        categoryId: null,
+        reveal: null,
+        revealedAt: null,
       }
     }
 

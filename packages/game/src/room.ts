@@ -70,6 +70,7 @@ export function createRoom(input: CreateRoomInput): RoomState {
       banks: { a: { ms: full, started: false }, b: { ms: full, started: false } },
     },
     reveal: null,
+    revealedAt: null, // REQ-4.11 — no reveal, so no time it went up
   }
 }
 
