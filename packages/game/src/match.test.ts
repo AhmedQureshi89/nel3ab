@@ -4,6 +4,7 @@ import { remainingMs } from './clock.js'
 import { matchWinner } from './match.js'
 import { reduce } from './reducer.js'
 import { createRoom } from './room.js'
+import { REVEAL_HOLD_MS } from './rules.js'
 import { categoryIds, categoryQuestions, readyRoom } from './testing/rooms.js'
 import type { ReadyRoomSetup } from './testing/rooms.js'
 import type { Action, CategoryId, Question, RoomState, Screen, Team } from './types.js'
@@ -19,8 +20,7 @@ import type { Action, CategoryId, Question, RoomState, Screen, Team } from './ty
 // "nothing else changed" is part of each assertion rather than a separate claim.
 //
 // Every match starts from `readyRoom` (testing/rooms.ts), which stands in for
-// Phase 5's setup. Not here yet: Gate 3's REQ-4.6 boxes, which need the
-// `passTurn` action, and Table G (REQ-4.13), whose scripted matches pass turns.
+// Phase 5's setup. Not here yet: Table G (REQ-4.13).
 //
 // Every question below is synthetic. Nothing is copied from design/.
 
@@ -113,6 +113,7 @@ type Kind = 'startMatch' | 'nextRound'
 const HINT: Action = { type: 'hint' }
 const SKIP: Action = { type: 'skip' }
 const RESET: Action = { type: 'resetMatch' }
+const PASS: Action = { type: 'passTurn' }
 const startMatch = (
   categoryId: CategoryId,
   questions: readonly [Question, ...Question[]] = categoryQuestions(categoryId),
@@ -515,6 +516,262 @@ describe('REQ-4.5: odd rounds start with team a, even rounds with team b', () =>
     const over = reduce(s, tick(FULL))
     expect([over.screen, over.round, over.tallyA, over.tallyB]).toStrictEqual(['match', 7, 3, 4])
     expect(startOf(reduce(over, startMatch('c7')))).toStrictEqual([1, 'a', true, false])
+  })
+})
+
+// ----------------------------------------------------------------------------
+// REQ-4.6 — صحيح → a 1000 ms reveal → the other team's turn
+// ----------------------------------------------------------------------------
+
+/** What each bank has left at the state's engine time: team a's, then team b's. */
+const left = (s: RoomState): readonly [number, number] => [
+  remainingMs(s.clock, 'a'),
+  remainingMs(s.clock, 'b'),
+]
+
+describe('REQ-4.6: the hold, to the millisecond', () => {
+  /** Round 1 of a match: team a plays 37 ticks, then صحيح — the reveal goes up at T. */
+  const T = 3_700
+  const REVEALED = reduce(ticks(playedTo(DEFAULT, ['c0']), 37), CORRECT)
+
+  /** What one effective pass at T + 1,000 leaves: b's first turn, full, running from then. */
+  const PASSED: RoomState = {
+    ...REVEALED,
+    questionIndex: 1,
+    hintIndex: 0,
+    reveal: null,
+    revealedAt: null,
+    clock: {
+      now: T + 1_000,
+      active: 'b',
+      runningSince: T + 1_000,
+      banks: { a: { ms: FULL - T, started: true }, b: { ms: FULL, started: true } },
+    },
+  }
+
+  test('correct at T = 3,700: revealedAt is T, the reveal up, the clock stopped with a at 41,300; the hold is 1,000 ms', () => {
+    expect(REVEAL_HOLD_MS).toBe(1_000)
+    expect([
+      REVEALED.screen,
+      REVEALED.clock.now,
+      REVEALED.revealedAt,
+      REVEALED.reveal,
+      REVEALED.clock.runningSince,
+      left(REVEALED),
+    ]).toStrictEqual(['play', T, T, { answer: 'c0-a0', fact: 'c0-f0' }, null, [41_300, FULL]])
+  })
+
+  test('inert after 9 × tick(100) and after tick(999): passTurn returns the same object', () => {
+    const at900 = ticks(REVEALED, 9)
+    const at999 = reduce(REVEALED, tick(999))
+    expect([at900.clock.now - T, at999.clock.now - T]).toStrictEqual([900, 999])
+    expect(reduce(at900, PASS)).toBe(at900)
+    expect(reduce(at999, PASS)).toBe(at999)
+  })
+
+  test('to the millisecond: after one tick of k ms, for every k = 0 … 1,000, it takes effect at k = 1,000 only', () => {
+    const effectiveAt: number[] = []
+    for (let k = 0; k <= 1_000; k += 1) {
+      const s = reduce(REVEALED, tick(k))
+      if (reduce(s, PASS) !== s) effectiveAt.push(k)
+    }
+    expect(effectiveAt).toStrictEqual([1_000])
+  })
+
+  test('effective at 1,000 ms by three routes — the 10th tick(100), tick(999) then tick(1), one tick(1000) — each leaving the same state', () => {
+    const routes = [
+      ticks(REVEALED, 10),
+      reduce(reduce(REVEALED, tick(999)), tick(1)),
+      reduce(REVEALED, tick(1_000)),
+    ]
+    expect(routes.map((s) => s.clock.now - T)).toStrictEqual([1_000, 1_000, 1_000])
+    expect(routes.map((s) => reduce(s, PASS))).toStrictEqual([PASSED, PASSED, PASSED])
+  })
+
+  test('throughout the hold — at 0, 100, …, 1,000 ms and at 999 — hint, skip and correct return the same object and no bank drains', () => {
+    const hold = [
+      ...Array.from({ length: 11 }, (_, i) => ticks(REVEALED, i)),
+      reduce(REVEALED, tick(999)),
+    ]
+    const notInert = hold.flatMap((s) =>
+      [HINT, SKIP, CORRECT]
+        .filter((action) => reduce(s, action) !== s)
+        .map((action) => [s.clock.now - T, action.type]),
+    )
+    expect(notInert).toStrictEqual([])
+    expect(hold.map(left)).toStrictEqual(hold.map(() => [41_300, FULL]))
+  })
+})
+
+describe('REQ-4.6: the pass, exactly', () => {
+  // One round of a match, three passes. Every turn spends a hint before صحيح,
+  // so that the pass's return of `hintIndex` to 0 is visible, and each hold is
+  // reached by a different route:
+  //   a — a hint, 5,000 ms, صحيح at 5,000 (a at 38,000); the hold by 10 × tick(100);
+  //   b — a hint, 3,000 ms, صحيح at 9,000 (b at 40,000); the hold by one tick(1000);
+  //   a — 2,000 ms, a hint, صحيح at 12,000 (a at 34,000); the hold by 4 × tick(250).
+  const before1 = ticks(reduce(ticks(reduce(playedTo(DEFAULT, ['c0']), HINT), 50), CORRECT), 10)
+  const after1 = reduce(before1, PASS)
+  const before2 = reduce(reduce(ticks(reduce(after1, HINT), 30), CORRECT), tick(1_000))
+  const after2 = reduce(before2, PASS)
+  const before3 = ticks(reduce(reduce(ticks(after2, 20), HINT), CORRECT), 4, 250)
+  const after3 = reduce(before3, PASS)
+
+  test('the three states before the pass: the answering team, the reveal 1,000 ms old, both indices, both banks', () => {
+    const shape = (s: RoomState) => [
+      s.clock.active,
+      s.clock.now,
+      s.revealedAt,
+      s.questionIndex,
+      s.hintIndex,
+      s.clock.banks,
+    ]
+    expect([before1, before2, before3].map(shape)).toStrictEqual([
+      [
+        'a',
+        6_000,
+        5_000,
+        0,
+        1,
+        { a: { ms: 38_000, started: true }, b: { ms: FULL, started: false } },
+      ],
+      [
+        'b',
+        10_000,
+        9_000,
+        1,
+        1,
+        { a: { ms: 38_000, started: true }, b: { ms: 40_000, started: true } },
+      ],
+      [
+        'a',
+        13_000,
+        12_000,
+        2,
+        1,
+        { a: { ms: 34_000, started: true }, b: { ms: 40_000, started: true } },
+      ],
+    ])
+  })
+
+  test("a → b, b's first turn: b full and started, running from now; a's bank the same object", () => {
+    expect(after1).toStrictEqual({
+      ...before1,
+      questionIndex: 1,
+      hintIndex: 0,
+      reveal: null,
+      revealedAt: null,
+      clock: {
+        now: 6_000,
+        active: 'b',
+        runningSince: 6_000,
+        banks: { a: { ms: 38_000, started: true }, b: { ms: FULL, started: true } },
+      },
+    })
+    expect(after1.clock.banks.a).toBe(before1.clock.banks.a)
+    expect(after1.clock.banks.b).not.toBe(before1.clock.banks.b)
+  })
+
+  test("b → a, a's second turn: a's part-spent bank the same object, running from now; b's the same object", () => {
+    expect(after2).toStrictEqual({
+      ...before2,
+      questionIndex: 2,
+      hintIndex: 0,
+      reveal: null,
+      revealedAt: null,
+      clock: {
+        now: 10_000,
+        active: 'a',
+        runningSince: 10_000,
+        banks: { a: { ms: 38_000, started: true }, b: { ms: 40_000, started: true } },
+      },
+    })
+    expect(after2.clock.banks.a).toBe(before2.clock.banks.a)
+    expect(after2.clock.banks.b).toBe(before2.clock.banks.b)
+  })
+
+  test("a → b again: b's frozen bank the same object, running from now; a's the same object", () => {
+    expect(after3).toStrictEqual({
+      ...before3,
+      questionIndex: 3,
+      hintIndex: 0,
+      reveal: null,
+      revealedAt: null,
+      clock: {
+        now: 13_000,
+        active: 'b',
+        runningSince: 13_000,
+        banks: { a: { ms: 34_000, started: true }, b: { ms: 40_000, started: true } },
+      },
+    })
+    expect(after3.clock.banks.a).toBe(before3.clock.banks.a)
+    expect(after3.clock.banks.b).toBe(before3.clock.banks.b)
+  })
+
+  test('after each pass the new team, and only it, runs: one tick(100) drains it by 100', () => {
+    expect([after1, after2, after3].map((s) => left(reduce(s, tick(100))))).toStrictEqual([
+      [38_000, 44_900],
+      [37_900, 40_000],
+      [34_000, 39_900],
+    ])
+  })
+})
+
+describe('REQ-4.6: a late passTurn charges nobody (R2)', () => {
+  // The one place mutation N1 — anchoring the next team's clock at the
+  // reveal's time plus the hold rather than at `now` — can show: a driver that
+  // passes exactly on time makes the two the same number (specs.md §2.3, R2).
+  const T = 3_700
+  const REVEALED = reduce(ticks(playedTo(DEFAULT, ['c0']), 37), CORRECT)
+  const LATE = reduce(reduce(REVEALED, tick(1_500)), PASS)
+
+  test("correct at T, tick(1500), passTurn: b's clock runs from T + 1,500, not T + 1,000; one tick(100) leaves b 44,900", () => {
+    expect(REVEALED.revealedAt).toBe(T)
+    expect([LATE.clock.active, LATE.clock.runningSince, left(LATE)]).toStrictEqual([
+      'b',
+      T + 1_500,
+      [41_300, FULL],
+    ])
+    expect(left(reduce(LATE, tick(100)))).toStrictEqual([41_300, FULL - 100])
+  })
+
+  test('on a later turn too: b → a passed 2,300 ms late, a resumes its frozen 41,300 exactly', () => {
+    // b plays 2,000 ms of its first turn and answers at T + 3,500.
+    const answered = reduce(ticks(LATE, 20), CORRECT)
+    expect([answered.revealedAt, left(answered)]).toStrictEqual([T + 3_500, [41_300, 43_000]])
+    const lateAgain = reduce(reduce(answered, tick(2_300)), PASS)
+    expect([lateAgain.clock.active, lateAgain.clock.runningSince, left(lateAgain)]).toStrictEqual([
+      'a',
+      T + 5_800,
+      [41_300, 43_000],
+    ])
+    expect(left(reduce(lateAgain, tick(100)))).toStrictEqual([41_200, 43_000])
+  })
+})
+
+describe('REQ-4.6: passTurn is inert without a due reveal', () => {
+  test.for(['ready', 'setup', 'roundEnd', 'match', 'play'] as const)(
+    'on %s, with no reveal up, it returns the same object',
+    (screen) => {
+      const play = ticks(playedTo(DEFAULT, ['c0']), 10)
+      const roundEnd = reduce(play, tick(FULL))
+      const s = {
+        ready: readyRoom(DEFAULT),
+        setup: reduce(roundEnd, RESET),
+        roundEnd,
+        // One selected category: its round ends the match.
+        match: reduce(playedTo({ ...DEFAULT, picked: ['c0'] }, ['c0']), tick(FULL)),
+        play,
+      }[screen]
+      expect([s.screen, s.reveal, s.revealedAt]).toStrictEqual([screen, null, null])
+      expect(reduce(s, PASS)).toBe(s)
+    },
+  )
+
+  test('a second passTurn straight after an effective one returns the same object — a driver sending it after every tick passes the turn once', () => {
+    const passed = reduce(reduce(reduce(playedTo(DEFAULT, ['c0']), CORRECT), tick(1_000)), PASS)
+    expect([passed.clock.active, passed.revealedAt]).toStrictEqual(['b', null])
+    expect(reduce(passed, PASS)).toBe(passed)
   })
 })
 

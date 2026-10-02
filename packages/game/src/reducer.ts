@@ -21,15 +21,17 @@
 // elapsed a second time (specs.md §2.3).
 //
 // Phase 4 adds the match flow (specs/phase-4/specs.md §2.6): `startMatch`,
-// `nextRound` and `resetMatch`, built from match.ts. The same two rules hold. A
-// round's draws arrive in the payload and are checked before anything else, so
-// a bad draw throws on every screen (REQ-4.1); and a round of a match is scored
-// in the same step it ends (REQ-4.7).
+// `nextRound` and `resetMatch`, built from match.ts, and `passTurn`, built from
+// clock.ts's `passClock`. The same two rules hold. A round's draws arrive in the
+// payload and are checked before anything else, so a bad draw throws on every
+// screen (REQ-4.1); a round of a match is scored in the same step it ends
+// (REQ-4.7); and the turn passes only once the reveal has been up
+// `REVEAL_HOLD_MS` of engine time (REQ-4.6).
 
-import { remainingMs, roundMs, startClock, stopClock, zeroActive } from './clock.js'
+import { passClock, remainingMs, roundMs, startClock, stopClock, zeroActive } from './clock.js'
 import { assertRoundPayload, beginRound, nextJudgeIndex, scoreRound } from './match.js'
 import { liveQuestion } from './room.js'
-import { HINT_COST_MS, SKIP_COST_MS } from './rules.js'
+import { HINT_COST_MS, REVEAL_HOLD_MS, SKIP_COST_MS } from './rules.js'
 import type { Action, ClockState, RoomState } from './types.js'
 
 /**
@@ -133,8 +135,10 @@ export function reduce(state: RoomState, action: Action): RoomState {
     }
 
     case 'correct': {
-      // The reveal stays up: the 1000ms hold, the reveal coming down and the
-      // turn passing are Phase 4's (requirements.md §1.3).
+      // The clock stops and the reveal goes up. It stays up — every tick drains
+      // nothing and every judge action is inert — until a `passTurn` at least
+      // `REVEAL_HOLD_MS` of engine time later brings it down and passes the
+      // turn (Phase 4 — REQ-4.6, the `passTurn` case below).
       const question = liveQuestion(state)
       if (question === null) return state
       return {
@@ -171,6 +175,28 @@ export function reduce(state: RoomState, action: Action): RoomState {
         action.categoryId,
         action.questions,
       )
+    }
+
+    case 'passTurn': {
+      // REQ-4.6 — صحيح → the reveal held `REVEAL_HOLD_MS` → the other team's
+      // turn; the prototype's `passTurn`. Inert until the reveal has been up the
+      // whole hold, so no driver can pass the turn early.
+      //
+      // Only `revealedAt` is tested (specs/phase-4/specs.md §2.6): in every state
+      // an action can produce it is non-null exactly when the screen is `play`,
+      // a reveal is up and the clock is stopped, so it is the whole rule.
+      // Testing `screen` or `reveal` as well would add branches only a
+      // hand-built inconsistent state could reach.
+      const { revealedAt } = state
+      if (revealedAt === null || state.clock.now - revealedAt < REVEAL_HOLD_MS) return state
+      return {
+        ...state,
+        clock: passClock(state.clock, roundMs(state.config)),
+        questionIndex: state.questionIndex + 1,
+        hintIndex: 0,
+        reveal: null,
+        revealedAt: null,
+      }
     }
 
     case 'resetMatch': {

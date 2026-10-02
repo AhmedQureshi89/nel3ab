@@ -19,8 +19,8 @@
 // room constructor and the reducer, never from index.ts (specs.md §2.6,
 // NFR-3.5). `remainingMs` and `displaySeconds` are public: two of the twelve
 // runtime exports that specs.md §2.6 names, so a timer card and the reducer
-// read the same rule. Phase 4 adds `otherTeam`, internal in the same way
-// (specs/phase-4/specs.md §2.3).
+// read the same rule. Phase 4 adds `otherTeam` and `passClock`, internal in
+// the same way (specs/phase-4/specs.md §2.3).
 //
 // Silent failure modes (specs.md §2.3 — each has a named mutation in
 // verification.md Gate 7):
@@ -49,8 +49,9 @@ export function remainingMs(clock: ClockState, team: Team): number {
 }
 
 /**
- * The team that is not `team` (Phase 4 — REQ-4.7; specs/phase-4/specs.md §2.3).
- * A round's winner is `otherTeam` of the team whose bank emptied.
+ * The team that is not `team` (Phase 4 — REQ-4.6, REQ-4.7; specs/phase-4/specs.md
+ * §2.3). A round's winner is `otherTeam` of the team whose bank emptied, and the
+ * turn passes to `otherTeam` of the team that answered.
  */
 export function otherTeam(team: Team): Team {
   return team === 'a' ? 'b' : 'a'
@@ -90,6 +91,38 @@ export function settleActive(clock: ClockState): ClockState {
 /** Settle, then stop: the remaining time is preserved and nothing drains (REQ-3.8). */
 export function stopClock(clock: ClockState): ClockState {
   return { ...settleActive(clock), runningSince: null }
+}
+
+/**
+ * The turn passes (Phase 4 — REQ-4.6; specs/phase-4/specs.md §2.3): the other
+ * team becomes active, its clock running from `clock.now`. Its bank is `full`
+ * and marked started on its first turn of the round; on every later turn it is
+ * kept as it is — the same object, holding exactly the milliseconds it had when
+ * its last turn ended. The prototype's `passTurn`:
+ * `nx.started ? nx : {time:this.roundTime, started:true}`.
+ *
+ * The answering team's bank is not read and not written: `correct`'s
+ * `stopClock` already settled it.
+ *
+ * Silent failure modes (specs/phase-4/specs.md §2.3 — named mutations N1 and N2
+ * in its verification.md Gate 6):
+ * - The anchor is `clock.now` — the engine time of the `passTurn` that took
+ *   effect — never the time the reveal went up and never the end of the hold.
+ *   A driver that passes the turn late must not charge the next team for time
+ *   the reveal hid its question; and a driver that passes it exactly on time
+ *   makes all three the same number, so only a late pass can tell them apart.
+ * - `started ? bank : full`, never `full` alone: a team that has already played
+ *   this round resumes its frozen bank, it does not get a new one.
+ */
+export function passClock(clock: ClockState, full: number): ClockState {
+  const next = otherTeam(clock.active)
+  const bank = clock.banks[next]
+  return {
+    ...clock,
+    active: next,
+    runningSince: clock.now,
+    banks: { ...clock.banks, [next]: bank.started ? bank : { ms: full, started: true } },
+  }
 }
 
 /**

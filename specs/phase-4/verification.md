@@ -297,29 +297,48 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > only the starting team's bank `started` (the match ends 3–4 on round 7) · rematch **a** (round 1,
   > a started, b not) · 2026-10-02, `match.test.ts` (REQ-4.5, 1 test)
 
-- [ ] **REQ-4.6 (The hold, to the millisecond):** after `correct` at engine time T, `revealedAt` is T;
+- [x] **REQ-4.6 (The hold, to the millisecond):** after `correct` at engine time T, `revealedAt` is T;
   after 9 × `tick(100)`, and again after `tick(999)`, `passTurn` returns the same object; after the
   10th `tick(100)`, and after `tick(999)` then `tick(1)`, and after a single `tick(1000)`, it takes
   effect. Throughout the hold `hint`, `skip` and `correct` return the same object and no bank drains.
-  > Measured: inert at 900 / 999 ms ____ · effective at 1,000 ms by three routes ____ / 3 ·
-  > judge actions inert during the hold ____ / 3 · drain during the hold ____ ms
+  > Measured: inert at 900 / 999 ms **yes / yes** — the same object, from `correct` at T = 3,700
+  > (`revealedAt` **3,700**); and after one tick of every k = 0 … 1,000 ms it takes effect at
+  > **k = 1,000 only** (1,000 / 1,000 inert below it) · effective at 1,000 ms by three routes **3** / 3
+  > — the 10th `tick(100)`, `tick(999)` then `tick(1)`, one `tick(1000)` — each leaving the same state
+  > by `toStrictEqual` (b's first turn, 45,000, running from 4,700) · judge actions inert during the
+  > hold **3** / 3 — `hint`, `skip` and `correct` the same object at all 12 hold states (0, 100, …,
+  > 1,000 ms and 999) · drain during the hold **0** ms — a 41,300 and b 45,000 at every one ·
+  > 2026-10-02, `match.test.ts` (REQ-4.6, 5 tests)
 
-- [ ] **REQ-4.6 (The pass, exactly):** the state after an effective `passTurn` equals, by
+- [x] **REQ-4.6 (The pass, exactly):** the state after an effective `passTurn` equals, by
   `toStrictEqual`, the state before with: `active` the other team; that team's bank `{ ms: R,
   started: true }` on its first turn of the round, and the **same object** as before on a later turn;
   the answering team's bank the **same object** as before; `runningSince` = `clock.now`;
   `questionIndex + 1`; `hintIndex` 0; `reveal` and `revealedAt` `null`. Checked for a → b (b's first
   turn), b → a (a's second turn, a part-spent bank) and a → b again.
-  > Measured: passes checked ____ / 3 · mismatches ____ · bank objects kept (`toBe`) ____
+  > Measured: passes checked **3** / 3 — a → b at 6,000 (b's first turn, `{ ms: 45,000, started:
+  > true }`), b → a at 10,000 (a's second turn, its part-spent **38,000**), a → b at 13,000 (b's
+  > frozen **40,000**), each by `toStrictEqual` with `runningSince` = `now`, `questionIndex` 0 → 1,
+  > 1 → 2, 2 → 3 and `hintIndex` 1 → 0 · mismatches **0** · bank objects kept (`toBe`) **5** / 5 —
+  > the answering team's at all 3 passes and the next team's on its 2 later turns (on b's first, a
+  > new object) · one `tick(100)` after each drains the new team only: b 44,900 · a 37,900 · b
+  > 39,900 · 2026-10-02, `match.test.ts` (REQ-4.6, 5 tests)
 
-- [ ] **REQ-4.6 (A late `passTurn` charges nobody — R2):** `correct` at T, then `tick(1500)`, then
+- [x] **REQ-4.6 (A late `passTurn` charges nobody — R2):** `correct` at T, then `tick(1500)`, then
   `passTurn`: `runningSince` is **T + 1500**, not T + 1000; one further `tick(100)` leaves the new
   team R − 100. *(This is the only box that can see mutation N1 — specs.md §2.3.)*
-  > Measured: `runningSince` ____ (expected T + 1500) · new team after one tick ____
+  > Measured: `runningSince` **5,200** (expected T + 1500, T = 3,700 — not 4,700) · new team after
+  > one tick **44,900** (R − 100, R = 45,000), the answering team's 41,300 untouched · on a later turn
+  > too: b → a passed 2,300 ms late, a's clock runs from **9,500** and a resumes exactly its frozen
+  > **41,300** (41,200 after one tick) · N1 applied alone and reverted: these **2** tests fail and the
+  > other 291 of `@nel3ab/game`'s 293 pass · 2026-10-02, `match.test.ts` (REQ-4.6, 2 tests)
 
-- [ ] **REQ-4.6 (`passTurn` inert without a due reveal):** on `ready`, `setup`, `roundEnd`, `match`,
+- [x] **REQ-4.6 (`passTurn` inert without a due reveal):** on `ready`, `setup`, `roundEnd`, `match`,
   and on `play` with no reveal, `passTurn` returns the same object.
-  > Measured: states ____ / 5 identical
+  > Measured: states **5** / 5 identical — `ready`, `setup` (after `resetMatch`), `roundEnd`, `match`
+  > (one category) and `play`, each reached by actions, with `reveal` and `revealedAt` both `null` ·
+  > and a second `passTurn` straight after an effective one, the same object: the turn passes once ·
+  > 2026-10-02, `match.test.ts` (REQ-4.6, 6 tests)
 
 - [x] **REQ-4.7 (A match round is scored in the step it ends):** for each round-ending path — a
   `tick`, a `hint` and a `skip` taking the active bank to zero — with team a losing and with team b

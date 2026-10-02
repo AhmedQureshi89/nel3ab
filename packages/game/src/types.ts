@@ -126,6 +126,10 @@ export type Action =
       readonly categoryId: CategoryId
       readonly questions: readonly [Question, ...Question[]]
     }
+  // The reveal comes down and the turn passes to the other team. The driver
+  // sends it; the engine refuses it until the reveal has been up the hold
+  // (REQ-4.6, DECIDED 2026-10-02).
+  | { readonly type: 'passTurn' }
   | { readonly type: 'resetMatch' }
 
 export interface CreateRoomInput {
