@@ -18,10 +18,29 @@ and testable before the next begins. STEP 1 is the only step that touches Phase 
 with Phase 3's whole suite green — so from STEP 2 on, a red Phase 3 test is a regression this phase
 caused, never a pending edit. The exit-criterion verdict sits after every ordinary check it depends on.
 
+> **Correction 2026-10-02 — made before the first implementation commit, approved by the owner in
+> session.** Three slips, found the first time STEP 1 was run:
+>
+> 1. **§2.9 missed one sanctioned edit.** `room.test.ts`'s REQ-3.2 test "with only roomCode, teamA
+>    and teamB, every initial value is that of specs.md §2.4" compares `createRoom(…)` by
+>    `toStrictEqual` with a complete `satisfies RoomState` literal, so it fails — at run time and in
+>    `pnpm typecheck`, which reports it as the only error — until that literal gains
+>    `revealedAt: null`. It is the same kind of edit as §2.9's others: a whole-state expectation
+>    Phase 3 wrote to fail when a field is added. §2.9's table now lists it.
+> 2. **The four action types cannot land in STEP 1.** Adding them to `Action` before the reducer has
+>    a case for each fails `pnpm typecheck` at the reducer's exhaustive `never` default. They land
+>    with their cases in STEP 3; `Random` lands with `draw.ts` in STEP 2. The diagram below says so.
+> 3. **STEP 1 is not the only step that touches Phase 3's files** — STEP 4 edits `index.test.ts`
+>    (§2.9), as the diagram always showed. Gate 1's sanctioned-edits box is read accordingly; see
+>    [verification.md](verification.md), "Gate ordering".
+>
+> No requirement or behaviour changed. The only change to what any check accepts is §2.9's one
+> added hunk.
+
 ```
   STEP 1 ─ The one new field, and Phase 3 kept green
   ┌──────────────────────────────────────────────────────────────────────┐
-  │ types.ts         [MOD]  RoomState.revealedAt; Action + 4; Random     │
+  │ types.ts         [MOD]  RoomState.revealedAt  (correction 2026-10-02)│
   │ rules.ts         [MOD]  REVEAL_HOLD_MS                               │
   │ room.ts          [MOD]  createRoom: revealedAt null                  │
   │ reducer.ts       [MOD]  correct records it; startRound clears it     │
@@ -31,6 +50,7 @@ caused, never a pending edit. The exit-criterion verdict sits after every ordina
                                   │
   STEP 2 ─ The draw (pure, no reducer) ▼
   ┌──────────────────────────────────────────────────────────────────────┐
+  │ types.ts         [MOD]  Random                (correction 2026-10-02)│
   │ draw.ts          [NEW]  drawableCategories, drawCategory,            │
   │                         shuffleQuestions; internal choice lists      │
   │ draw.test.ts     [NEW]                                               │
@@ -38,6 +58,7 @@ caused, never a pending edit. The exit-criterion verdict sits after every ordina
                                   │
   STEP 3 ─ The flow                ▼   ── needs the draw's choice lists
   ┌──────────────────────────────────────────────────────────────────────┐
+  │ types.ts         [MOD]  Action + 4            (correction 2026-10-02)│
   │ clock.ts         [MOD]  internal passClock, otherTeam                │
   │ match.ts         [NEW]  startingTeam, nextJudgeIndex, beginRound,    │
   │                         scoreRound, assertRoundPayload, matchWinner  │
@@ -298,7 +319,7 @@ else in these three files, and every byte of `clock.test.ts`, `purity.test.ts`, 
 
 | File | Edit |
 |---|---|
-| `room.test.ts` | `ADDED` gains `['revealedAt']`; `TOP_LEVEL_KEYS` gains `'revealedAt'`; `toHaveLength(20)` becomes `21`; the test title's "20 top-level" becomes "21"; the comment above `ADDED` says three `+` rows, the third Phase 4's |
+| `room.test.ts` | `ADDED` gains `['revealedAt']`; `TOP_LEVEL_KEYS` gains `'revealedAt'`; `toHaveLength(20)` becomes `21`; the test title's "20 top-level" becomes "21"; the comment above `ADDED` says three `+` rows, the third Phase 4's; **and** (correction 2026-10-02) the REQ-3.2 test's expected initial state — the `satisfies RoomState` literal — gains `revealedAt: null` |
 | `index.test.ts` | the sorted export list gains the five names of §2.8 and its title says seventeen; the `kinds` map gains `REVEAL_HOLD_MS: 'number'` and the four `'function'`s; the internal-names test gains the nine names of §2.8, each with its module |
 | `reducer.test.ts` | the REQ-3.8 test "the reveal is the current question's answer and fact; the bank is settled; nothing else changes" — its expected state after `correct` gains `revealedAt: 3_700` (the engine time at which that test's reveal goes up). Its title stays: `revealedAt` is the one thing besides the reveal and the settled bank that `correct` now changes, and the edit says so in a one-line comment |
 

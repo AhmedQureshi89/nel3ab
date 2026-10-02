@@ -32,6 +32,19 @@ verdict; its ordinary boxes are evaluated first, so that when the 🚦 box is ev
 already been shown to agree with exact arithmetic and the only thing left for it to measure is the
 prototype. Gate 6 is evaluated last, once, over the finished phase.
 
+> **Correction 2026-10-02 — ordering only, made before the first implementation commit, approved by
+> the owner in session.** As first written, Gate 1 "blocks everything", but its second box —
+> "The sanctioned edits, and no others" — names `index.test.ts`'s edits, which
+> [specs.md](specs.md) §2.9 and §1 place in STEP 4, inside the block Gate 1 blocks. Read strictly,
+> Gate 1 could never close. **At Gate 1 that box is evaluated over the edits STEP 1 makes**
+> (`room.test.ts`, `reducer.test.ts`), with `index.test.ts` still unedited and the ten untouched files
+> untouched; `index.test.ts`'s edits are checked when STEP 4 makes them, and the whole set — all
+> three files — by Gate 6's "Re-checked over the finished phase" box. Separately, specs.md §2.9 now
+> lists one more sanctioned hunk, found the first time STEP 1 ran: the REQ-3.2 test's complete
+> initial-state literal in `room.test.ts` gains `revealedAt: null` (specs.md §1's correction). No
+> threshold or pre-registered number changed; the only change to what any box accepts is that one
+> hunk.
+
 **A tick with an empty `Measured:` line is not a tick.**
 
 ---
