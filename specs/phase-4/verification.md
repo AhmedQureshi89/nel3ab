@@ -573,38 +573,84 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
 
 ## 5. Gate 5 — Equivalence with the prototype (blocks Gate 6)
 
-- [ ] **REQ-4.14 (Generator fingerprint):** `mulberry32(MATCH_SEED)`'s first three draws and the
+- [x] **REQ-4.14 (Generator fingerprint):** `mulberry32(MATCH_SEED)`'s first three draws and the
   verdict sample's sequences 0–2 reproduce Table E exactly — configurations, event counts, steps,
   matches ended and the exact oracle's final state.
-  > Measured: draws ____ · sequences ____ / 3 · mismatches ____
+  > Measured: draws **0.1825684069 · 0.6584435350 · 0.6478405960** (3 / 3, to 10 places) · sequences
+  > **3** / 3 — #0 `winsNeeded` 2 · c0–c5 · 7 players · rotation on · judge 5 · rate 0.02, **368**
+  > events, 0 matches ended, exact oracle at the end `setup`, round 1, 0–0, judge 5, startMatch 1 ·
+  > tick 362 · skip 2 · hint 2 · resetMatch 1, non-tick events at 1, 25, 114, 119, 367, 368 — 367 a
+  > `hint` and the exact oracle's one round end; #1 `winsNeeded` 4 · c0–c7 · 2 players · rotation on ·
+  > judge 1 · rate 0.05, **5,163** events, 2 matches ended, `match`, round 4, 4–0, judge 0, log
+  > `1·c2·a 2·c5·a 3·c3·a 4·c0·a`, startMatch 2 · nextRound 7 · tick 4,903 · correct 125 · skip 74 ·
+  > hint 52; #2 `winsNeeded` 3 · c0–c7 · 8 players · rotation off · judge 6 · rate 0.1, **1,066**
+  > events, 0 matches ended, `setup`, round 1, 0–0, judge 6, startMatch 1 · nextRound 1 · tick 953 ·
+  > correct 50 · skip 42 · hint 18 · resetMatch 1 · mismatches **0** — each sequence replayed through a
+  > fresh exact match oracle, its matches ended equal to the generator's (3 / 3); `MATCH_SEED`
+  > 0x20261002, rates 0.02 / 0.05 / 0.1, `MATCH_MAX_STEPS` 40,000 and the verdict sample (45 s, 500)
+  > as specs.md §2.10 fixes them · 2026-10-02, `match-equivalence.test.ts` (REQ-4.14, 1 test)
 
-- [ ] **REQ-4.14 (Oracle anchor — Phase 3's Table A):** the new match oracle's silent first round, at
+- [x] **REQ-4.14 (Oracle anchor — Phase 3's Table A):** the new match oracle's silent first round, at
   each of the 15 lengths, ends after Phase 3's Table A float row in `'float'` and its exact row in
   `'exact'` — including **801, 851, 901** at 80, 85, 90 s.
-  > Measured: float row ____ / 15 · exact row ____ / 15
+  > Measured: float row **15** / 15 — 200 · 250 · 300 · 350 · 400 · 450 · 500 · 550 · 600 · 650 · 700
+  > · 750 · **801 · 851 · 901** · exact row **15** / 15 — 200 · 250 · … · 850 · 900, 10 × S at every S
+  > · the silent first round: `startMatch` (r 0, perm [0, 1, 2]) on room-ready with Table G's default
+  > configuration at each length, then ticks alone until the screen leaves `play` · 2026-10-02,
+  > `match-equivalence.test.ts` (REQ-4.14, 1 test)
 
-- [ ] **REQ-4.14 (Oracle against oracle):** float vs exact over every sample reproduces Table F — every
+- [x] **REQ-4.14 (Oracle against oracle):** float vs exact over every sample reproduces Table F — every
   diverging count, steps-consumed total, matches-ended count and reset count, for all 16 rows. If
   Table E matched and this does not, the harness or the oracle departs from specs.md §2.10: fix it to
   the definition; never edit Table F.
-  > Measured: rows equal to Table F ____ / 16 · per row ____
+  > Measured: rows equal to Table F **16** / 16, every column · per row, diverging · steps · matches
+  > ended · ended by `resetMatch`: verdict 45 s **0 · 1,156,355 · 593 · 332** · 20 s 11 · 16,248 · 23 ·
+  > 13 · 25 s 1 · 21,743 · 22 · 16 · 30 s 0 · 30,327 · 24 · 13 · 35 s 0 · 34,123 · 24 · 14 · 40 s 0 ·
+  > 37,965 · 20 · 14 · 45 s 0 · 43,472 · 19 · 15 · 50 s 0 · 51,514 · 23 · 14 · 55 s 0 · 57,800 · 23 ·
+  > 13 · 60 s 0 · 60,472 · 21 · 14 · 65 s 20 · 73,159 · 29 · 11 · 70 s 20 · 85,873 · 27 · 10 · 75 s
+  > 20 · 66,851 · 24 · 14 · 80 s 20 · 96,182 · 27 · 11 · 85 s 20 · 88,203 · 21 · 16 · 90 s 20 ·
+  > 77,555 · 20 · 16 · per-length total **841,487**, with the verdict row **1,997,842** · sequences
+  > reaching `MATCH_MAX_STEPS` **0** · 800 / 800 sequences run, and on each the harness's exact oracle
+  > and the generator's agree on the matches ended and on ending on `setup` · 2026-10-02,
+  > `match-equivalence.test.ts` (REQ-4.14, 1 test)
 
-- [ ] **REQ-4.14 (Scripted matches through both oracles):** both oracles produce Table G's outcome for
+- [x] **REQ-4.14 (Scripted matches through both oracles):** both oracles produce Table G's outcome for
   all sixteen matches and agree with each other at all 15,700 events.
-  > Measured: matches ____ / 16 · disagreeing events ____
+  > Measured: matches **16** / 16 — the float oracle and the exact oracle each end every round at Table
+  > G's step (34 / 34 each) and finish on Table G's screen, round, tallies, judge, active team, used
+  > list, log, displays A/B, started A/B, `questionIndex` and `hintIndex`, with no reveal up at the
+  > end · disagreeing events **0** of **15,700** — every scripted draw placed in the exact oracle's
+  > drawable list and given to both as the same `r` · 2026-10-02, `match-equivalence.test.ts`
+  > (REQ-4.14, 1 test)
 
-- [ ] **REQ-4.14 (The engine is exact arithmetic):** engine ≡ exact oracle at every step of all sixteen
+- [x] **REQ-4.14 (The engine is exact arithmetic):** engine ≡ exact oracle at every step of all sixteen
   scripted matches, all 500 verdict sequences and all 300 per-length sequences.
-  > Measured: sequences ____ / 816 · steps ____ · first divergence ____
+  > Measured: sequences **816** / 816 — 16 scripted, 500 verdict, 300 per-length · steps **2,013,542**
+  > (15,700 + 1,156,355 + 841,487), the 17-field observation compared after every one · first
+  > divergence **none** — 0 diverging sequences in each set, 0 flow events refused to the engine ·
+  > 2026-10-02, `match-equivalence.test.ts` (REQ-4.14, 1 test)
 
-- [ ] **REQ-4.14 (The decision of 2026-09-30, measured in full matches):** engine vs **float**, per
+- [x] **REQ-4.14 (The decision of 2026-09-30, measured in full matches):** engine vs **float**, per
   per-length row, diverges in exactly Table F's float-vs-exact count for that row — 11 · 1 · 0 × 7 ·
   20 × 6. The cost of exact milliseconds, restated for whole matches; informational, not a verdict.
-  > Measured: per row ____ · rows equal to Table F ____ / 15
+  > Measured: per row 20 s **11** · 25 s **1** · 30 · 35 · 40 · 45 · 50 · 55 · 60 s **0** each · 65 ·
+  > 70 · 75 · 80 · 85 · 90 s **20** each · rows equal to Table F **15** / 15 — and in every row the
+  > very sequences, index for index, that float vs exact diverges in · engine vs float measured on the
+  > per-length sample **only**: carried by 300 / 300 per-length runs and by **0** of the 500 verdict
+  > runs and **0** of the 16 Table G runs, which the harness ran with it off · 2026-10-02,
+  > `match-equivalence.test.ts` (REQ-4.14, 2 tests)
 
-- [ ] **REQ-4.14 (Invariants):** Phase 3's I1–I10 and this phase's J1–J8 hold after every step of the
+- [x] **REQ-4.14 (Invariants):** Phase 3's I1–I10 and this phase's J1–J8 hold after every step of the
   per-length sample and of Table G.
-  > Measured: states checked ____ · violations per invariant ____
+  > Measured: states checked **1,669,698** — per-length **1,638,339** (300 ready rooms and 1,638,039
+  > states after an action), Table G **31,359** (16 and 31,343), each equal to its expected count ·
+  > violations per invariant **0** for each of I1–I10 and J1–J8, in both sets — 0 violating states ·
+  > population: per-length `setup` 204 · `ready` 300 · `play` 1,635,249 · `roundEnd` 1,824 · `match`
+  > 762, a reveal up in 331,154; Table G 2 · 16 · 31,275 · 52 · 14, a reveal up in 183 · I1–I10 by
+  > Phase 3's `invariantViolations` (testing/invariants.ts, unchanged), J1–J8 by
+  > `testing/match-invariants.ts`, `prev` given at every step for I7; J6 read with its opening "on
+  > `play`, `roundEnd` and `match`" governing every clause of the row · 2026-10-02,
+  > `match-equivalence.test.ts` (REQ-4.14, 1 test)
 
 - [ ] 🚦 **REQ-4.14 (A full match runs as it does in the prototype) (VERDICT GATE — no retry):** with
   the harness's engine ≡ **float** comparison on, the engine and the prototype's own floating-point
