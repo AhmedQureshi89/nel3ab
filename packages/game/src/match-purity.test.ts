@@ -427,6 +427,7 @@ describe('NFR-4.3: every pair of the per-length sample and Table G, frozen, redu
 // ============================================================================
 
 describe('NFR-4.3 / REQ-4.1: no ambient time, randomness or timers — at run time', () => {
+  // As above, the timeout is a ceiling for a slow runner, not the budget.
   test('the per-length sample and all of Table G run through the engine and the helpers with Date.now, Math.random, performance.now, setTimeout and setInterval throwing: spies shown live first, then 0 calls', () => {
     // Every public runtime function a driver or a screen calls, counted: the
     // reducer and the draw helpers through the harness's engine; the clock,
@@ -579,5 +580,5 @@ describe('NFR-4.3 / REQ-4.1: no ambient time, randomness or timers — at run ti
     console.log(
       `NFR-4.3 ambient: ${runs} runs, ${steps} events, ${pairs} reductions, ${draws} draws, spy calls during the run ${JSON.stringify(Object.fromEntries(Object.keys(after).map((k) => [k, (after[k] ?? 0) - (before[k] ?? 0)])))}`,
     )
-  })
+  }, 120_000)
 })
