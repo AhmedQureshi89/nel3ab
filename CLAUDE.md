@@ -18,13 +18,21 @@ the press mechanism and five primitives; `apps/web` self-hosts both font familie
 dev-only `/styleguide` that 404s in production. Phase 3 (rules engine — state & clock) is
 **complete** as of 2026-10-01 — 49/49 boxes with measured values, both 🚦 verdict gates PASS
 (a 45-second round ends as it does in the prototype; the stack verdict with coverage).
-`@nel3ab/game` now ships `RoomState`, the pure reducer `reduce` (`tick`, `startRound`, `hint`,
-`skip`, `correct`) and an integer-millisecond clock; round and match flow — turn passing,
-scoring, category draw, randomness — is Phase 4's. What Phases 2 and 3 carried forward is
-listed under "Completed Work" in `specs/roadmap.md`. `@nel3ab/protocol`, `@nel3ab/content`
-and `apps/game` are still deliberate shells exporting `PLACEHOLDER`: protocol, content and the
-server are owned by later phases and are intentionally absent — do not "fill them in"
-outside their phase.
+Phase 4 (rules engine — round & match flow) is **complete** as of 2026-10-02 — 46/46 boxes
+with measured values, both 🚦 verdict gates PASS (a full match runs as it does in the
+prototype; the prototype's shuffle measured lopsided, the premise of the fair-shuffle
+decision). `@nel3ab/game` is now the whole rules engine: `RoomState`, the pure reducer `reduce`
+(`tick`, `hint`, `skip`, `correct`, `passTurn`, `startMatch`, `nextRound`, `resetMatch`, and
+Phase 3's `startRound`), an integer-millisecond clock, scoring and match end, and the draw
+helpers. Two rules bind every driver (Phase 5's browser, Phase 11's server): send
+`passTurn` after ticks — the engine refuses it until the 1000 ms reveal has elapsed — and
+draw with `drawableCategories` / `drawCategory` / `shuffleQuestions` and a real random source,
+since the reducer draws nothing. Never dispatch `startRound` from a driver: it is Phase 3's
+primitive, kept for Phase 3's tests, and its rounds are unscored. What Phases 2–4 carried
+forward is listed under "Completed Work" in `specs/roadmap.md`. `@nel3ab/protocol`,
+`@nel3ab/content` and `apps/game` are still deliberate shells exporting `PLACEHOLDER`:
+protocol, content and the server are owned by later phases and are intentionally absent — do
+not "fill them in" outside their phase.
 
 ## Commands
 
@@ -46,7 +54,7 @@ done until all four are green.
 **Dev server:** `pnpm --filter nel3ab-web dev`
 
 **Running a subset of tests:** call Vitest directly — `pnpm vitest run packages/game/src/index.test.ts`,
-or `pnpm vitest run -t "substring"`. Three traps:
+or `pnpm vitest run -t "substring"`. Four traps:
 
 - `vitest run --dir <path>` does **not** filter. Each project sets its own `root` in
   `vitest.config.ts`, which overrides `--dir`, so it silently runs the whole suite and exits 0.
@@ -58,6 +66,11 @@ or `pnpm vitest run -t "substring"`. Three traps:
   added to the rules engine needs a test in the same commit, and a branch nothing can reach
   is deleted, never `v8 ignore`d. `pnpm vitest` runs without coverage, so iteration is not
   failed by thresholds — but a green `pnpm vitest` does not mean a green gate.
+- Ubuntu CI runs the coverage-instrumented suite ~2.5–3× slower than the Windows machine, so a
+  heavy test that passes locally can hit Vitest's default 5 s per-test (10 s per-hook) timeout
+  in CI — it did once in Phase 4. Give every heavy pass an explicit `120_000` ceiling, as the
+  existing ones carry ("a ceiling for a slow runner, not the budget"); never raise it globally
+  in `vitest.config.ts`.
 
 ## Layout and dependency direction
 

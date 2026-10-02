@@ -18,7 +18,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 | 1     | Repo, toolchain & CI                      | 1 day    | ✅ Completed    |
 | 2     | Arcade design system                      | 1 day    | ✅ Completed    |
 | 3     | Rules engine — state & clock              | 1 day    | ✅ Completed    |
-| 4     | Rules engine — round & match flow          | 1 day    | 🛠️ In Progress |
+| 4     | Rules engine — round & match flow          | 1 day    | ✅ Completed    |
 | 5     | Judge app — setup & room-ready            | 1 day    | 🔲 Not Started |
 | 6     | Judge app — the play screen               | 1 day    | 🔲 Not Started |
 | 7     | Judge app — round end & match end         | 1 day    | 🔲 Not Started |
@@ -81,7 +81,23 @@ Carried forward rather than closed, each binding on a later phase:
 - **NFR-3.6 held on mains power.** `@nel3ab/game`'s tests take 6.5 s on Windows and 11 s on CI against a 20 s budget. But 21–31 s was observed on unchanged code while the laptop recharged from 2.7% battery, and the cause was not isolated.
 - **Two wording slips remain in `phase-3/verification.md`.** Two boxes cite "the grep of §7" for commands that are in §8. And an already-ticked Gate 3 box's evidence describes the stop rule as it stood before the Gate 6 unit switched it to the exact oracle; no count changed. Whether to amend the text is the owner's call.
 
-No phase after 3 has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
+**Phase 4 — Rules engine: round & match flow. Completed 2026-10-02.** `@nel3ab/game` now holds the whole of `tech-specs.md` §2.3's rules engine: everything between one round and the next. `correct` records the engine time the reveal went up (`revealedAt`, the one field Phase 4 added to `RoomState`), and a `passTurn` action — inert until the reveal has been up `REVEAL_HOLD_MS` (1000 ms) of engine time — brings it down and passes the turn: the other team's bank full on its first turn of the round and frozen otherwise, its clock running from the moment of the pass, the next question. A round that ends with a category scores: the other team's tally, one log entry `{ n, category, winner }`, and in the same reducer step `roundEnd`, or `match` once a tally reaches `winsNeeded` or every selected category has been used — a tie, possible only when the categories run out, has no winner (`matchWinner`). `startMatch` (the room-ready screen's first round, and the rematch), `nextRound` (with judge rotation when it is on) and `resetMatch` (back to setup with players and choices intact) complete the flow; odd rounds start with team A, even with team B. The reducer still draws nothing: the drawn category and the round's questions arrive in the action, the reducer rejects a category the rules do not allow and a question list with a repeat, and drivers draw with the exported `drawableCategories`, `drawCategory` and `shuffleQuestions`, which take the random source as a parameter. The package exports exactly seventeen runtime names. All 46 verification boxes are ticked with measured values in [`phase-4/verification.md`](phase-4/verification.md). Both 🚦 verdict gates returned **PASS**: REQ-4.14, the exit criterion, at `de425e9` (measured at `d7762ec` plus its test) — a full match runs as it does in the prototype's own floating-point flow, with 0 of 16 scripted matches and 0 of 500 pre-registered sequences diverging over 1,172,055 steps and all 600 completed matches ending with the same round log, after the engine was first shown equal to exact arithmetic over 816 sequences and 2,013,542 steps; and REQ-4.2, the premise of the fair-shuffle decision, at `430d7b8` — the prototype's shuffle returns the original order 22,564 times in 60,000 and the reversed order 18,813, against a fair 10,000 each. Phase 3's 211 tests pass unchanged, its REQ-3.11 verdict test included; its test files changed only at the places Phase 4's plan sanctioned. Coverage is 100% (lines 131, branches 132, functions 30, statements 154), seventeen named mutations are each caught by an assertion, and seventeen of the flow's rules are read from the prototype at test time — sixteen driving the engine, the seventeenth (the prototype's shuffle line) the 🚦 premise check. The four gate commands pass with no escape hatch on a fresh Windows clone and on Ubuntu CI, both at `07e615e`. No dependency and no configuration was added. The phase was implemented with `/spec-next` (Gate 1) and one autonomous `/spec-run` on 2026-10-02 and landed as PR #31.
+
+Four owner decisions of 2026-10-02 shape it, each recorded as a DECIDED block in [`phase-4/requirements.md`](phase-4/requirements.md): the driver draws and the engine checks — no seed in room state (REQ-4.1); a fair shuffle rather than the prototype's coin-flip comparator sort, the `mission.md` §5.3 route as on 2026-09-30, so no §8 amendment (REQ-4.2); the turn passes by an explicit action rather than inside `tick`, which would have changed Phase 3's pre-registered Table D and the tails of its verdict samples (REQ-4.6); and rematch and back-to-setup are Phase 4's, leaving Phase 7 the buttons (§1.4). The plan carries one dated correction, made before the first implementation commit and approved by the owner (`4894269`): one sanctioned edit to a Phase 3 test the plan had missed, and two ordering slips. The two Phase 3 findings that bound this phase are met: the 100% bar now covers the whole engine, the turn-pass re-anchor included, and randomness entered without breaking purity.
+
+Carried forward rather than closed, each binding on a later phase:
+
+- **Every driver must send `passTurn`.** A driver that never sends it leaves the reveal up and the game stalled. One that ticks in steps not dividing 1000 — Phase 11's wall-clock ticks — passes the turn on the first tick at or after 1000 ms; the next team is never charged for the delay. Binding on **Phase 5** (the browser loop) and **Phase 11** (the server loop).
+- **Every driver must draw with `drawableCategories`, `drawCategory` and `shuffleQuestions` and a real random source.** The engine checks that a draw is allowed, not that it was random. Binding on **Phases 5 and 11**, each to verify.
+- **No driver may dispatch Phase 3's `startRound`.** It stays public, unchanged, because Phase 3's tests and verdict harness use it, and the rounds it starts are unscored. **Phase 11** maps the wire's `startRound` message onto `startMatch`.
+- **Setup is Phase 5's.** Phase 4's tests start from a hand-built `ready` room (`testing/rooms.ts`). The draw's "fall back to the whole selection" branch is unreachable in the prototype's own flow and is tested only by a hand-built state; if **Phase 5** adds a path to a draw with every category used, the fallback becomes live and invariant J6 (`usedCategories.length === round`) stops holding — that phase records it.
+- **On a tie the prototype's winners line names team A's players.** `matchWinner` returns `null`; the reason line, the winners line and the progress line are formatted by **Phase 7**.
+- **The engine's question order differs from the prototype's for any random source**, because its shuffle is fair (2026-10-02). A side-by-side against the prototype in **Phases 5–7** will show it, as it will show the clock differences at 20, 25 and 65–90 s (2026-09-30). Neither is a regression.
+- **The test suite is slower, and heavy passes need an explicit ceiling.** `pnpm test` takes 28.43 s on Ubuntu CI (Phase 3: 10.98 s) and ~10.4–11.3 s on Windows on mains power against NFR-4.5's 20 s budget. The first CI run failed one test on Vitest's default 5 s per-test timeout (5,375 ms on the runner); `07e615e` gave it the 120 s ceiling every other heavy pass carries. Every later phase inherits both.
+- **A rematch can repeat questions** a previous match asked, by reshuffling a category it played. That is content depth (**Phase 22**), not a flow rule.
+- **Two notes in the record.** `draw.test.ts` carries one `// prettier-ignore`, holding the prototype's shuffle line character for character for the 🚦 premise check; it is not on the escape-hatch list. And verification's NFR-4.1 / NFR-4.7 box names no exception for the roadmap at close, unlike Phase 3's; it was measured over the implementation commits, and this closing commit edits `specs/roadmap.md` and `CLAUDE.md` outside that range. Whether to amend the text is the owner's call.
+
+No phase after 4 has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
 
 ---
 
@@ -145,14 +161,14 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 
 > **Goal:** Rounds, matches, judges and categories all behave exactly as the prototype does.
 
-- [ ] Category draw: random from selected-but-unused, falling back to the full selection when exhausted
-- [ ] Question pool: shuffled per round, no repeats until the pool wraps
-- [ ] Turn passing on `correct`: reveal → 1000ms hold → other team, whose bank starts full on their first turn
-- [ ] Round win = the opponent's clock hit zero; tally, log entry, reason line
-- [ ] Odd rounds start with team A, even rounds with team B
-- [ ] Match ends at `winsNeeded` (default 3) or when categories run out
-- [ ] Judge rotation on `nextRound` when "بدّل الحكم كل جولة" is on
-- [ ] Tests for a full simulated match, and for the categories-exhausted edge case
+- [x] Category draw: random from selected-but-unused, falling back to the full selection when exhausted
+- [x] Question pool: shuffled per round, no repeats until the pool wraps
+- [x] Turn passing on `correct`: reveal → 1000ms hold → other team, whose bank starts full on their first turn
+- [x] Round win = the opponent's clock hit zero; tally, log entry, reason line
+- [x] Odd rounds start with team A, even rounds with team B
+- [x] Match ends at `winsNeeded` (default 3) or when categories run out
+- [x] Judge rotation on `nextRound` when "بدّل الحكم كل جولة" is on
+- [x] Tests for a full simulated match, and for the categories-exhausted edge case
 
 **Exit criteria:** A scripted full match runs end to end in tests and produces a correct round log.
 
@@ -485,6 +501,6 @@ Players remain account-free throughout. Everything in this milestone is host-sid
 
 ---
 
-*Last updated: 2026-10-01*
+*Last updated: 2026-10-02*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — phases are re-evaluated as priorities shift*
