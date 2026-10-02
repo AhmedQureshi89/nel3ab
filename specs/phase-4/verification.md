@@ -411,7 +411,7 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
 
 ## 4. Gate 4 — Fidelity, purity and the public surface (block 2–4; the block blocks Gate 5)
 
-- [ ] **REQ-4.12 (The flow, read from the prototype):** each extraction below is read from
+- [x] **REQ-4.12 (The flow, read from the prototype):** each extraction below is read from
   `design/designs/Nel3ab - Arcade.dc.html` at test time, its match count asserted, its value asserted
   equal to the engine's — and each drives the engine (the test uses the extracted value, not a literal).
 
@@ -435,8 +435,38 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   | 16 | `onClick="{{ goWheel }}"` · `{{ nextRound }}` · `{{ rematch }}` · `{{ resetAll }}` | 1 · 1 · 1 · 2 | — | which screen offers which action |
   | 17 | `usedCats: s.usedCats.includes(s.catIdx) ? s.usedCats : [...s.usedCats, s.catIdx]` in `startRound` | 1 | appended once | the used list after the fallback |
 
-  > Measured: extractions found ____ / 17 · count mismatches ____ · value mismatches ____ · each
-  > driving the engine ____ / 17
+  > Measured: extractions found **17** / 17 · count mismatches **0** · value mismatches **0** (17 / 17
+  > equal the plan's value; 16 / 16 equal the engine's own rule over its probes) · each driving the
+  > engine **16** / 17 — every row but #15, through the reducer with the extracted value, 0
+  > mismatches; #15's Drives column is Gate 2's 🚦 premise box, which "Gate ordering" evaluates after
+  > this box — here the line is pinned, not run, and it has no engine value (REQ-4.2 departs from it).
+  > Per row, count × value — then what it was compared with, and drove: #1 1 × `1000` —
+  > `REVEAL_HOLD_MS`; `passTurn` inert at 999 ms, effective at 1,000 · #2 1 × `% 2 === 1 ? 'a' : 'b'`
+  > in `startingTeam` only — `startingTeam` over rounds 1 … 8; rounds 1 … 4 start a, b, a, b · #3 1 ×
+  > step 1, `max(1, …)`, else `s.judgeIdx` — `nextJudgeIndex` over **44** cases (players 0 … 6, every
+  > judge, rotation on and off); `nextRound` with players 0 / 5 and the judge last: on → 0 / 0, off →
+  > 0 / 4 · #4 **1 · 0** — of the four flow buttons only `nextRound`'s names the judge, and only its
+  > action moves it; a rematch with rotation on keeps judge **3** · #5 1 in `drawCategory` — 5
+  > round-end lists equal `drawableCategories`; 11 `nextRound` draws, the fallback's included · #6 1 ×
+  > `floor` — **88** picks over L = 1 … 11 equal `drawCategory`; 10 `startMatch` draws · #7 1 ×
+  > `picked` without `usedCats`, in `remaining` — 5 lists equal `unusedCategories`; c5 then c3 used
+  > from c3, c0, c5, c1 leaves **[c0, c1]**, each drawn at its position · #8 1 × `>=`, `>=`,
+  > exhaustion — **174** `scoreRound` cases (wins needed 2, 3, 4 × every tally × either loser × 0, 1, 2
+  > unused); 20 round ends of 6 silent matches · #9 1 × a → b, b → a — `otherTeam`; 3 log winners · #10
+  > 1 × `n`, `cat`, `winner` (`n: s.round`) — `RoundLogEntry`'s `n`, `category`, `winner`; 5 entries,
+  > field for field · #11 1 — `passClock`, 2 banks; b's first turn 45,000 (a new bank), a's later turn
+  > 43,000 (the same object) · #12 1 × `+ 1`, `0`, `null`, in `passTurn` only — 1 pass; 3 passes,
+  > `questionIndex` 2, 3, 5 · #13 1 × **5** fields — after a rematch: round 1, 0–0, log `[]`, used only
+  > the drawn category · #14 1 × **8** fields — `resetMatch` changes exactly those plus `revealedAt`
+  > (9 / 9), and nothing else from a round end or a match end · #15 1 — the table's line, character for
+  > character, once in the file · #16 **1 · 1 · 1 · 2** — `goWheel` on ready, `nextRound` on roundEnd,
+  > `rematch` on match, `resetAll` on roundEnd and match: the screens each engine action takes effect
+  > on; 5 / 5 buttons pressed land on play or setup · #17 1 in `startRound` only — 3 `beginRound`
+  > cases; after the fallback the used list is the same array (3 / 3). Bites: 16 engine mutations, one
+  > per row but #15, each applied alone and reverted — each failed its own row's engine comparison.
+  > `pnpm typecheck`, `pnpm lint`, `pnpm test` exit 0 — 458 tests; coverage 100% (statements 154/154,
+  > branches 132/132, functions 30/30, lines 131/131) · 2026-10-02, `match-rules.test.ts` (REQ-4.12,
+  > 57 tests)
 
 - [ ] **NFR-4.3 (Frozen inputs):** with every state and action deep-frozen before each reduction,
   every step of the per-length sample and of Table G reduces with **0** `TypeError`s, and each result
