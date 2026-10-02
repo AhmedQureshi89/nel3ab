@@ -6,7 +6,9 @@ import { ROUND_SECONDS_OPTIONS } from './rules.js'
 import { INVARIANT_IDS } from './testing/invariants.js'
 import {
   runMatch,
+  sameMatchObservation,
   scriptedRun,
+  type HarnessEvent,
   type MatchDivergence,
   type MatchRun,
   type MatchVisit,
@@ -17,7 +19,15 @@ import {
   assertMatchInvariants,
   type AnyInvariantId,
 } from './testing/match-invariants.js'
-import { matchOracle, type Arithmetic, type OracleView } from './testing/match-oracle.js'
+import {
+  logEntryText,
+  matchOracle,
+  type Arithmetic,
+  type MatchEvent,
+  type MatchObservation,
+  type MatchOracle,
+  type OracleView,
+} from './testing/match-oracle.js'
 import {
   MATCH_MAX_STEPS,
   MATCH_PER_LENGTH_SAMPLES,
@@ -30,12 +40,13 @@ import {
   matchSequences,
   type GeneratedMatch,
   type MatchSample,
+  type NamedDraw,
   type ScriptedMatch,
   type TableGFinal,
   type TableGId,
 } from './testing/match-sequences.js'
 import { mulberry32 } from './testing/prng.js'
-import type { Screen } from './types.js'
+import type { RoundLogEntry, Screen } from './types.js'
 
 // Equivalence with the prototype — specs/phase-4/verification.md Gate 5, in the
 // gate's order: its ORDINARY boxes. The generator's fingerprint (Table E), the
@@ -902,5 +913,285 @@ describe('Gate 5 — equivalence with the prototype (the ordinary boxes)', () =>
     console.log(
       `REQ-4.14 invariants: per-length ${invariants.perLength.states} states (${JSON.stringify(invariants.perLength.byScreen)}, reveal up ${invariants.perLength.revealUp}), Table G ${invariants.tableG.states} states (${JSON.stringify(invariants.tableG.byScreen)}, reveal up ${invariants.tableG.revealUp}); violations ${JSON.stringify(invariants.perLength.byInvariant)} / ${JSON.stringify(invariants.tableG.byInvariant)}`,
     )
+  })
+})
+
+// ============================================================================
+// Gate 5 — 🚦 the verdict box of REQ-4.14 (VERDICT GATE — no retry)
+// ============================================================================
+//
+// The engine against the FLOAT match oracle — the prototype's own flow in its
+// own floating-point arithmetic — with the harness's `engineVsFloat` ON, the
+// 17-field observation (screen, round, both tallies, active team, both
+// displayed clocks, both started flags, reveal, both indices, category, used
+// list, judge, log length and last log entry) compared after every event, in:
+//
+// - all 16 scripted matches of Table G, each consumed in full (`scriptedRun`),
+//   every named draw placed in the exact oracle's drawable list and given to
+//   all three as the same `r`, as the ordinary boxes above run them; and
+// - all 500 sequences of the 45 s verdict sample (`MATCH_VERDICT_SAMPLE`:
+//   `MATCH_SEED`, n 500, `MATCH_RATES`, `MATCH_MAX_STEPS`), generated and
+//   stopped exactly as specs.md §2.10 gives them (`matchSequences`), as the
+//   ordinary boxes above run them.
+//
+// And every match that ends ends with the same round log, compared whole: at
+// each event after which the ENGINE's screen becomes `match` from another
+// screen, its whole log is taken through the harness's `visit`; at each event
+// after which the FLOAT oracle's screen does, its whole log is taken from a
+// twin of that oracle (`floatTwin`) — the harness keeps its oracles inside the
+// run — and the two lists are compared match end by match end, step and log.
+// The twin is checked against the harness's own float oracle at the end of
+// every run.
+//
+// PASS: 0 diverging scripted matches, 0 diverging sequences, and every match
+// that ends — counted by the harness's exact oracle — ends with the same round
+// log in the engine and in the float oracle. Nothing here may be changed to
+// reach it — not the seed, the sample size, the rate list, the stop rule, the
+// observation, the harness or the engine (verification.md Gate 5). The verdict
+// was evaluated ONCE, by the run that added this block, and verification.md
+// records that run's numbers; every later run of this block is the permanent
+// regression check of that verdict, not a re-evaluation.
+
+/** A round log, each entry as the observation spells it: `n:category:winner`. */
+const logTexts = (log: readonly RoundLogEntry[]): string[] => log.map(logEntryText)
+
+/** One match end in a run: the 1-based event after which the screen became `match` from another screen, and the whole round log there. */
+interface MatchEnd {
+  readonly step: number
+  readonly log: readonly string[]
+}
+
+/** A draw that names its category (Table G), as opposed to a generated draw, which carries `r`. */
+const isNamedDraw = (event: HarnessEvent): event is NamedDraw =>
+  typeof event !== 'string' && 'categoryId' in event
+
+/**
+ * A twin of the harness's FLOAT oracle, for its whole round log at each match
+ * end. A fresh `matchOracle('float', setup)` is given the run's events exactly
+ * as the harness gives them: a generated event as it stands; a named draw at
+ * its position `i` in the EXACT oracle's drawable list, `r = (i + 0.5) /
+ * length` (specs.md §2.10, "The scripted matches"), read from a fresh exact
+ * oracle stepped alongside for that purpose only — and only when the run has a
+ * named draw. The oracle is deterministic, so the twin is the harness's float
+ * oracle event for event; `verdictRun` checks that at the end of every run.
+ */
+function floatTwin(run: MatchRun): {
+  readonly oracle: MatchOracle
+  readonly matchEnds: MatchEnd[]
+} {
+  const oracle = matchOracle('float', run.setup)
+  const placer = run.events.some(isNamedDraw) ? matchOracle('exact', run.setup) : null
+  const matchEnds: MatchEnd[] = []
+  let step = 0
+  for (const scripted of run.events) {
+    step += 1
+    let event: MatchEvent
+    if (isNamedDraw(scripted)) {
+      const list = placer === null ? null : placer.drawable(scripted.type)
+      const i = list === null ? -1 : list.indexOf(scripted.categoryId)
+      if (list === null || i < 0) {
+        throw new Error(
+          `step ${step}: ${scripted.type}(${scripted.categoryId}) is not in the exact oracle's drawable list`,
+        )
+      }
+      event = { type: scripted.type, r: (i + 0.5) / list.length, perm: scripted.perm }
+    } else {
+      event = scripted
+    }
+    const before = oracle.screen()
+    oracle.step(event)
+    placer?.step(event)
+    if (before !== 'match' && oracle.screen() === 'match') {
+      matchEnds.push({ step, log: logTexts(oracle.view().log) })
+    }
+  }
+  return { oracle, matchEnds }
+}
+
+/** The first step at which the engine and the float oracle differed in one run, and both observations there. */
+interface FloatDivergence {
+  /** A Table G `#`, or `#i` for sequence `i` of the verdict sample. */
+  readonly run: string
+  /** 1-based: the event after which they differed. */
+  readonly step: number
+  readonly engine: MatchObservation
+  readonly float: MatchObservation
+  /** Set when the engine was refused a flow event: the event and the engine's screen. */
+  readonly refused?: string
+}
+
+/** A match end at which the engine's and the float oracle's round logs differ — or that only one of them reached. */
+interface LogMismatch {
+  readonly run: string
+  /** 0-based: the run's k-th match end. */
+  readonly k: number
+  readonly engine: MatchEnd | null
+  readonly float: MatchEnd | null
+}
+
+/** One half of the verdict — Table G, or the verdict sample — tallied run by run. */
+interface MatchVerdictTally {
+  runs: number
+  /** Events consumed, the engine's observation compared with the float oracle's after every one. */
+  steps: number
+  /** Times the EXACT oracle's screen became `match` from another screen — the harness's count, Table F's column. */
+  matchesEnded: number
+  /** Match ends seen in the engine (through the harness's `visit`) and in the float oracle (through its twin). */
+  engineMatchEnds: number
+  floatMatchEnds: number
+  /** Match ends at which both had a round log, compared step and log. */
+  logsCompared: number
+  /** Every run whose engine and float observations differ at some step — all of them, not a sample. */
+  diverging: FloatDivergence[]
+  logMismatches: LogMismatch[]
+  /** Runs whose float twin ends unlike the harness's own float oracle — the twin checking itself. */
+  twinMismatches: string[]
+}
+
+const emptyMatchVerdictTally = (): MatchVerdictTally => ({
+  runs: 0,
+  steps: 0,
+  matchesEnded: 0,
+  engineMatchEnds: 0,
+  floatMatchEnds: 0,
+  logsCompared: 0,
+  diverging: [],
+  logMismatches: [],
+  twinMismatches: [],
+})
+
+/** One run through the harness with `engineVsFloat` on, its round logs compared at every match end, tallied into `t`. */
+function verdictRun(t: MatchVerdictTally, name: string, run: MatchRun): void {
+  const engineEnds: MatchEnd[] = []
+  const r = runMatch(run, {
+    engineVsFloat: true,
+    visit: (state, prev, _action, step) => {
+      if (prev !== null && prev.screen !== 'match' && state.screen === 'match') {
+        engineEnds.push({ step, log: logTexts(state.log) })
+      }
+    },
+  })
+  if (r.engineVsFloat === undefined || r.float === undefined) {
+    throw new Error(`${name}: the engine was not compared with the float oracle`)
+  }
+  t.runs += 1
+  t.steps += r.stepsConsumed
+  t.matchesEnded += r.matchesEnded
+  const d = r.engineVsFloat
+  if (d !== null) {
+    t.diverging.push({
+      run: name,
+      step: d.step,
+      engine: d.left,
+      float: d.right,
+      ...(d.refused === undefined ? {} : { refused: d.refused }),
+    })
+  }
+  const twin = floatTwin(run)
+  if (
+    !sameMatchObservation(twin.oracle.observe(), r.float.observe()) ||
+    !isDeepStrictEqual(logTexts(twin.oracle.view().log), logTexts(r.float.view().log))
+  ) {
+    t.twinMismatches.push(name)
+  }
+  t.engineMatchEnds += engineEnds.length
+  t.floatMatchEnds += twin.matchEnds.length
+  const ends = Math.max(engineEnds.length, twin.matchEnds.length)
+  for (let k = 0; k < ends; k += 1) {
+    const engine = engineEnds[k] ?? null
+    const float = twin.matchEnds[k] ?? null
+    if (engine !== null && float !== null) t.logsCompared += 1
+    if (engine === null || float === null || !isDeepStrictEqual(engine, float)) {
+      t.logMismatches.push({ run: name, k, engine, float })
+    }
+  }
+}
+
+const showFloatDivergence = (d: FloatDivergence | undefined): string =>
+  d === undefined
+    ? 'none'
+    : `${d.run} step ${d.step}: engine ${JSON.stringify(d.engine)} vs float ${JSON.stringify(d.float)}${d.refused === undefined ? '' : ` (refused: ${d.refused})`}`
+
+describe('🚦 Gate 5 — REQ-4.14 verdict: a full match runs as it does in the prototype', () => {
+  let scripted: MatchVerdictTally
+  let sample: MatchVerdictTally
+
+  // About 1.2 million lockstep events, and the float twin over the same. As
+  // above, the timeout is a ceiling for a slow runner, not the budget.
+  beforeAll(() => {
+    scripted = emptyMatchVerdictTally()
+    for (const match of TABLE_G) verdictRun(scripted, match.id, scriptedRun(match))
+    sample = emptyMatchVerdictTally()
+    for (const sequence of matchSequences(MATCH_VERDICT_SAMPLE)) {
+      verdictRun(sample, `#${sequence.index}`, sequence)
+    }
+  }, 120_000)
+
+  test('🚦 REQ-4.14 (A full match runs as it does in the prototype) (VERDICT GATE — no retry): the engine and the FLOAT match oracle produce the same observation at every step, and every match that ends ends with the same round log, in all 16 scripted matches of Table G and all 500 sequences of the 45 s verdict sample', () => {
+    const diverging = [...scripted.diverging, ...sample.diverging]
+    const logMismatches = [...scripted.logMismatches, ...sample.logMismatches]
+    const twinMismatches = [...scripted.twinMismatches, ...sample.twinMismatches]
+    const matchesEnded = scripted.matchesEnded + sample.matchesEnded
+    const logsCompared = scripted.logsCompared + sample.logsCompared
+
+    // The single evaluation's numbers, printed before any assertion so that a
+    // FAIL records them too.
+    console.log(
+      `🚦 REQ-4.14 verdict: scripted ${scripted.diverging.length} / ${scripted.runs} diverging${scripted.diverging.length === 0 ? '' : ` (${scripted.diverging.map((x) => x.run).join(', ')})`} · sequences ${sample.diverging.length} / ${sample.runs} diverging${sample.diverging.length === 0 ? '' : ` (${sample.diverging.map((x) => x.run).join(', ')})`} · steps ${scripted.steps + sample.steps} (Table G ${scripted.steps} + verdict sample ${sample.steps}) · matches ended ${matchesEnded} (Table G ${scripted.matchesEnded} + verdict sample ${sample.matchesEnded}; engine match ends ${scripted.engineMatchEnds + sample.engineMatchEnds}, float match ends ${scripted.floatMatchEnds + sample.floatMatchEnds}) · round logs compared ${logsCompared} (Table G ${scripted.logsCompared} + verdict sample ${sample.logsCompared}) · round-log mismatches ${logMismatches.length}${logMismatches.length === 0 ? '' : ` (first: ${JSON.stringify(logMismatches[0])})`} · twin mismatches ${twinMismatches.length} · first divergence ${showFloatDivergence(diverging[0])}`,
+    )
+
+    // The sample is the pre-registered one (specs.md §2.10) — restated here,
+    // because this block is evaluated on its own.
+    expect({
+      MATCH_SEED,
+      MATCH_RATES: [...MATCH_RATES],
+      MATCH_MAX_STEPS,
+      verdict: MATCH_VERDICT_SAMPLE,
+      tableG: TABLE_G.length,
+    }).toStrictEqual({
+      MATCH_SEED: 0x20261002,
+      MATCH_RATES: [0.02, 0.05, 0.1],
+      MATCH_MAX_STEPS: 40_000,
+      verdict: { roundSeconds: 45, seed: 0x20261002, n: 500 },
+      tableG: 16,
+    })
+    expect({
+      scripted: { runs: scripted.runs, diverging: scripted.diverging, steps: scripted.steps },
+      sequences: {
+        runs: sample.runs,
+        diverging: sample.diverging.length,
+        first: sample.diverging.slice(0, KEEP),
+        steps: sample.steps,
+        matchesEnded: sample.matchesEnded,
+      },
+      roundLogs: {
+        mismatches: logMismatches.slice(0, KEEP),
+        engineMatchEnds: scripted.engineMatchEnds + sample.engineMatchEnds,
+        floatMatchEnds: scripted.floatMatchEnds + sample.floatMatchEnds,
+        compared: logsCompared,
+      },
+      twinMismatches,
+    }).toStrictEqual({
+      // Every scripted match in full; the verdict sample under the stop rule — Table F's row 1.
+      scripted: { runs: 16, diverging: [], steps: TABLE_G_EVENT_TOTAL },
+      sequences: {
+        runs: 500,
+        diverging: 0,
+        first: [],
+        steps: TABLE_F[0]?.steps,
+        matchesEnded: TABLE_F[0]?.matchesEnded,
+      },
+      // Every match that ended — counted by the harness's exact oracle — ended
+      // in the engine and in the float oracle, and its round log was compared.
+      roundLogs: {
+        mismatches: [],
+        engineMatchEnds: matchesEnded,
+        floatMatchEnds: matchesEnded,
+        compared: matchesEnded,
+      },
+      twinMismatches: [],
+    })
+    // The round-log comparison has a population in both halves.
+    expect([scripted.logsCompared > 0, sample.logsCompared > 0]).toStrictEqual([true, true])
   })
 })

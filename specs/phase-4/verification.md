@@ -652,7 +652,7 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > `play`, `roundEnd` and `match`" governing every clause of the row · 2026-10-02,
   > `match-equivalence.test.ts` (REQ-4.14, 1 test)
 
-- [ ] 🚦 **REQ-4.14 (A full match runs as it does in the prototype) (VERDICT GATE — no retry):** with
+- [x] 🚦 **REQ-4.14 (A full match runs as it does in the prototype) (VERDICT GATE — no retry):** with
   the harness's engine ≡ **float** comparison on, the engine and the prototype's own floating-point
   flow produce the same observation — screen, round, both tallies, active team, both displayed clocks,
   both started flags, reveal, both indices, category, used list, judge and round log — at **every** step
@@ -662,8 +662,22 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   0 diverging sequences. Evaluated once, by the test written for this box, after every box above it is
   ticked. A different seed, a smaller `n`, another rate list, another stop rule or another observation
   is a different measurement and may not replace this one.
-  > Measured: scripted ____ / 16 diverging · sequences ____ / 500 diverging · steps ____ ·
-  > matches ended ____ · round logs compared ____ · **verdict: PASS / FAIL** ____ · measured at ____
+  > Measured: scripted **0** / 16 diverging · sequences **0** / 500 diverging · steps **1,172,055**
+  > (Table G 15,700, each match consumed in full, + the verdict sample 1,156,355 under §2.10's stop
+  > rule — Table F's row 1), the 17-field observation compared engine against float oracle after
+  > every one · matches ended **600** (Table G 7 + the verdict sample 593 — Table F's row 1 — counted
+  > by the harness's exact oracle; the engine and the float oracle each reached 600 match ends) ·
+  > round logs compared **600** — at every match end the engine's whole log against the float
+  > oracle's, step and log, **0** mismatches; the float oracle's logs read from a twin given the same
+  > events, equal to the harness's own float oracle at the end of 516 / 516 runs · first divergence
+  > **none** · **verdict: PASS** · measured at `d7762ec` + this test, 2026-10-02, by the last
+  > describe block of `match-equivalence.test.ts` ("🚦 Gate 5 — REQ-4.14 verdict …", harness
+  > `engineVsFloat` on), in the first and only run of it: `pnpm vitest run
+  > packages/game/src/match-equivalence.test.ts -t "VERDICT GATE" --reporter=verbose`, 1 passed ·
+  > 8 skipped, the numbers read from that run's console line. Seed, sample size, rates, stop rule,
+  > observation, harness and engine are as the boxes above ran them — only the test file changed.
+  > Its later runs inside `pnpm test` are the permanent regression check of this verdict, not a
+  > re-evaluation.
 
 ---
 
