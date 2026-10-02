@@ -17,7 +17,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 |-------|-------------------------------------------|----------|----------------|
 | 1     | Repo, toolchain & CI                      | 1 day    | ✅ Completed    |
 | 2     | Arcade design system                      | 1 day    | ✅ Completed    |
-| 3     | Rules engine — state & clock              | 1 day    | 🔲 Not Started |
+| 3     | Rules engine — state & clock              | 1 day    | ✅ Completed    |
 | 4     | Rules engine — round & match flow          | 1 day    | 🔲 Not Started |
 | 5     | Judge app — setup & room-ready            | 1 day    | 🔲 Not Started |
 | 6     | Judge app — the play screen               | 1 day    | 🔲 Not Started |
@@ -66,7 +66,22 @@ Carried forward rather than closed, each binding on a later phase:
 - **`next/font` preload is inert on a Windows build** — a Next 15.5.23 path-matching bug; a Linux build preloads all three files (measured in Docker). Production must build on Linux (**Phase 9**).
 - **`specs/phase-2/specs.md` is now behind the implementation in six places**, each an owner's ruling recorded in `verification.md` rather than a silent change: the Dot follows the prototype; Button applies the press class in code because Stylelint rejects `composes`; `next.config.ts` gained a webpack `extensionAlias` so Next resolves the NodeNext `.js` specifiers in `@nel3ab/ui`; Archivo ships as two static files; the dark blocks re-declare the `--sh-*` tokens; the action sub-label is inline. None contradicts `mission.md`, `tech-specs.md` or `roadmap.md`, so none needs a §8 amendment; whether to amend the phase triad's text is the owner's call.
 
-No phase after 2 has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
+**Phase 3 — Rules engine: state & clock. Completed 2026-10-01.** `@nel3ab/game` is a pure, dependency-free rules engine consumed as TypeScript source. `RoomState` covers the handoff's state contract field for field (22 / 22 names; `categoryIndex` became `categoryId`, and `banks` and `active` are grouped under `clock`). One reducer, `reduce(state, action)`, handles `tick`, `startRound`, `hint`, `skip` and `correct`; it never mutates its input, reads no clock, randomness or timer, returns the identical object when an action is inert, and throws on a malformed one. The clock holds integer-millisecond banks with `runningSince` and an engine time advanced only by `tick(ms)`, so a tick that does not end the round changes nothing but the time. A hint costs exactly 2 s and a skip exactly 3 s, a spend that reaches zero ends the round in the same step, and صحيح raises the reveal and stops the clock. The rules' numbers are read from the prototype file at test time — 13 extractions plus 4 user-story values — and drive the engine. The package exports exactly twelve runtime names and no longer exports `PLACEHOLDER`. All 49 verification boxes are ticked with measured values in [`phase-3/verification.md`](phase-3/verification.md). Both 🚦 verdict gates returned **PASS**: REQ-3.11, the exit criterion, at `83b5f9a` — a simulated 45-second round produces the same outcome as the prototype's own floating-point arithmetic, with 0 of 13 scripted scenarios and 0 of 10,000 pre-registered sequences diverging (2,429,148 steps), after the engine was first shown equal to exact arithmetic over 3,231,120 steps; and REQ-3.13, the stack verdict, measured at `54e716c` — the four gate commands pass on a fresh `--frozen-lockfile` install with no escape hatch, on Windows and on Ubuntu CI. Coverage is 100% on lines, branches, functions and statements, enforced by `pnpm test` on every run, and ten named mutations are each caught by an assertion. The phase was implemented by one autonomous `/spec-run` on 2026-09-30 and landed as PR #30.
+
+Two owner decisions of 2026-09-30 shape it, each recorded as a DECIDED block in [`phase-3/requirements.md`](phase-3/requirements.md). First, the engine keeps exact integer milliseconds and follows the prototype's stated rules rather than its floating-point drift — the `mission.md` §5.3 route, so no §8 amendment. Its measured cost is 0 of 70,000 simulated rounds at the default 45 s; the drift is common at 20, 25 and 65–90 s. Second, coverage is enforced on every test run through `@vitest/coverage-v8` 4.1.10. The verification plan carries one dated ordering correction, made before implementation: Gates 2–5 are one block.
+
+Carried forward rather than closed, each binding on a later phase:
+
+- **Phase 4 inherits the 100% coverage bar** over all of `@nel3ab/game`. It may extend `RoomState` but may not change the clock's representation without revisiting REQ-3.4. It also owns the clock's hardest transition: re-anchoring `runningSince` for the *other* team when the turn passes. Nothing in Phase 3 exercises that, because only one team's bank ever runs.
+- **Phase 4 must bring in randomness without breaking purity** (REQ-3.3), either through an action's payload or through a seed carried in state. Phase 3 chose neither.
+- **The integer-millisecond contract moves rounding onto every driver.** A loop that measures wall time and rounds each delta with `Math.round` can drift by up to ±225 ms over a 45 s bank, and the engine cannot see it. Binding on **Phase 5**, if its browser loop measures time rather than dispatching `tick(100)`, and on **Phase 11**, whose server tick measures wall time.
+- **`clock.now` is engine time, not a timestamp.** It starts at 0 per room, and **Phase 16** must map it onto `serverTime` explicitly.
+- **The engine deliberately disagrees with the prototype at 20, 25 and 65–90 s banks.** It can show a different second, or end a round one tick sooner. If **Phase 5** exposes the bank length, a side-by-side comparison will show this. That is the 2026-09-30 decision working, not a regression.
+- **Gate 6's prototype comparison cannot see a cost change smaller than one 100 ms tick** (a 2,001 ms hint passes it). Exact costs are guarded only by REQ-3.10's extraction and the unit tests.
+- **NFR-3.6 held on mains power.** `@nel3ab/game`'s tests take 6.5 s on Windows and 11 s on CI against a 20 s budget. But 21–31 s was observed on unchanged code while the laptop recharged from 2.7% battery, and the cause was not isolated.
+- **Two wording slips remain in `phase-3/verification.md`.** Two boxes cite "the grep of §7" for commands that are in §8. And an already-ticked Gate 3 box's evidence describes the stop rule as it stood before the Gate 6 unit switched it to the exact oracle; no count changed. Whether to amend the text is the owner's call.
+
+No phase after 3 has started. The remainder of this roadmap is derived from the design handoff and the constitution interview rather than from shipped work.
 
 ---
 
@@ -114,13 +129,13 @@ The goal of this milestone is a **judge app you can hand to a friend and actuall
 
 > **Goal:** The game's core maths, as pure functions with no UI and no network.
 
-- [ ] Define `RoomState` in `packages/game` matching the handoff's state contract
-- [ ] Pure reducer: `(state, action) => state`, no side effects, no timers inside
-- [ ] Clock model: banks per team, `active`, `runningSince`; time advanced by an explicit `tick(ms)` action
-- [ ] Spend actions: hint costs 2s, skip costs 3s; any spend reaching 0 ends the round immediately
-- [ ] Reveal pauses the clock; all judge actions are no-ops while a reveal is up or the clock is stopped
-- [ ] Display helper: `ceil(seconds)`, clamped at 0
-- [ ] Unit tests covering every spend/boundary case, especially "spend exactly to zero"
+- [x] Define `RoomState` in `packages/game` matching the handoff's state contract
+- [x] Pure reducer: `(state, action) => state`, no side effects, no timers inside
+- [x] Clock model: banks per team, `active`, `runningSince`; time advanced by an explicit `tick(ms)` action
+- [x] Spend actions: hint costs 2s, skip costs 3s; any spend reaching 0 ends the round immediately
+- [x] Reveal pauses the clock; all judge actions are no-ops while a reveal is up or the clock is stopped
+- [x] Display helper: `ceil(seconds)`, clamped at 0
+- [x] Unit tests covering every spend/boundary case, especially "spend exactly to zero"
 
 **Exit criteria:** Full test coverage on clock and spend logic; a simulated 45-second round produces the same outcome as the prototype.
 
@@ -470,6 +485,6 @@ Players remain account-free throughout. Everything in this milestone is host-sid
 
 ---
 
-*Last updated: 2026-09-30*
+*Last updated: 2026-10-01*
 *Author: Ahmed Alshehri (ahmed@tadawulcom.sa)*
 *Status: Living document — phases are re-evaluated as priorities shift*

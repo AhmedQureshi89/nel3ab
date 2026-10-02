@@ -15,11 +15,16 @@ with measured values, and its 🚦 stack-compatibility verdict gate returned PAS
 both 🚦 verdict gates PASS (the font licence, and the stack verdict for a source-consumed
 React + CSS Modules package). `@nel3ab/ui` now ships the token layer, globals, `.ltr-num`,
 the press mechanism and five primitives; `apps/web` self-hosts both font families and has a
-dev-only `/styleguide` that 404s in production. What Phase 2 carried forward is listed under
-"Completed Work" in `specs/roadmap.md`. The other three packages — `@nel3ab/game`,
-`@nel3ab/protocol`, `@nel3ab/content` — and `apps/game` are still deliberate shells exporting
-`PLACEHOLDER`: the rules engine, protocol and content are owned by later phases and are
-intentionally absent — do not "fill them in" outside their phase.
+dev-only `/styleguide` that 404s in production. Phase 3 (rules engine — state & clock) is
+**complete** as of 2026-10-01 — 49/49 boxes with measured values, both 🚦 verdict gates PASS
+(a 45-second round ends as it does in the prototype; the stack verdict with coverage).
+`@nel3ab/game` now ships `RoomState`, the pure reducer `reduce` (`tick`, `startRound`, `hint`,
+`skip`, `correct`) and an integer-millisecond clock; round and match flow — turn passing,
+scoring, category draw, randomness — is Phase 4's. What Phases 2 and 3 carried forward is
+listed under "Completed Work" in `specs/roadmap.md`. `@nel3ab/protocol`, `@nel3ab/content`
+and `apps/game` are still deliberate shells exporting `PLACEHOLDER`: protocol, content and the
+server are owned by later phases and are intentionally absent — do not "fill them in"
+outside their phase.
 
 ## Commands
 
@@ -41,13 +46,18 @@ done until all four are green.
 **Dev server:** `pnpm --filter nel3ab-web dev`
 
 **Running a subset of tests:** call Vitest directly — `pnpm vitest run packages/game/src/index.test.ts`,
-or `pnpm vitest run -t "substring"`. Two traps:
+or `pnpm vitest run -t "substring"`. Three traps:
 
 - `vitest run --dir <path>` does **not** filter. Each project sets its own `root` in
   `vitest.config.ts`, which overrides `--dir`, so it silently runs the whole suite and exits 0.
 - `pnpm test` forwards extra args to the wrapper, but the wrapper asserts that _every_
   workspace project contributed a test file, so it will fail on any filtered run. Use it
   for the gate, use `pnpm vitest` for iteration.
+- `pnpm test` runs with `--coverage` and **100% thresholds over `packages/game/src`**
+  (lines, branches, functions, statements; REQ-3.12, owner's decision 2026-09-30). Every line
+  added to the rules engine needs a test in the same commit, and a branch nothing can reach
+  is deleted, never `v8 ignore`d. `pnpm vitest` runs without coverage, so iteration is not
+  failed by thresholds — but a green `pnpm vitest` does not mean a green gate.
 
 ## Layout and dependency direction
 
