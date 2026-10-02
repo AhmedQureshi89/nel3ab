@@ -9,13 +9,13 @@
 // `rand()` calls per configuration, in the order written; one per category
 // value, then n − 1 per permutation.
 //
-// What is here now: those fixed pieces, and verification.md Table G — the
-// sixteen scripted matches — as data: per match its configuration, its script,
-// event by event, with every draw naming its category, and its pre-registered
-// outcome exactly as the table states it. match.test.ts plays them through the
-// engine alone (Gate 3, REQ-4.13). The generated sequences — the stepper that
-// chooses each event from the exact oracle's screen, and the two samples — need
-// the match oracle, and are not here yet.
+// What is here: those fixed pieces; verification.md Table G — the sixteen
+// scripted matches — as data: per match its configuration, its script, event by
+// event, with every draw naming its category, and its pre-registered outcome
+// exactly as the table states it (match.test.ts plays them through the engine
+// alone, Gate 3, REQ-4.13); and, at the end of the file, the generated
+// sequences — the stepper that chooses each event from the EXACT match oracle's
+// screen (testing/match-oracle.ts), and the two samples of specs.md §2.10.
 //
 // Every question here is synthetic (testing/rooms.ts). Nothing is copied from
 // design/.
@@ -24,7 +24,10 @@
 // exclusion), never exported from index.ts, imported only by `*.test.ts` and by
 // other files under `testing/`.
 
+import { ROUND_SECONDS_OPTIONS } from '../rules.js'
 import type { CategoryId, Question, Screen, Team } from '../types.js'
+import { matchOracle, type MatchDraw, type MatchEvent } from './match-oracle.js'
+import { mulberry32 } from './prng.js'
 import { categoryIds, categoryQuestions, type ReadyRoomSetup } from './rooms.js'
 
 export const MATCH_SEED = 0x20261002
@@ -615,3 +618,138 @@ export const TABLE_G: readonly ScriptedMatch[] = [
     },
   },
 ]
+
+// ============================================================================
+// The generated sequences — specs.md §2.10, "A sequence" and "A sample"
+// ============================================================================
+
+/**
+ * A draw (specs.md §2.10): ONE `rand()` — the category value `r` — then
+ * `permutation(rand, 3)`, two more. Every category has three questions
+ * (testing/rooms.ts), so every permutation is of three.
+ */
+export function drawFor(rand: () => number, type: MatchFlow): MatchDraw {
+  const r = rand()
+  const perm = permutation(rand, 3)
+  return { type, r, perm }
+}
+
+/** How a generated sequence ended (specs.md §2.10). */
+export type SequenceEnd =
+  /** A `resetMatch` was drawn — on round end or on match end — and is the sequence's last event. */
+  | 'resetMatch'
+  /** On match end with two matches already ended: the sequence ends before any draw. */
+  | 'twoMatches'
+  /** `MATCH_MAX_STEPS` events. No pre-registered sequence ends this way (verification.md Table F). */
+  | 'maxSteps'
+
+export interface GeneratedEvents {
+  readonly events: readonly MatchEvent[]
+  /** Times the exact oracle's screen became `match` from another screen. */
+  readonly matchesEnded: number
+  readonly end: SequenceEnd
+}
+
+/**
+ * One sequence, generated one event at a time from the EXACT match oracle's
+ * screen — the oracle that times everything, as Phase 3's exact oracle timed
+ * its stop rule — so the sample never depends on the engine under test. Draw
+ * order is part of the contract (specs.md §2.10's event table):
+ *
+ * | Exact oracle's screen | Event |
+ * |---|---|
+ * | `ready` (the start) | `startMatch` + a draw — always the first event |
+ * | `play` | `rand() < rate` ? (`r = rand()`: `r < 0.5` → `correct`; `r < 0.8` → `skip`; else `hint`) : `tick` |
+ * | `roundEnd` | `r = rand()`: `r < 0.25` → `tick`; `r < 0.95` → `nextRound` + a draw; else `resetMatch` — the sequence ends |
+ * | `match` | two matches ended → the sequence ends before any draw. Else `r = rand()`: `r < 0.25` → `tick`; `r < 0.6` → `startMatch` + a draw (a rematch); else `resetMatch` — the sequence ends |
+ *
+ * A sequence also ends at `MATCH_MAX_STEPS` events. The only flow events are
+ * those whose buttons the prototype shows on that screen. `setup` is reached
+ * only by a `resetMatch`, which ends the sequence, so no event is ever chosen
+ * there.
+ */
+export function generateMatchEvents(
+  rand: () => number,
+  setup: ReadyRoomSetup,
+  rate: number,
+): GeneratedEvents {
+  const exact = matchOracle('exact', setup)
+  const events: MatchEvent[] = []
+  let matchesEnded = 0
+  while (events.length < MATCH_MAX_STEPS) {
+    const screen = exact.screen()
+    let event: MatchEvent
+    switch (screen) {
+      case 'ready':
+        event = drawFor(rand, 'startMatch')
+        break
+      case 'play':
+        if (rand() < rate) {
+          const r = rand()
+          event = r < 0.5 ? 'correct' : r < 0.8 ? 'skip' : 'hint'
+        } else {
+          event = 'tick'
+        }
+        break
+      case 'roundEnd': {
+        const r = rand()
+        event = r < 0.25 ? 'tick' : r < 0.95 ? drawFor(rand, 'nextRound') : 'resetMatch'
+        break
+      }
+      case 'match': {
+        if (matchesEnded >= 2) return { events, matchesEnded, end: 'twoMatches' }
+        const r = rand()
+        event = r < 0.25 ? 'tick' : r < 0.6 ? drawFor(rand, 'startMatch') : 'resetMatch'
+        break
+      }
+      case 'setup':
+        throw new Error(
+          'generateMatchEvents: setup is reached only by the resetMatch that ends a sequence',
+        )
+    }
+    exact.step(event)
+    events.push(event)
+    if (screen !== 'match' && exact.screen() === 'match') matchesEnded += 1
+    if (event === 'resetMatch') return { events, matchesEnded, end: 'resetMatch' }
+  }
+  return { events, matchesEnded, end: 'maxSteps' }
+}
+
+/** A sample (specs.md §2.10): `(roundSeconds, seed, n)`. */
+export interface MatchSample {
+  readonly roundSeconds: number
+  readonly seed: number
+  readonly n: number
+}
+
+/** The verdict's sample: 45 s, `MATCH_SEED`, 500 sequences (verification.md Table F, first row). */
+export const MATCH_VERDICT_SAMPLE: MatchSample = { roundSeconds: 45, seed: MATCH_SEED, n: 500 }
+
+/** One sample per legal bank length: `MATCH_SEED + roundSeconds`, 20 sequences each (Table F, rows 2–16). */
+export const MATCH_PER_LENGTH_SAMPLES: readonly MatchSample[] = ROUND_SECONDS_OPTIONS.map(
+  (roundSeconds) => ({ roundSeconds, seed: MATCH_SEED + roundSeconds, n: 20 }),
+)
+
+export interface GeneratedMatch extends GeneratedEvents {
+  /** 0-based position in its sample. */
+  readonly index: number
+  readonly rate: number
+  readonly setup: ReadyRoomSetup
+}
+
+/**
+ * The sample's sequences, in generation order, all drawn from ONE shared
+ * `mulberry32(sample.seed)`: sequence `i` draws its configuration with
+ * `drawMatchConfig`, then its events, at rate `MATCH_RATES[i % 3]`. Because
+ * the generator is shared, sequence `i` depends on every sequence before it,
+ * so they are yielded strictly in order.
+ */
+export function* matchSequences(sample: MatchSample): Generator<GeneratedMatch> {
+  const rand = mulberry32(sample.seed)
+  for (let index = 0; index < sample.n; index += 1) {
+    const rate = MATCH_RATES[index % MATCH_RATES.length]
+    if (rate === undefined) throw new Error(`no rate for sequence ${index}`)
+    const setup = drawMatchConfig(rand, sample.roundSeconds)
+    yield { index, rate, setup, ...generateMatchEvents(rand, setup, rate) }
+  }
+}

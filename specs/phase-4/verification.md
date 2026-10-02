@@ -495,26 +495,55 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > branches 132/132, functions 30/30, lines 131/131) · 2026-10-02, `match-rules.test.ts` (REQ-4.12,
   > 57 tests)
 
-- [ ] **NFR-4.3 (Frozen inputs):** with every state and action deep-frozen before each reduction,
+- [x] **NFR-4.3 (Frozen inputs):** with every state and action deep-frozen before each reduction,
   every step of the per-length sample and of Table G reduces with **0** `TypeError`s, and each result
   equals the unfrozen run's.
-  > Measured: pairs reduced ____ · TypeErrors ____ · differences ____
+  > Measured: pairs reduced **1,669,382** — per-length sample **1,638,039** (300 sequences, 841,487
+  > events: 796,552 ticks as `tick(100)` + `passTurn`, and 44,935 other events) and Table G **31,343**
+  > (16 matches, 15,700 events) — every one through the match harness as the equivalence run drives
+  > the engine, 0 runs refused a flow event · TypeErrors **0** · differences **0** — on a second
+  > chain built from separate objects (its own ready room and copies of every action), each state and
+  > action deep-frozen before `reduce`, every result deep-equal to the unfrozen run's result for the
+  > same pair, and the 316 / 316 ready rooms equal · 2026-10-02, `match-purity.test.ts` (NFR-4.3,
+  > 2 tests)
 
-- [ ] **NFR-4.3 (Deterministic, and identical when inert):** reducing each step twice gives deep-equal
+- [x] **NFR-4.3 (Deterministic, and identical when inert):** reducing each step twice gives deep-equal
   results; every action that changes nothing returns its input (`===`) — counted per action type
   over the per-length sample.
-  > Measured: double reductions ____ · differing ____ · inert returns per type ____ · inert copies ____
+  > Measured: double reductions **1,638,039** over the per-length sample (and 31,343 over Table G) ·
+  > differing **0** · inert returns per type over the per-length sample, of that type's pairs:
+  > `passTurn` **780,584** of 796,552 · `correct` **5,930** of 21,898 · `skip` **3,554** of 13,077 ·
+  > `hint` **2,549** of 8,616 · `tick` **0** of 796,552 · `startMatch` **0** of 412 · `nextRound`
+  > **0** of 728 · `resetMatch` **0** of 204 · `startRound` never given (no driver dispatches it) —
+  > the 15,968 effective `passTurn`s equal the 15,968 effective `correct`s; Table G: `passTurn`
+  > 15,634 of 15,643, `correct` 1 of 10, `skip` 1 of 5, `hint` 1 of 3, the rest 0 · inert copies
+  > **0** for every type in both sets — no result deep-equal to its input that was not its input ·
+  > 2026-10-02, `match-purity.test.ts` (NFR-4.3, 2 tests)
 
-- [ ] **NFR-4.3 / REQ-4.1 (No ambient time, randomness or timers — at run time):** with `Date.now`,
+- [x] **NFR-4.3 / REQ-4.1 (No ambient time, randomness or timers — at run time):** with `Date.now`,
   `Math.random`, `performance.now`, `setTimeout` and `setInterval` each replaced by a function that
   throws, the per-length sample and all of Table G run through the engine and the helpers with **0**
   calls. The spies are first shown to fire.
-  > Measured: steps run ____ · calls ____ · spies proven live ____ / 5
+  > Measured: steps run **857,187** events — the per-length sample's 841,487 and Table G's 15,700,
+  > 316 runs, generated under the spies — giving **1,669,382** reductions and **1,177** draws ·
+  > calls **0** to each of the five during the run · spies proven live **5** / 5 before it (each
+  > called once and threw), and 5 / 5 still live after it · every public helper counted under the
+  > spies: `reduce` 1,669,382 · `drawableCategories`, `drawCategory` and `shuffleQuestions` 1,177
+  > each (one per draw; `shuffleQuestions` on the drawn questions with a `mulberry32` source) ·
+  > `remainingMs`, `displaySeconds` 3,339,396 each · `currentQuestion`, `acceptsJudgeActions`,
+  > `matchWinner` 1,669,698 each (every visited state) · `createRoom`, through `readyRoom`, 316 ·
+  > 2026-10-02, `match-purity.test.ts` (NFR-4.3 / REQ-4.1, 1 test)
 
-- [ ] **NFR-4.2 (Dependency-free, ambient-free in source):** `packages/game/package.json` has no
+- [x] **NFR-4.2 (Dependency-free, ambient-free in source):** `packages/game/package.json` has no
   dependency keys; §7's ambient grep and non-relative-import grep each return **0** lines over non-test
   source.
-  > Measured: dependency keys ____ · ambient hits ____ · non-relative imports ____
+  > Measured: dependency keys **0** — the manifest's keys are `name`, `version`, `private`, `type`,
+  > `main`, `types`, `exports`, `scripts`; `git diff 841981a -- packages/game/package.json` empty ·
+  > ambient hits **0** lines — §7's grep over the 8 non-test source files (`clock`, `draw`, `index`,
+  > `match`, `reducer`, `room`, `rules`, `types`), comments included · non-relative imports **0**
+  > lines — all 20 `from '…'` clauses in those files are `./`-relative (`clock` 1, `draw` 1, `index`
+  > 7, `match` 3, `reducer` 5, `room` 3), and there is no `import(` or `require(` · 2026-10-02,
+  > §7's two greps and `packages/game/package.json`
 
 - [x] **NFR-4.4 (The surface, exactly):** `@nel3ab/game`'s runtime exports are exactly the seventeen of
   [specs.md](specs.md) §2.8; the nine internal names of §2.8 each exist in their module and are absent
