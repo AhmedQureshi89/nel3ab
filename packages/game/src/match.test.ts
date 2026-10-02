@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 
 import { remainingMs } from './clock.js'
 import { matchWinner } from './match.js'
@@ -6,14 +6,32 @@ import { reduce } from './reducer.js'
 import { createRoom } from './room.js'
 import { REVEAL_HOLD_MS } from './rules.js'
 import { categoryIds, categoryQuestions, readyRoom } from './testing/rooms.js'
+import type * as game from './index.js'
 import type { ReadyRoomSetup } from './testing/rooms.js'
-import type { Action, CategoryId, Question, RoomState, Screen, Team } from './types.js'
+import type {
+  Action,
+  CategoryId,
+  ClockState,
+  CreateRoomInput,
+  Player,
+  PlayerId,
+  Question,
+  Random,
+  Reveal,
+  RoomConfig,
+  RoomState,
+  RoundLogEntry,
+  Screen,
+  Team,
+  TeamBank,
+} from './types.js'
 
 // Phase 4 — the round and match flow: the direct boxes of
-// specs/phase-4/verification.md Gates 1 and 3, and Gate 2's "A bad draw
-// throws, in every state", which needs the reducer. See specs/phase-4/specs.md
-// §2.5 (match.ts), §2.6 (the reducer's table, including the Phase 3 rows that
-// change) and §2.11.
+// specs/phase-4/verification.md Gates 1 and 3, Gate 2's "A bad draw throws, in
+// every state", which needs the reducer, and the type half of Gate 4's "The
+// surface, exactly" (NFR-4.4). See specs/phase-4/specs.md §2.5 (match.ts),
+// §2.6 (the reducer's table, including the Phase 3 rows that change), §2.8
+// (the package's surface) and §2.11.
 //
 // As in Phase 3's reducer tests, every expected state is written as "the
 // previous state with these fields replaced", compared with `toStrictEqual`, so
@@ -1182,5 +1200,40 @@ describe('REQ-4.10: resetMatch — back to setup with the room intact', () => {
     }[screen]
     expect(s.screen).toBe(screen)
     expect(reduce(s, RESET)).toBe(s)
+  })
+})
+
+// ============================================================================
+// verification.md Gate 4 — NFR-4.4: the package's types
+// ============================================================================
+
+// index.test.ts asserts the runtime half of the surface: the seventeen names
+// `Object.keys` can see. A type leaves nothing at run time to see, so the type
+// half is asserted here, at compile time: every type of types.ts — Phase 3's
+// fourteen and Phase 4's `Random` — is reached through the package's entry
+// point by the type-only `game` import above, and is the same type there as in
+// types.ts. `import type` compiles away, so the evidence is `pnpm typecheck`
+// (tsc --build over src/**/*.ts, test files included): a type missing from
+// index.ts's `export type` list is a compile error on its line below — "has no
+// exported member" — not a failing test. The calls are inert at run time.
+describe('NFR-4.4: Random and every Phase 3 type are importable from the package as types', () => {
+  test('each of the fifteen types of types.ts is exported by index.ts, unchanged', () => {
+    // Phase 4's one new type.
+    expectTypeOf<game.Random>().toEqualTypeOf<Random>()
+    // Phase 3's fourteen.
+    expectTypeOf<game.Action>().toEqualTypeOf<Action>()
+    expectTypeOf<game.CategoryId>().toEqualTypeOf<CategoryId>()
+    expectTypeOf<game.ClockState>().toEqualTypeOf<ClockState>()
+    expectTypeOf<game.CreateRoomInput>().toEqualTypeOf<CreateRoomInput>()
+    expectTypeOf<game.Player>().toEqualTypeOf<Player>()
+    expectTypeOf<game.PlayerId>().toEqualTypeOf<PlayerId>()
+    expectTypeOf<game.Question>().toEqualTypeOf<Question>()
+    expectTypeOf<game.Reveal>().toEqualTypeOf<Reveal>()
+    expectTypeOf<game.RoomConfig>().toEqualTypeOf<RoomConfig>()
+    expectTypeOf<game.RoomState>().toEqualTypeOf<RoomState>()
+    expectTypeOf<game.RoundLogEntry>().toEqualTypeOf<RoundLogEntry>()
+    expectTypeOf<game.Screen>().toEqualTypeOf<Screen>()
+    expectTypeOf<game.Team>().toEqualTypeOf<Team>()
+    expectTypeOf<game.TeamBank>().toEqualTypeOf<TeamBank>()
   })
 })

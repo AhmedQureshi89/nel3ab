@@ -459,11 +459,29 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   source.
   > Measured: dependency keys ____ · ambient hits ____ · non-relative imports ____
 
-- [ ] **NFR-4.4 (The surface, exactly):** `@nel3ab/game`'s runtime exports are exactly the seventeen of
+- [x] **NFR-4.4 (The surface, exactly):** `@nel3ab/game`'s runtime exports are exactly the seventeen of
   [specs.md](specs.md) §2.8; the nine internal names of §2.8 each exist in their module and are absent
   from the package; `Random` and every Phase 3 type are importable as types.
-  > Measured: exports ____ / 17 · extra ____ · missing ____ · internal names present-in-module and
-  > absent-from-package ____ / 9
+  > Measured: exports **17** / 17 · extra **0** · missing **0** — `Object.keys` of the package, sorted,
+  > `toStrictEqual` the written list: Phase 3's twelve plus `REVEAL_HOLD_MS`, `drawableCategories`,
+  > `drawCategory`, `shuffleQuestions`, `matchWinner`; kinds **17** / 17 (`REVEAL_HOLD_MS` a number,
+  > the four functions) · internal names present-in-module and absent-from-package **9** / 9 —
+  > `otherTeam`, `passClock` (clock.ts) · `unusedCategories`, `nextRoundChoices` (draw.ts) ·
+  > `startingTeam`, `nextJudgeIndex`, `assertRoundPayload`, `beginRound`, `scoreRound` (match.ts) —
+  > beside Phase 3's 6 / 6 · types **15** / 15 — `Random` and Phase 3's fourteen — each reached
+  > through the type-only `import type * as game from './index.js'` and asserted
+  > `expectTypeOf<game.X>().toEqualTypeOf<X>()` against types.ts's own; a type-only import compiles
+  > away, so the evidence is `pnpm typecheck` **exit 0** with it — and **exit 2**, TS2694 "has no
+  > exported member 'Random'" at that line, with `Random` removed from index.ts's `export type` list
+  > (then restored) · `git diff 841981a -- index.test.ts`: **7** hunks (11 at `-U0`), every one
+  > §2.9's — (1) the namespace imports of `./draw.js` and `./match.js`, which "each with its module"
+  > needs; (2) the title twelve → **seventeen**, naming phase-4 §2.8 beside §2.6, and
+  > `REVEAL_HOLD_MS` in the sorted list; (3) the list's other four; (4) `kinds` gains
+  > `REVEAL_HOLD_MS: 'number'`; (5) `kinds` gains the four `'function'`s; (6) one sentence appended
+  > to the comment above the internal-names test, naming the nine; (7) the internal list gains the
+  > nine · lines outside §2.9 **0** · diff over the ten untouched files **0** lines; `room.test.ts`,
+  > `reducer.test.ts` unchanged since Gate 1 · `pnpm build` exit 0 (apps/web transpiles the package)
+  > · 2026-10-02, `index.test.ts` (NFR-4.4, 4 tests) and `match.test.ts` (NFR-4.4, 1 test)
 
 ---
 
