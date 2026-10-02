@@ -783,19 +783,52 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > the two N17 checks), `git status --porcelain` was empty, the eight files' SHA-256 equalled
   > `de425e9`'s, and `pnpm vitest run packages/game` passed 384 / 384
 
-- [ ] **REQ-4.16 (The four gate commands, no escape hatch):** on a fresh clone, `pnpm install
+- [x] **REQ-4.16 (The four gate commands, no escape hatch):** on a fresh clone, `pnpm install
   --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` all exit 0 on Windows
   and on this phase's pull request's Ubuntu CI (`ci` job), and §7's escape-hatch greps return the baseline
   measured at `841981a` — **5** prose lines (`CLAUDE.md` × 3, `press.module.css`, `stylelint.config.mjs`), **0**
   directives, and `skipLibCheck` in `tsconfig.base.json` only — unchanged.
-  > Measured: Windows ____ / 5 · CI run ____ (`ci` ____) · escape-hatch lines ____ · directives ____
+  > Measured: Windows **5** / 5 · CI run **37026483519** (`ci` **success**) · escape-hatch lines **5** ·
+  > directives **0**
+  > **Windows — a fresh clone at `07e615e`.** Cloned from GitHub into
+  > `C:\Users\aalsh\AppData\Local\Temp\claude\n4v`, Windows 11, Node v24.14.0, pnpm 11.22.0, on mains
+  > power (`Win32_Battery` `BatteryStatus` 2, charge 100%), each command once: `pnpm install
+  > --frozen-lockfile` exit **0** (3.90 s, "Lockfile is up to date") · `pnpm lint` **0** (5.68 s) ·
+  > `pnpm typecheck` **0** (2.52 s) · `pnpm test` **0** (11.39 s wall, Vitest Duration 10.43 s) —
+  > **25** files across **6** projects, **491 / 491**, `[check-collected-tests] OK`, coverage **100%**
+  > (statements 154 / 154 · branches 132 / 132 · functions 30 / 30 · lines 131 / 131) · `pnpm build`
+  > **0** (10.19 s) — **5 / 5**.
+  > **Ubuntu CI.** PR #31's `ci` job, run **37026483519** at **`07e615e`**, conclusion **`success`**,
+  > runner image `ubuntu-24.04` `20260927.320.1`, 15:22:15–15:23:32 UTC; its `pnpm test`: **25** files
+  > across **6** projects, **491 / 491**, Vitest Duration 28.43 s, coverage **100%**
+  > (`All files 100 | 100 | 100 | 100`).
+  > **Escape hatches — §7's two greps, in the fresh clone.** **5** prose lines — `CLAUDE.md:59`,
+  > `CLAUDE.md:114`, `CLAUDE.md:119`, `packages/ui/src/styles/press.module.css:48`,
+  > `stylelint.config.mjs:19` — and **0** directives; `skipLibCheck` in `tsconfig.base.json` only;
+  > identical to `841981a`. Outside the box's list, one `prettier-ignore`, at
+  > `packages/game/src/draw.test.ts:561`: it holds the prototype's shuffle line character for character
+  > for Gate 2's 🚦 box, and `prettier-ignore` is not one of the escape hatches this box names.
+  > **Two failures before this pass, recorded.** (a) The first CI run on PR #31, run **37025099379** at
+  > **`8834255`**, **failed**: one test — `match-purity.test.ts`'s ambient-spy pass — hit Vitest's
+  > default 5,000 ms per-test timeout on the Ubuntu runner (5,375 ms; its own output showed 0 spy
+  > calls). The fix, commit **`07e615e`**, gave that one test the suite's existing 120 s ceiling ("a
+  > ceiling for a slow runner, not the budget", as Phase 3's heavy passes have); no assertion, sample or
+  > threshold changed, and no configuration. (b) A first Windows fresh clone placed under the session
+  > scratchpad failed `pnpm test` at start-up (`ERR_PACKAGE_IMPORT_NOT_DEFINED`) because a path inside
+  > `node_modules` exceeded Windows' 260-character limit (`LongPathsEnabled` = 0 on this machine) —
+  > environmental; the same commit at a short path passed, and the Windows measurement above is taken
+  > at a short path · 2026-10-02
 
 - [x] **NFR-4.5 (Fast enough to stay in `pnpm test`):** the `@nel3ab/game` project's test duration in
   `pnpm test`, on the Windows development machine **on mains power**, is under **20 s**; the same on CI
   is recorded. If over, the overrun is recorded as a finding — no sample is shrunk.
   > Measured: Windows **10.78 · 10.92 · 11.02** s (power **mains** — `Win32_Battery` `BatteryStatus`
   > 2, AC, charge 100%, before the first run and after the last; CPU load 2% before, 13% after) · CI
-  > recorded by the next unit, REQ-4.16's CI run
+  > **28.43** s — Ubuntu CI run 37026483519 at `07e615e`, the six-project Vitest Duration (the
+  > `@nel3ab/game` project's files: `match-equivalence.test.ts` 23,396 ms, `match-purity.test.ts`
+  > 20,436 ms, `purity.test.ts` 15,760 ms, `prototype-equivalence.test.ts` 11,246 ms; the files run in
+  > parallel, so the project's span is bounded by the 28.43 s), against Phase 3's 10.98 s on CI —
+  > recorded; no budget applies on CI
   > **Windows — under 20 s at the slowest of every measure.** Three `pnpm test` runs at `de425e9`,
   > 2026-10-02, Windows 11, Node v24.14.0, each exit 0, 491 / 491, coverage 100%: Vitest Duration
   > **10.78 · 10.92 · 11.02 s** for the whole six-project run, which bounds the game project inside
