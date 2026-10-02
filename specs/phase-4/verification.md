@@ -236,7 +236,7 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > shuffle, each a `RangeError` at that draw (no later draw made) whose message names the value and
   > the draw · 2026-10-02, `draw.test.ts` (REQ-4.2, 1 test)
 
-- [ ] 🚦 **REQ-4.2 (The decision's premise: the prototype's shuffle is not fair) (VERDICT GATE — no
+- [x] 🚦 **REQ-4.2 (The decision's premise: the prototype's shuffle is not fair) (VERDICT GATE — no
   retry):** the prototype's shuffle, transcribed character for character from Gate 4 extraction #15 and
   run with `Math.random` replaced by `mulberry32(0x20261002)` for 60,000 shuffles of `[0, 1, 2]`, returns
   the original order **more than 20,000** times and the reversed order **more than 15,000** times — each
@@ -244,8 +244,24 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   Node 24.14.0. **This box measures the runtime's sort, not our code.** If it fails, the premise of
   REQ-4.2's DECIDED block has changed: halt, record the counts, and return the decision to the owner.
   It is not retried with another seed.
-  > Measured: 012 ____ · 021 ____ · 102 ____ · 120 ____ · 201 ____ · 210 ____ · Node ____ ·
-  > equal to Table H ____ · **verdict: PASS / FAIL** ____
+  > Measured: 012 **22,564** · 021 **3,795** · 102 **7,344** · 120 **3,732** · 201 **3,752** · 210
+  > **18,813** · Node **v24.14.0** · equal to Table H **yes — 6 / 6**, its first row exactly ·
+  > **verdict: PASS** — the original order 22,564 > 20,000 (37.6%, 2.26 × a fair 10,000) and the
+  > reversed order 18,813 > 15,000 (31.4%, 1.88 ×). The shuffle line read from the prototype at test
+  > time by extraction #15's pattern: found **1** time; the transcription's source text equal to its
+  > function, `(arr) => arr.slice().sort(() => Math.random() - .5)`, character for character (the
+  > design file's text never evaluated) · `Math.random` replaced by one `mulberry32(0x20261002)`
+  > stream for exactly the 60,000 shuffles — **164,881** draws consumed — and restored after them ·
+  > evaluated **once**: `pnpm vitest run packages/game/src/draw.test.ts -t "REQ-4.2 verdict"`, 1 test
+  > passed, exit 0. That run's log line was not displayed — Vitest 4.1, detecting an AI-agent
+  > environment, falls back when no reporter is named to its agent reporter, which prints console
+  > output of failing tests only — so the six counts are read from the same test's log in the
+  > post-verdict `pnpm test` regression run (`--reporter=default`): same code, seed, input and
+  > Node; the seeded stream makes them deterministic; nothing changed between the two runs · after
+  > the verdict: `pnpm typecheck` 0 · `pnpm lint` 0 · `pnpm test` 0 — **23** files across **6**
+  > projects, 459 passed, 0 failed; coverage 100% — lines 131/131, branches 132/132, functions 30/30,
+  > statements 154/154 · this closes Gate 4 extraction #15's Drives column (REQ-4.12) · measured at
+  > `38f7ad3` + this test, 2026-10-02, `draw.test.ts` (REQ-4.2, 1 test)
 
 - [x] **REQ-4.1 (A bad draw throws, in every state — validation precedes inertness):** `startMatch` and
   `nextRound` each throw `RangeError` — on `ready`, `play`, a reveal, `roundEnd`, `match` and `setup`

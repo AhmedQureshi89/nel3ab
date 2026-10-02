@@ -1,4 +1,9 @@
-import { describe, expect, test } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { version } from 'node:process'
+import { fileURLToPath } from 'node:url'
+import { isDeepStrictEqual } from 'node:util'
+
+import { describe, expect, test, vi } from 'vitest'
 
 import {
   drawableCategories,
@@ -22,17 +27,19 @@ import type { CategoryId, Question, Random, RoomState, Screen } from './types.js
 //           pre-registered values of verification.md Table H, pure, counted,
 //           and guarded.
 //
-// Two Gate 2 boxes are deliberately not here yet (verification.md, "Gate
-// ordering"): the 🚦 premise box — the prototype's own shuffle, measured — is
-// evaluated once, after Gate 4's extraction #15 has pinned the line it runs;
-// and "A bad draw throws, in every state" needs the reducer's `startMatch` and
-// `nextRound`, which land in specs.md §1 STEP 3.
+// Gate 2's one box not in this file is "A bad draw throws, in every state": it
+// needs the reducer's `startMatch` and `nextRound`, and lives in match.test.ts.
+// The 🚦 premise box — the prototype's own shuffle, measured — is the last
+// describe block below, evaluated once, after Gate 4's extraction #15 had
+// pinned the line it runs (verification.md, "Gate ordering").
 //
 // Every random source below is scripted or seeded — `mulberry32` from Phase 3's
 // test support — so every number this file asserts is reproducible. Where a box
 // counts, one pass tallies and one `toStrictEqual` compares, so a failure
 // reports the count and the first cases rather than stopping at the first.
-// Every category and question is synthetic; nothing is copied from design/.
+// Every category and question is synthetic. The one thing taken from design/ is
+// the prototype's shuffle line, transcribed for the 🚦 block and checked there
+// against the file, character for character.
 
 const ROOM = { roomCode: 'TEST01', teamA: 'أ', teamB: 'ب' } as const
 
@@ -477,5 +484,150 @@ describe("REQ-4.2: shuffleQuestions' guard — a random value outside [0, 1) thr
       ),
     )
     expect(results).toHaveLength(9)
+  })
+})
+
+// ============================================================================
+// Gate 2 — 🚦 REQ-4.2's premise (VERDICT GATE — no retry)
+// ============================================================================
+//
+// REQ-4.2's DECIDED block departs from the prototype's shuffle on one premise,
+// requirements.md §1.1 fact 3: that the prototype's comparator sort is not fair.
+// This block measures that premise as verification.md Gate 2's 🚦 box defines
+// it. It measures the runtime's sort, not our code:
+//
+//   1. the shuffle's line is read from design/designs/Nel3ab - Arcade.dc.html
+//      at test time by extraction #15's own pattern (match-rules.test.ts), and
+//      is found exactly once;
+//   2. the transcription below is checked against that line's function,
+//      character for character: its source text as the runtime holds it,
+//      against the text the file holds. The design file's text is never
+//      evaluated — what runs is the transcription, once it has been shown equal;
+//   3. Math.random is replaced by `mulberry32(0x20261002)` — Table H's seed, one
+//      stream — for exactly the 60,000 shuffles of [0, 1, 2], and restored after
+//      them, on failure too;
+//   4. the box's criterion, and only it, is asserted: the original order more
+//      than 20,000 times and the reversed order more than 15,000 times — each
+//      more than 1.5 × a fair 10,000. The six counts are logged and recorded in
+//      verification.md, not asserted: Table H's first row is their value on
+//      Node 24.14.0, and another engine's sort may give others.
+//
+// Nothing may be changed to reach the verdict — not the seed, the 60,000, the
+// input or the thresholds. The verdict was evaluated ONCE, by the run that
+// added the measurement, and verification.md records that run's numbers; every
+// later run of this block is the permanent regression check of that verdict,
+// not a re-evaluation.
+//
+// The transcription is the one statement in this file Prettier is told to
+// leave alone: it prints `.5` as `0.5`, and the transcription would then no
+// longer be the prototype's text character for character. The number is the
+// same either way; step 2 checks the text.
+
+const readFromRepoRoot = (relativeToRepoRoot: string): string =>
+  readFileSync(fileURLToPath(new URL(`../../../${relativeToRepoRoot}`, import.meta.url)), 'utf8')
+
+/** Extraction #15's pattern (match-rules.test.ts): the shuffle's declaration, the whole line. */
+const SHUFFLE_LINE = /^const shuffle\b[^\r\n]*/gm
+
+/** The declaration's function: everything between `const shuffle = ` and the line's final `;`. */
+const SHUFFLE_DECLARATION = /^const shuffle = (.+);$/
+
+/** The box's sample: 60,000 shuffles of [0, 1, 2], as Table H's first row. */
+const PREMISE_SHUFFLES = 60_000
+
+/** The six orderings of [0, 1, 2], as Table H's counts write them. */
+const ORDERINGS: readonly string[] = ['012', '021', '102', '120', '201', '210']
+
+/**
+ * Table H's first row: the prototype's shuffle under `mulberry32(0x20261002)`,
+ * on Node 24.14.0. Compared with and recorded — never asserted (see above).
+ */
+const TABLE_H_PROTOTYPE: Readonly<Record<string, number>> = {
+  '012': 22_564,
+  '021': 3_795,
+  '102': 7_344,
+  '120': 3_732,
+  '201': 3_752,
+  '210': 18_813,
+}
+
+type PrototypeShuffle = (arr: readonly number[]) => number[]
+
+/**
+ * The prototype's shuffle, transcribed from extraction #15. The type is on the
+ * binding, not the parameter, so the arrow function's own text is the
+ * prototype's, character for character — which the 🚦 test checks first.
+ */
+// prettier-ignore
+const prototypeShuffle: PrototypeShuffle = (arr) => arr.slice().sort(() => Math.random() - .5)
+
+describe("🚦 Gate 2 — REQ-4.2 verdict: the decision's premise, the prototype's shuffle is not fair", () => {
+  test("🚦 REQ-4.2: the prototype's shuffle, transcribed from extraction #15 and run 60,000 times on [0, 1, 2] with Math.random seeded, returns the original order more than 20,000 times and the reversed order more than 15,000", () => {
+    // 1. The line, read from the prototype at test time: found exactly once.
+    const prototype = readFromRepoRoot('design/designs/Nel3ab - Arcade.dc.html')
+    const lines = [...prototype.matchAll(SHUFFLE_LINE)].map((m) => m[0])
+    const [line = ''] = lines
+    const functionText = SHUFFLE_DECLARATION.exec(line)?.[1]
+    expect(functionText).toBeTypeOf('string')
+
+    // 2. The transcription is that line's function, character for character.
+    expect({ lines: lines.length, transcription: String(prototypeShuffle) }).toStrictEqual({
+      lines: 1,
+      transcription: functionText,
+    })
+
+    // 3. Math.random seeded for exactly the measurement — one stream, Table H's
+    //    seed — and restored after it, on failure too. Every draw is counted, so
+    //    the record shows the seeded source was the one the sort consumed.
+    const ambient = Math.random
+    const seeded = mulberry32(TABLE_H_SEED)
+    let draws = 0
+    const spy = vi.spyOn(Math, 'random').mockImplementation(() => {
+      draws += 1
+      return seeded()
+    })
+    const input = Object.freeze([0, 1, 2])
+    const counts: Record<string, number> = {}
+    try {
+      for (let k = 0; k < PREMISE_SHUFFLES; k += 1) {
+        const key = prototypeShuffle(input).join('')
+        counts[key] = (counts[key] ?? 0) + 1
+      }
+    } finally {
+      spy.mockRestore()
+    }
+    const restored = Math.random === ambient
+
+    // The record: the six counts, the runtime, the draws, and whether the counts
+    // equal Table H's first row. Logged on every run; asserted never.
+    const record = {
+      counts: Object.fromEntries(ORDERINGS.map((o) => [o, counts[o] ?? 0])),
+      node: version,
+      draws,
+      equalToTableH: isDeepStrictEqual(counts, TABLE_H_PROTOTYPE),
+    }
+    console.info(`🚦 REQ-4.2 premise: ${JSON.stringify(record)}`)
+
+    // 4. The box's criterion. The other four lines only show the measurement is
+    //    what it claims: every shuffle counted, each an ordering of [0, 1, 2],
+    //    the seeded source consumed, Math.random given back.
+    expect(
+      {
+        shuffles: Object.values(counts).reduce((sum, n) => sum + n, 0),
+        everyKeyAnOrdering: Object.keys(counts).every((key) => ORDERINGS.includes(key)),
+        seededDraws: draws > 0,
+        restored,
+        originalOrderOver20000: (counts['012'] ?? 0) > 20_000,
+        reversedOrderOver15000: (counts['210'] ?? 0) > 15_000,
+      },
+      JSON.stringify(record),
+    ).toStrictEqual({
+      shuffles: PREMISE_SHUFFLES,
+      everyKeyAnOrdering: true,
+      seededDraws: true,
+      restored: true,
+      originalOrderOver20000: true,
+      reversedOrderOver15000: true,
+    })
   })
 })
