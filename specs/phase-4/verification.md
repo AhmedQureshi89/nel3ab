@@ -683,14 +683,24 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
 
 ## 6. Gate 6 — Coverage, mutations and the gate commands (evaluated once, over the finished phase)
 
-- [ ] **REQ-4.15 (Full coverage, measured on the right files):** `pnpm test` reports **100%** lines,
+- [x] **REQ-4.15 (Full coverage, measured on the right files):** `pnpm test` reports **100%** lines,
   branches, functions and statements over `packages/game/src`; `coverage/coverage-summary.json` lists
   `draw.ts`, `match.ts` and every Phase 3 source file by path, and nothing outside `packages/game/src`
   or inside `src/testing/`.
-  > Measured: lines ____ · branches ____ · functions ____ · statements ____ · files listed ____ ·
-  > outside / testing ____
+  > Measured: lines **131 / 131** · branches **132 / 132** · functions **30 / 30** · statements
+  > **154 / 154** — 100% on all four, the thresholds enforcing it · files listed **8**, each by its
+  > path under `packages/game/src/`, each 100% (lines · branches · functions · statements): `clock.ts`
+  > 18 · 10 · 10 · 20, **`draw.ts`** 17 · 12 · 6 · 19, `index.ts` 0 · 0 · 0 · 0, **`match.ts`** 25 ·
+  > 33 · 6 · 28, `reducer.ts` 48 · 61 · 3 · 60, `room.ts` 16 · 16 · 5 · 20, `rules.ts` 7 · 0 · 0 · 7,
+  > `types.ts` 0 · 0 · 0 · 0 — `draw.ts`, `match.ts` and all six Phase 3 source files, plus the
+  > `total` key · outside / testing **0 / 0** — 0 keys outside `packages/game/src/`, 0 under
+  > `src/testing/`, 0 matching `*.test.ts` · `pnpm test` at `de425e9`, run three times: exit 0 each,
+  > **25** files across **6** projects, 491 passed, 0 failed, `[check-collected-tests] OK`, the same
+  > four totals each time. The text table's per-file rows print empty at 100%, so the per-file values
+  > are read from `coverage/coverage-summary.json` (gitignored; `git status --porcelain -- coverage/`
+  > empty) · 2026-10-02, Windows
 
-- [ ] **REQ-4.15 (Assertions that bite):** each mutation below, applied alone and reverted, fails at
+- [x] **REQ-4.15 (Assertions that bite):** each mutation below, applied alone and reverted, fails at
   least one assertion in the named place. Coverage says a line ran; this says a test would notice.
 
   | # | Mutation | Must be caught by |
@@ -713,9 +723,65 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   | N16 | `drawCategory` uses `Math.round` | Gate 2 "The pick" |
   | N17 | `assertRoundPayload` runs after the inertness check | Gate 2 "A bad draw throws, in every state" |
 
-  > Measured: N1 ____ · N2 ____ · N3 ____ · N4 ____ · N5 ____ · N6 ____ · N7 ____ · N8 ____ · N9 ____ ·
-  > N10 ____ · N11 ____ · N12 ____ · N13 ____ · N14 ____ · N15 ____ · N16 ____ · N17 ____ ·
-  > caught ____ / 17 · deviations from the "Must be caught by" column ____
+  > Measured: per mutation, failing tests of `@nel3ab/game`'s 384 — then the named catchers, every one
+  > of which failed, and the rest:
+  > N1 **caught, 2** — "A late `passTurn` charges nobody", both its tests, and nothing else: Table G,
+  > the equivalence harness and both 🚦 verdicts pass, as the column says (applied at `passClock`'s one
+  > call site as `{ ...passClock(…), runningSince: revealedAt + REVEAL_HOLD_MS }`, `passClock` not
+  > being given `revealedAt`) ·
+  > N2 **caught, 19** — "The pass, exactly" ×4 (the states before the pass, b → a, a → b again, the
+  > one-tick drain; b's first turn, full either way, passes); Table G **M2, M14**; extraction #11
+  > (equals and drives); the late-pass later-turn test; Gate 5 ×4 with the 🚦 verdict; NFR-4.3 ×4 ·
+  > N3 **caught, 18** — "The pass, exactly" ×4; Table G **M2, M11** with M8, M13, M14, M16; extraction
+  > #12 (equals and drives); "The hold" three-routes test; Gate 5 ×3 with the 🚦 verdict ·
+  > N4 **caught, 29** — "The hold" ×2 (to the millisecond, k = 1,000 inert; the three routes);
+  > **extraction #1** (drives the reducer) with #9, #11, #12; Table G **M2** with M7, M8, M11, M14,
+  > M16; "The pass, exactly" ×5; the second-`passTurn` test; Gate 5 ×4; NFR-4.3 ×4 ·
+  > N5 **caught, 59** — **"Who starts"**; **extraction #2** (equals and drives) with #1, #11, #13;
+  > Table G **M1** and the other 15; REQ-4.4 ×5, REQ-4.6 ×11, REQ-4.7 ×6, REQ-4.8 ×4, fallback ×3,
+  > REQ-4.9, REQ-4.10; Gate 5 ×4 ·
+  > N6 **caught, 18** — the **rematch** test (the judge moved off 2); **extraction #4** (equals and
+  > drives) with #3; Table G **M6** with M5; `startMatch` from ready ×4; the REQ-4.9 judge ×2;
+  > REQ-4.10; Gate 5 ×3 with the 🚦 verdict ·
+  > N7 **caught, 23** — **"When a match is over"**, its exhaustion test (1–1 `null`, 2–1 a, 1–2 b);
+  > Table G **M3, M4**; extraction #8 (equals and drives), #13, #16; REQ-4.1 ×2, REQ-4.6, REQ-4.9,
+  > REQ-4.10; Gate 5 ×4; NFR-4.3 ×4 ·
+  > N8 **caught, 22** — **"When a match is over"** ×3 (`winsNeeded` 2, 3, 4); Table G **M1, M7** with
+  > M6, M10; extraction #8 (equals and drives), #4, #13; REQ-4.5; Gate 5 ×4; NFR-4.3 ×4 ·
+  > N9 **caught, 32** — **scoring** ×6 (REQ-4.7: tick, hint and skip, each team losing); **extraction
+  > #9** (drives) with #8, #10, #13; Table G **M1** and 10 more; REQ-4.8 ×4, REQ-4.5, REQ-4.10;
+  > Gate 5 ×3 with the 🚦 verdict ·
+  > N10 **caught, 13** — **"Which categories"** ×2 (the 15 cases; the fallback); **Gate 3 fallback**
+  > ×4 (c3, c0, c5 refused; the outside-the-selection message); extraction #5 (equals and drives),
+  > #16; REQ-4.1 ×2; REQ-4.9 ·
+  > N11 **caught, 6** — **Gate 3 fallback** ×3 (c3, c0, c5: the used list appended a second time);
+  > **extraction #17** (equals and drives), and nothing else ·
+  > N12 **caught, 12** — **`resetMatch`** ×2 (from `roundEnd`, from `match`); **extraction #14**
+  > (equals and drives); Table G **M9, M15**; Gate 5 ×4 with the 🚦 verdict ·
+  > N13 **caught, 3** — **"every ordering exactly once"**; **Table H**'s third row (the scripted
+  > outputs) and second row (the 60,000-shuffle counts), and nothing else ·
+  > N14 **caught, 28** — **Phase 3's suite** ×25 — `reducer.test.ts` 16, `rules.test.ts` 5,
+  > `prototype-equivalence.test.ts` 4 including its 🚦 REQ-3.11 verdict test, whose rooms have no
+  > category (§9); **"not scored"** ×3 ·
+  > N15 **caught, 36** — **"The one new field"**: `match.test.ts` REQ-4.11 ×2 (`correct` records
+  > `clock.now`; ticks leave it) and `reducer.test.ts` REQ-3.8, §2.9's `revealedAt: 3_700`; **"The
+  > hold"** ×3; "The pass, exactly" ×5, the late pass ×2, the second-`passTurn` test, Table G ×7,
+  > extraction #1, #9, #11, #12, Gate 5 ×4, NFR-4.3 ×4 ·
+  > N16 **caught, 20** — **"The pick"** ×2 (the 66 pairs; first and last at every L) and the guard
+  > test; extraction #6 (equals and drives), #5, #7; Gate 5 ×7; NFR-4.3 ×5 ·
+  > N17 **caught, 1** — **"A bad draw throws, in every state"**, the 48-case test, the only failure:
+  > applied at both call sites (`startMatch`, `nextRound`) at once — and, as a check, at each alone:
+  > caught, 1, the same test, both times ·
+  > caught **17 / 17**, every one by a failing assertion (no coverage ran: `node
+  > node_modules/vitest/vitest.mjs run packages/game` — the `pnpm vitest run packages/game` command —
+  > with the JSON reporter, 12 files, 384 tests) · deviations from the "Must be caught by" column
+  > **0** — every test, extraction and Table G match the column names failed under its mutation.
+  > Method, 2026-10-02, Windows, at `de425e9`: each mutation applied by exact string replacement,
+  > exactly one match required per site, never committed; after each run every engine file was copied
+  > back from a backup taken before the first, each of the eight engine files' SHA-256 equalled its
+  > pre-mutation value and `git diff --quiet -- packages/game/src` was clean; after all seventeen (and
+  > the two N17 checks), `git status --porcelain` was empty, the eight files' SHA-256 equalled
+  > `de425e9`'s, and `pnpm vitest run packages/game` passed 384 / 384
 
 - [ ] **REQ-4.16 (The four gate commands, no escape hatch):** on a fresh clone, `pnpm install
   --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` all exit 0 on Windows
@@ -724,20 +790,59 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   directives, and `skipLibCheck` in `tsconfig.base.json` only — unchanged.
   > Measured: Windows ____ / 5 · CI run ____ (`ci` ____) · escape-hatch lines ____ · directives ____
 
-- [ ] **NFR-4.5 (Fast enough to stay in `pnpm test`):** the `@nel3ab/game` project's test duration in
+- [x] **NFR-4.5 (Fast enough to stay in `pnpm test`):** the `@nel3ab/game` project's test duration in
   `pnpm test`, on the Windows development machine **on mains power**, is under **20 s**; the same on CI
   is recorded. If over, the overrun is recorded as a finding — no sample is shrunk.
-  > Measured: Windows ____ s (power ____) · CI ____ s
+  > Measured: Windows **10.78 · 10.92 · 11.02** s (power **mains** — `Win32_Battery` `BatteryStatus`
+  > 2, AC, charge 100%, before the first run and after the last; CPU load 2% before, 13% after) · CI
+  > recorded by the next unit, REQ-4.16's CI run
+  > **Windows — under 20 s at the slowest of every measure.** Three `pnpm test` runs at `de425e9`,
+  > 2026-10-02, Windows 11, Node v24.14.0, each exit 0, 491 / 491, coverage 100%: Vitest Duration
+  > **10.78 · 10.92 · 11.02 s** for the whole six-project run, which bounds the game project inside
+  > it (`pnpm test` wall 11.9 · 12.2 s for runs 2 and 3). Inside those runs the game project's
+  > slowest file, `match-purity.test.ts`, took 9.62 · 9.96 · 10.39 s (then `match-equivalence` 8.02
+  > · 8.23 · 8.82, `purity` 7.07 · 7.28 · 7.73, `prototype-equivalence` 4.32 · 4.59 · 4.62; the other
+  > eight 5–317 ms each). Two further measures, three runs each: the same Vitest invocation
+  > `pnpm test` makes (`--reporter=default --reporter=json --coverage`), the JSON report kept — the
+  > game project's span from its first test's start to its last test's end **10.19 · 10.55 · 10.64
+  > s**; and the game project alone, `pnpm vitest run --project @nel3ab/game --coverage` — Duration
+  > **10.70 · 11.25 · 11.05 s**, 12 files, 384 / 384, coverage 100%. Up from Phase 3's 6.47 s, as R4
+  > expected of the two match samples' ~2,000,000 added steps; no sample was shrunk
 
-- [ ] **NFR-4.1 / NFR-4.7 (Nothing outside `packages/game/src` changed):** `git diff --stat` from the
+- [x] **NFR-4.1 / NFR-4.7 (Nothing outside `packages/game/src` changed):** `git diff --stat` from the
   phase's first implementation commit's parent to its final commit lists files under
   `packages/game/src/` and `specs/phase-4/verification.md` only — no `design/`, no other `specs/`
   file, no manifest, lockfile or configuration.
-  > Measured: files changed ____ · outside `packages/game/src/` ____ (each named)
+  > Measured: files changed **22** · outside `packages/game/src/` **1** —
+  > `specs/phase-4/verification.md`, and in it only ticks and measured values: 40 `- [ ]` → `- [x]`,
+  > 51 placeholder `Measured:` lines replaced by 311 measured lines, 20 blank lines realigned by the
+  > diff — no gate text, table or threshold changed · `git diff --stat f1a38a2^ HEAD` — `f1a38a2^` =
+  > `4894269`, the plan correction; `f1a38a2` the phase's first implementation commit; HEAD `de425e9`,
+  > 11 commits — 8,112 insertions, 136 deletions: 21 files under `packages/game/src/` — 8 engine
+  > (`clock`, `draw` new, `index`, `match` new, `reducer`, `room`, `rules`, `types`), 8 test files
+  > (`draw`, `match`, `match-rules`, `match-purity`, `match-equivalence` new; `index`, `reducer`,
+  > `room` edited) and 5 new under `testing/` (`rooms`, `match-sequences`, `match-oracle`,
+  > `match-harness`, `match-invariants`) — and no `design/`, no other `specs/` file, no manifest,
+  > lockfile or configuration · 2026-10-02
 
-- [ ] **REQ-4.11 (Re-checked over the finished phase):** Gate 1's sanctioned-edits box, repeated at
+- [x] **REQ-4.11 (Re-checked over the finished phase):** Gate 1's sanctioned-edits box, repeated at
   the phase's final commit.
-  > Measured: lines outside §2.9 ____ · diff over the ten untouched files ____
+  > Measured: lines outside §2.9 **0** · diff over the ten untouched files **0** lines — `git diff
+  > 841981a` and `git diff --stat 841981a` over `clock.test.ts`, `purity.test.ts`, `rules.test.ts`,
+  > `prototype-equivalence.test.ts` and `testing/{prng,sequences,prototype-oracle,harness,invariants,deep-freeze}.ts`
+  > both empty, all ten present · at `de425e9`, `git diff -U0 841981a` over the three edited files,
+  > 36 insertions, 5 deletions, every hunk one of §2.9's: `room.test.ts` **5** (4 hunks at default
+  > context) — (1) the comment above `ADDED` says three `+` rows, the third Phase 4's; (2) `ADDED`
+  > gains `['revealedAt']`; (3) `TOP_LEVEL_KEYS` gains `'revealedAt'`; (4) the title's 20 and
+  > `toHaveLength` → **21**; (5) the REQ-3.2 literal gains `revealedAt: null` (the correction's added
+  > hunk) · `reducer.test.ts` **1** — the REQ-3.8 expected state gains `revealedAt: 3_700` with its
+  > one-line comment, the title unchanged · `index.test.ts` **11** (7 at default context) — (1–2) the
+  > namespace imports of `./draw.js` and `./match.js`, which "each with its module" needs; (3) the
+  > title twelve → **seventeen**, naming phase-4 §2.8 beside §2.6; (4–6) the sorted list's five names;
+  > (7–9) `kinds` gains `REVEAL_HOLD_MS: 'number'` and the four `'function'`s; (10) one sentence
+  > appended to the comment above the internal-names test, naming the nine; (11) the internal list
+  > gains the nine, each with its module · the same three files and hunks as Gate 1 (STEP 1's six)
+  > and Gate 4's NFR-4.4 box (`index.test.ts`'s eleven) recorded · 2026-10-02
 
 ---
 
