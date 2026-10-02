@@ -185,37 +185,56 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
 
 ## 2. Gate 2 — The draw (block 2–4; see Gate ordering)
 
-- [ ] **REQ-4.3 (Which categories may be drawn):** `drawableCategories` returns `pickedCategories`
+- [x] **REQ-4.3 (Which categories may be drawn):** `drawableCategories` returns `pickedCategories`
   (same order) on `ready` and on `match` — even with a non-empty used list; on `roundEnd`, `play` and
   `setup` the selected-but-unused categories **in selection order** (picked `[c3, c0, c5, c1]`, used
   `[c5, c3]` → `[c0, c1]`); and the whole selection when every one is used (the fallback — a hand-built
   state, requirements §1.1 fact 1).
-  > Measured: cases ____ · mismatches ____ · order kept ____ · fallback returns ____
+  > Measured: cases **15** (5 screens × none, two and all used) · mismatches **0** · order kept
+  > **yes** — `[c0, c1]` on `setup`, `play` and `roundEnd` (3 / 3), and `[c3, c0, c5, c1]` on `ready`
+  > and `match` with `[c5, c3]` used (2 / 2) · fallback returns **`[c3, c0, c5, c1]`** — the whole
+  > selection in selection order, from a hand-built `roundEnd` with all four used (`unusedCategories`
+  > `[]`) · 2026-10-02, `draw.test.ts` (REQ-4.3, 7 tests)
 
-- [ ] **REQ-4.3 (The pick):** for every list length L = 1 … 11 and every position k, `drawCategory`
+- [x] **REQ-4.3 (The pick):** for every list length L = 1 … 11 and every position k, `drawCategory`
   with `random` returning `(k + 0.5) / L` returns element k; `random` returning `0` returns the first
   and `1 − 2⁻⁵³` the last; `random` is called exactly **once** per pick.
-  > Measured: (L, k) pairs ____ / 66 · mismatches ____ · first / last ____ · calls per pick ____
+  > Measured: (L, k) pairs **66** / 66 · mismatches **0** · first / last **11 / 11** lengths —
+  > `random` 0 picks `c0` and 1 − 2⁻⁵³ (0.9999999999999999) picks `c{L−1}` at every L = 1 … 11 ·
+  > calls per pick **1** — 66 calls over the 66 pairs, 22 over the 22 first / last picks · 2026-10-02,
+  > `draw.test.ts` (REQ-4.3, 2 tests)
 
-- [ ] **REQ-4.1 (The pick's one guard):** `drawCategory` throws `RangeError` for an empty list, and for
+- [x] **REQ-4.1 (The pick's one guard):** `drawCategory` throws `RangeError` for an empty list, and for
   a random value of `1`, `-1e-9`, `NaN` and `Infinity` over a non-empty list; each message names the
   value and the length.
-  > Measured: inputs ____ / 5 thrown · messages naming both ____ / 5
+  > Measured: inputs **5** / 5 thrown, each a `RangeError` (an empty list; 1, −1e-9, `NaN` and
+  > `Infinity` over three categories) · messages naming both **5** / 5 (`got <value> for a list of
+  > length <L>`) · 2026-10-02, `draw.test.ts` (REQ-4.1, 1 test)
 
-- [ ] **REQ-4.2 (Fair — every ordering exactly once):** for *n* = 1 … 6, `shuffleQuestions` fed every
+- [x] **REQ-4.2 (Fair — every ordering exactly once):** for *n* = 1 … 6, `shuffleQuestions` fed every
   draw vector of Table H's fourth row produces **n!** distinct orderings, each exactly once.
-  > Measured: n = 1 ____ · 2 ____ · 3 ____ · 4 ____ · 5 ____ · 6 ____ (distinct / each-once)
+  > Measured: n = 1 **1 / 1** · 2 **2 / 2** · 3 **6 / 6** · 4 **24 / 24** · 5 **120 / 120** · 6
+  > **720 / 720** (distinct / each-once) — over 1 · 2 · 6 · 24 · 120 · 720 draw vectors, every output
+  > a permutation of the input (0 not), exactly n draws per vector · 2026-10-02, `draw.test.ts`
+  > (REQ-4.2, 1 test)
 
-- [ ] **REQ-4.2 (Pinned, pure, and counted):** `shuffleQuestions` reproduces every scripted output of
+- [x] **REQ-4.2 (Pinned, pure, and counted):** `shuffleQuestions` reproduces every scripted output of
   Table H's third row and its exact 60,000-shuffle counts in the second; it calls `random` exactly *n*
   times; it returns a new array (not `===` its input) holding the same elements; and its input, deep-
   frozen, is unchanged.
-  > Measured: scripted outputs ____ / 4 · 60,000-shuffle counts equal Table H ____ · draws for n = 0 … 6
-  > ____ · new array ____ · same elements ____ · frozen-input TypeErrors ____
+  > Measured: scripted outputs **4** / 4 — Q1,Q2,Q0 · Q0,Q1,Q2 · Q2,Q1,Q0 · Q3,Q0,Q2,Q4,Q1 in
+  > exactly **5** draws · 60,000-shuffle counts equal Table H **6 / 6**, exactly: 012 **10,142** · 021
+  > **10,001** · 102 **9,823** · 120 **10,115** · 201 **9,925** · 210 **9,994** (one
+  > `mulberry32(0x20261002)` stream, three draws per shuffle) · draws for n = 0 … 6 **0 · 1 · 2 · 3 · 4
+  > · 5 · 6** · new array **7** / 7 · same elements **7** / 7 · frozen-input TypeErrors **0**, over
+  > 60,007 shuffles of deep-frozen inputs, each input unchanged · 2026-10-02, `draw.test.ts` (REQ-4.2,
+  > 3 tests)
 
-- [ ] **REQ-4.2 (The shuffle's guard):** a random value of `1`, `-0.5` or `NaN` at the first, a middle
+- [x] **REQ-4.2 (The shuffle's guard):** a random value of `1`, `-0.5` or `NaN` at the first, a middle
   or the last draw throws `RangeError`.
-  > Measured: cases ____ / 9 thrown
+  > Measured: cases **9** / 9 thrown — 1, −0.5 and `NaN` at draw 1, 2 and 3 of a three-question
+  > shuffle, each a `RangeError` at that draw (no later draw made) whose message names the value and
+  > the draw · 2026-10-02, `draw.test.ts` (REQ-4.2, 1 test)
 
 - [ ] 🚦 **REQ-4.2 (The decision's premise: the prototype's shuffle is not fair) (VERDICT GATE — no
   retry):** the prototype's shuffle, transcribed character for character from Gate 4 extraction #15 and

@@ -94,6 +94,13 @@ export interface RoomState {
   readonly revealedAt: number | null
 }
 
+/**
+ * A random source: each call returns a number in [0, 1) — the shape of the
+ * platform's own random function. The draw's helpers take one as a parameter
+ * (REQ-4.1, specs/phase-4/specs.md §2.1); the reducer never calls one.
+ */
+export type Random = () => number
+
 export type Action =
   | { readonly type: 'tick'; readonly ms: number }
   | {
