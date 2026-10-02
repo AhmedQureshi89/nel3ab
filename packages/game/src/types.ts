@@ -2,7 +2,8 @@
 // See specs/phase-3/specs.md §2.1, whose table maps every field of the design
 // handoff's "State Management" contract (design/README.md) onto a path here,
 // with the reason for every difference in name or representation. Phase 4
-// adds one field, `revealedAt` — the added row of specs/phase-4/specs.md §2.1.
+// adds one field, `revealedAt` — the added row of specs/phase-4/specs.md §2.1 —
+// the `Random` type, and the match flow's actions.
 //
 // Types only — no runtime code. Every property is `readonly` and every array
 // `readonly T[]`, so that a consumer mutating state is a compile error rather
@@ -111,6 +112,21 @@ export type Action =
   | { readonly type: 'hint' }
   | { readonly type: 'skip' }
   | { readonly type: 'correct' }
+  // Phase 4 — the match flow (specs/phase-4/specs.md §2.1, §2.6). A round of a
+  // match carries its draws in the payload — the category and the question
+  // list, in the order the round asks them: the driver draws, the engine checks
+  // (REQ-4.1, DECIDED 2026-10-02).
+  | {
+      readonly type: 'startMatch'
+      readonly categoryId: CategoryId
+      readonly questions: readonly [Question, ...Question[]]
+    }
+  | {
+      readonly type: 'nextRound'
+      readonly categoryId: CategoryId
+      readonly questions: readonly [Question, ...Question[]]
+    }
+  | { readonly type: 'resetMatch' }
 
 export interface CreateRoomInput {
   readonly roomCode: string

@@ -19,7 +19,8 @@
 // room constructor and the reducer, never from index.ts (specs.md §2.6,
 // NFR-3.5). `remainingMs` and `displaySeconds` are public: two of the twelve
 // runtime exports that specs.md §2.6 names, so a timer card and the reducer
-// read the same rule.
+// read the same rule. Phase 4 adds `otherTeam`, internal in the same way
+// (specs/phase-4/specs.md §2.3).
 //
 // Silent failure modes (specs.md §2.3 — each has a named mutation in
 // verification.md Gate 7):
@@ -45,6 +46,14 @@ export function remainingMs(clock: ClockState, team: Team): number {
   const { ms } = clock.banks[team]
   if (team !== clock.active || clock.runningSince === null) return ms
   return Math.max(0, ms - (clock.now - clock.runningSince))
+}
+
+/**
+ * The team that is not `team` (Phase 4 — REQ-4.7; specs/phase-4/specs.md §2.3).
+ * A round's winner is `otherTeam` of the team whose bank emptied.
+ */
+export function otherTeam(team: Team): Team {
+  return team === 'a' ? 'b' : 'a'
 }
 
 /** The clock with the active team's bank replaced; nothing else changes. */

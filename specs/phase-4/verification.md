@@ -247,36 +247,55 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > Measured: 012 ____ · 021 ____ · 102 ____ · 120 ____ · 201 ____ · 210 ____ · Node ____ ·
   > equal to Table H ____ · **verdict: PASS / FAIL** ____
 
-- [ ] **REQ-4.1 (A bad draw throws, in every state — validation precedes inertness):** `startMatch` and
+- [x] **REQ-4.1 (A bad draw throws, in every state — validation precedes inertness):** `startMatch` and
   `nextRound` each throw `RangeError` — on `ready`, `play`, a reveal, `roundEnd`, `match` and `setup`
   alike — for: a category not in its allowed list (`pickedCategories` for `startMatch`;
   selected-but-unused, or all when none is unused, for `nextRound`), `questions: []`, a non-array
   `questions`, and two questions sharing a `q`. A well-formed draw on a screen where the action is
   inert returns the **same object**.
-  > Measured: throwing cases ____ / 48 (2 actions × 4 inputs × 6 states) · inert-and-identical ____ /
-  > ____ · messages naming the category or the repeated text ____
+  > Measured: throwing cases **48** / 48 (2 actions × 4 inputs × 6 states), each a `RangeError` — the
+  > six states reached by actions from a two-category ready room: `play`, a reveal (`correct` in
+  > round 1), `roundEnd`, `match` (both categories used) and `setup` (`resetMatch`); the refused
+  > category is c9, outside the selection, except for `nextRound` where c0 is used and c1 is not,
+  > where it is c0 — selected but used; the non-array is an array-like `{ length: 1, 0: … }` ·
+  > inert-and-identical **9** / 9 (`startMatch` on `play`, a reveal, `roundEnd`, `setup`; `nextRound`
+  > on `ready`, `play`, a reveal, `match`, `setup`), and on the 3 others a round starts · messages
+  > naming the category or the repeated text **24** / 24 — 12 the refused category and the allowed
+  > list (`[c0, c1]`, `[c1]`, or the fallback's `[c0, c1]` on `match`), 12 the repeated text ·
+  > 2026-10-02, `match.test.ts` (REQ-4.1, 3 tests)
 
 ---
 
 ## 3. Gate 3 — The flow (block 2–4; see Gate ordering)
 
-- [ ] **REQ-4.4 (`startMatch` from `ready`):** from `readyRoom(…)` at engine time `t`, the result is,
+- [x] **REQ-4.4 (`startMatch` from `ready`):** from `readyRoom(…)` at engine time `t`, the result is,
   by `toStrictEqual`: round 1, tallies 0, log `[]`, `usedCategories` `[c]`, `categoryId` c, screen
   `play`, `questionPool` the given questions, both indices 0, `reveal` and `revealedAt` `null`,
   `clock` `{ now: t, active: 'a', runningSince: t, banks: { a: { ms: R, started: true }, b: { ms: R,
   started: false } } }` with R = `roundSeconds × 1000`; every other field — players, names, judge,
   rotation, selection, config, room code — identical to the input's.
-  > Measured: fields asserted ____ · mismatches ____ · at t = 0 and t = 123,400 ____
+  > Measured: fields asserted **21** / 21 top-level, by one `toStrictEqual` — 13 replaced (`clock`
+  > with all 4 of its fields and both banks), 8 identical to the input's (five players, judge 4,
+  > rotation on, c0–c7 selected) · mismatches **0** · at t = 0 and t = 123,400 **4** / 4 — each at
+  > 45 s (R **45,000**) and 20 s (R **20,000**); `questionPool` the given array (`toBe`); one
+  > `tick(100)` then leaves a R − 100 and b R · 2026-10-02, `match.test.ts` (REQ-4.4, 4 tests)
 
-- [ ] **REQ-4.4 (`startMatch` from `match` — a rematch):** from a finished match (round 4, tallies
+- [x] **REQ-4.4 (`startMatch` from `match` — a rematch):** from a finished match (round 4, tallies
   1–3, a four-entry log, four categories used, judge 2, rotation on), the result equals the `ready`
   case's — round 1, tallies 0, log `[]`, used `[c]` — with the judge **still 2**. On `setup`, `play`
   and `roundEnd` it returns the same object.
-  > Measured: mismatches ____ · judge after rematch ____ · inert screens ____ / 3
+  > Measured: mismatches **0** — from a hand-built finished match (round 4, 1–3, log
+  > `1·c3·b 2·c0·a 3·c6·b 4·c1·b`, used c3 · c0 · c6 · c1, judge 2, rotation on, engine time 187,300):
+  > round 1, 0–0, log `[]`, used **`[c3]`** (c3 having opened the last match), a running from
+  > 187,300, by `toStrictEqual` — and equal to `startMatch` from the same setup on `ready` at the same
+  > engine time · judge after rematch **2** · inert screens **3** / 3 (`setup`, `play`, `roundEnd`) ·
+  > 2026-10-02, `match.test.ts` (REQ-4.4, 4 tests)
 
-- [ ] **REQ-4.5 (Who starts):** a match driven through rounds 1 … 7 by `nextRound` starts them with
+- [x] **REQ-4.5 (Who starts):** a match driven through rounds 1 … 7 by `nextRound` starts them with
   a, b, a, b, a, b, a; a rematch's round 1 starts with a.
-  > Measured: starting teams ____ · rematch ____
+  > Measured: starting teams **a, b, a, b, a, b, a** — rounds 1 … 7 of a four-win match, each with
+  > only the starting team's bank `started` (the match ends 3–4 on round 7) · rematch **a** (round 1,
+  > a started, b not) · 2026-10-02, `match.test.ts` (REQ-4.5, 1 test)
 
 - [ ] **REQ-4.6 (The hold, to the millisecond):** after `correct` at engine time T, `revealedAt` is T;
   after 9 × `tick(100)`, and again after `tick(999)`, `passTurn` returns the same object; after the
@@ -302,40 +321,66 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   and on `play` with no reveal, `passTurn` returns the same object.
   > Measured: states ____ / 5 identical
 
-- [ ] **REQ-4.7 (A match round is scored in the step it ends):** for each round-ending path — a
+- [x] **REQ-4.7 (A match round is scored in the step it ends):** for each round-ending path — a
   `tick`, a `hint` and a `skip` taking the active bank to zero — with team a losing and with team b
   losing (six cases), the resulting state equals, by `toStrictEqual`, Phase 3's round end plus: the
   winner's tally + 1, one log entry `{ n: round, category: categoryId, winner }`, and screen `roundEnd`.
-  > Measured: cases ____ / 6 · mismatches ____
+  > Measured: cases **6** / 6 — a `tick(45,000)`, a `hint` with exactly 2,000 ms left and a `skip`
+  > with exactly 3,000, each with team a losing round 1 (0–0 → **0–1**, log `1·c0·b`) and with team
+  > b losing round 2 (0–1 → **1–1**, log `1·c0·b 2·c1·a`) · mismatches **0** · 2026-10-02, `match.test.ts`
+  > (REQ-4.7, 7 tests)
 
-- [ ] **REQ-4.7 (A round with no category is not scored):** on a fresh room, Phase 3's `startRound`
+- [x] **REQ-4.7 (A round with no category is not scored):** on a fresh room, Phase 3's `startRound`
   then `tick(45_000)` gives screen `roundEnd`, tallies 0–0 and log `[]` — the state Phase 3's own test
   expects, unchanged.
-  > Measured: screen ____ · tallies ____ · log ____
+  > Measured: screen **`roundEnd`** · tallies **0–0** · log **`[]`** — after `startRound('a')` and
+  > after `startRound('b')`, each equal by `toStrictEqual` to Phase 3's round end; the same in a
+  > ready room with c0–c7 selected, the round's `categoryId` being `null` · 2026-10-02,
+  > `match.test.ts` (REQ-4.7, 3 tests)
 
-- [ ] **REQ-4.8 (When a match is over):** a round won takes the screen to `match` exactly when a tally
+- [x] **REQ-4.8 (When a match is over):** a round won takes the screen to `match` exactly when a tally
   reaches `winsNeeded` — checked at 2, 3 and 4 — or when the round used the last unused category, and
   to `roundEnd` otherwise; with categories exhausted at 1–1 `matchWinner` is `null`, at 2–1 `'a'`, at
   1–2 `'b'`.
-  > Measured: cases ____ · mismatches ____ · `matchWinner` ____ / 3
+  > Measured: cases **24** round ends · mismatches **0** — at `winsNeeded` 2, 3 and 4: `roundEnd`
+  > after each of rounds 1 … 2w − 2, the tallies climbing to (w − 1)–(w − 1), then `match` in round
+  > 2w − 1 whether b reaches w (a's bank empties) or a does (b's empties, after a hand-built pass) —
+  > 18; categories running out — two selected: `roundEnd` 0–1, then `match` 1–1; three selected:
+  > `roundEnd` 0–1, `roundEnd` 1–1, then `match` at 1–2 and, after a hand-built pass, at 2–1 — 6 ·
+  > `matchWinner` **3** / 3 — 1–1 `null`, 2–1 `'a'`, 1–2 `'b'` (and `'b'` / `'a'` at the six
+  > `winsNeeded` ends) · 2026-10-02, `match.test.ts` (REQ-4.8, 4 tests)
 
-- [ ] **REQ-4.9 (`nextRound`):** from `roundEnd`, the result is round + 1, the drawn category set and
+- [x] **REQ-4.9 (`nextRound`):** from `roundEnd`, the result is round + 1, the drawn category set and
   appended to the used list, the starting team of REQ-4.5, and the clock of REQ-4.4. With rotation on,
   judge `j` becomes `(j + 1) mod max(1, players)` — checked for players 0, 1, 2 and 5 with the judge at
   the last index; with rotation off it is unchanged. On `ready`, `setup`, `play` and `match` it returns
   the same object.
-  > Measured: mismatches ____ · rotation cases ____ / 8 · inert screens ____ / 4
+  > Measured: mismatches **0** — rounds 2 and 3 by `toStrictEqual`: round + 1, the category set and
+  > appended (`[c0, c4]`, then `[c0, c4, c2]`), b then a starting full and running from 45,000 /
+  > 90,000, the other full and not started, both indices back to 0 from 1 / 1 · rotation cases **8**
+  > / 8 — players 0, 1, 2, 5 with the judge at 0, 0, 1, 4: rotation on → **0, 0, 0, 0**; off →
+  > unchanged; `startMatch` rotated none of them (and judge 2 of five → 3) · inert screens **4** / 4
+  > (`ready`, `setup`, `play`, `match`) · 2026-10-02, `match.test.ts` (REQ-4.9, 7 tests)
 
-- [ ] **REQ-4.3 / REQ-4.9 (The fallback, by a hand-built state):** on a hand-built `roundEnd` with every
+- [x] **REQ-4.3 / REQ-4.9 (The fallback, by a hand-built state):** on a hand-built `roundEnd` with every
   selected category used, `nextRound` with any selected category is accepted; the used list is
   **unchanged** (the category is not appended a second time); a category outside the selection throws.
-  > Measured: accepted ____ · used list before / after ____ · outside the selection throws ____
+  > Measured: accepted **3** / 3 — c3, c0 and c5 each, on a hand-built `roundEnd` with all three
+  > used, starting round 2 with b by `toStrictEqual` · used list before / after **`[c5, c3, c0]` /
+  > `[c5, c3, c0]`** — the same array (`toBe`) · outside the selection throws **yes** — c9, a
+  > `RangeError` naming the whole selection, `[c3, c0, c5]` · 2026-10-02, `match.test.ts`
+  > (REQ-4.3 / REQ-4.9, 4 tests)
 
-- [ ] **REQ-4.10 (`resetMatch`):** from `roundEnd` and from `match`, the result is the input with screen
+- [x] **REQ-4.10 (`resetMatch`):** from `roundEnd` and from `match`, the result is the input with screen
   `setup`, round 1, tallies 0, log `[]`, used `[]`, `categoryId` `null`, `reveal` and `revealedAt`
   `null` — and **nothing else changed**: `clock`, `questionPool`, both indices and every setup field are
   the same values. On `ready`, `setup` and `play` it returns the same object.
-  > Measured: mismatches ____ / 2 · fields that must not change ____ / ____ · inert screens ____ / 3
+  > Measured: mismatches **0** / 2 — from `roundEnd` (round 2, 1–1, judge 3, indices 1 / 1) and from
+  > `match` (round 3, 1–2, judge 4), each by `toStrictEqual` · fields that must not change **12** /
+  > 12 from each, `===` the input's — `roomCode`, `config`, `players`, `teamA`, `teamB`,
+  > `judgeIndex`, `rotateJudge`, `pickedCategories`, `clock`, `questionPool`, `questionIndex`,
+  > `hintIndex`; a reveal on a hand-built round end is cleared with `revealedAt` · inert screens
+  > **3** / 3 (`ready`, `setup`, `play`) · 2026-10-02, `match.test.ts` (REQ-4.10, 7 tests)
 
 - [ ] **REQ-4.13 (Table G through the engine):** each of the sixteen scripted matches, played through
   the engine alone with its draws named directly, ends each round at Table G's step and finishes on
