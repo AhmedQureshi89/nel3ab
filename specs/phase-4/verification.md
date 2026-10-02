@@ -417,11 +417,22 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
   > `hintIndex`; a reveal on a hand-built round end is cleared with `revealedAt` · inert screens
   > **3** / 3 (`ready`, `setup`, `play`) · 2026-10-02, `match.test.ts` (REQ-4.10, 7 tests)
 
-- [ ] **REQ-4.13 (Table G through the engine):** each of the sixteen scripted matches, played through
+- [x] **REQ-4.13 (Table G through the engine):** each of the sixteen scripted matches, played through
   the engine alone with its draws named directly, ends each round at Table G's step and finishes on
   Table G's final state, used list, log, clocks and indices — and for M3 `matchWinner` is `null`.
-  > Measured: matches ____ / 16 · rounds ending at the pre-registered step ____ / 34 · final-state
-  > mismatches ____ · M3 `matchWinner` ____
+  > Measured: matches **16** / 16 · rounds ending at the pre-registered step **34** / 34, and **0**
+  > round ends beyond the table · final-state mismatches **0** — screen, round, tallies, judge, active
+  > team, used list, log, displays A/B, started A/B, `questionIndex` and `hintIndex`, by
+  > `toStrictEqual`, with no reveal up (`reveal` and `revealedAt` both `null`) at the end of any · M3
+  > `matchWinner` **`null`** (1–1, the categories run out) · the scripts as encoded hold Table G's
+  > event totals **16** / 16 — M1 2,255 · M2 676 · M3 902 · M4 451 · M5 1,804 · M6 2,256 · M7 963 · M8
+  > 443 · M9 452 · M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **15,700** in
+  > all; each `tick` sent as `tick(100)` then `passTurn`, each draw as its action with the named
+  > category and `perm.map(k => categoryQuestions(id)[k])`; scripts and outcomes as data in
+  > `testing/match-sequences.ts` · bites: N3 (a pass leaves `questionIndex`) applied alone and
+  > reverted fails M2, M8, M11, M13, M14 and M16 · `pnpm typecheck` 0 · `pnpm lint` 0 · `pnpm test` 0
+  > — **23** files across **6** projects, 477 passed; coverage 100% (statements 154/154, branches
+  > 132/132, functions 30/30, lines 131/131) · 2026-10-02, `match.test.ts` (REQ-4.13, 18 tests)
 
 ---
 

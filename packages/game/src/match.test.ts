@@ -1,12 +1,21 @@
+import { isDeepStrictEqual } from 'node:util'
+
 import { describe, expect, expectTypeOf, test } from 'vitest'
 
-import { remainingMs } from './clock.js'
+import { displaySeconds, remainingMs } from './clock.js'
 import { matchWinner } from './match.js'
 import { reduce } from './reducer.js'
 import { createRoom } from './room.js'
 import { REVEAL_HOLD_MS } from './rules.js'
+import {
+  drawnQuestions,
+  TABLE_G,
+  TABLE_G_EVENT_TOTAL,
+  TABLE_G_EVENT_TOTALS,
+} from './testing/match-sequences.js'
 import { categoryIds, categoryQuestions, readyRoom } from './testing/rooms.js'
 import type * as game from './index.js'
+import type { ScriptedEvent, ScriptedMatch, TableGFinal } from './testing/match-sequences.js'
 import type { ReadyRoomSetup } from './testing/rooms.js'
 import type {
   Action,
@@ -38,7 +47,10 @@ import type {
 // "nothing else changed" is part of each assertion rather than a separate claim.
 //
 // Every match starts from `readyRoom` (testing/rooms.ts), which stands in for
-// Phase 5's setup. Not here yet: Table G (REQ-4.13).
+// Phase 5's setup. Gate 3's last box, Table G (REQ-4.13), closes the flow: its
+// sixteen scripted matches — transcribed as data, script and outcome, in
+// testing/match-sequences.ts — are played here through the engine alone, every
+// draw named directly.
 //
 // Every question below is synthetic. Nothing is copied from design/.
 
@@ -1200,6 +1212,125 @@ describe('REQ-4.10: resetMatch — back to setup with the room intact', () => {
     }[screen]
     expect(s.screen).toBe(screen)
     expect(reduce(s, RESET)).toBe(s)
+  })
+})
+
+// ============================================================================
+// verification.md Gate 3 — REQ-4.13: Table G through the engine alone
+// ============================================================================
+
+// Each scripted match is played as a driver plays it (specs.md §2.10, the
+// harness's table): a `tick` event is `tick(100)` followed by `passTurn` —
+// inert until the reveal has been up the hold — and a draw is its action with
+// the NAMED category and `perm.map(k => categoryQuestions(id)[k])` as its
+// questions. No oracle and no random source take part: the engine alone, given
+// every draw. Event indices are 1-based over the SCRIPT's events, so the
+// `passTurn` after a tick belongs to that tick's event. A round has ended after
+// an event exactly when that event took the screen from `play` to `roundEnd` or
+// `match`.
+
+/** One scripted event as the engine's actions, in the order a driver sends them. */
+const engineActions = (event: ScriptedEvent): readonly Action[] => {
+  if (event === 'tick') return [tick(100), PASS]
+  if (typeof event === 'string') return [{ type: event }]
+  const { type, categoryId, perm } = event
+  return [{ type, categoryId, questions: drawnQuestions(categoryId, perm) }]
+}
+
+/** What Table G states of a final state, read from the engine's, in the table's shape. */
+const tableGView = (s: RoomState): TableGFinal => ({
+  screen: s.screen,
+  round: s.round,
+  tallies: [s.tallyA, s.tallyB],
+  judgeIndex: s.judgeIndex,
+  active: s.clock.active,
+  used: s.usedCategories,
+  log: s.log.map(({ n, category, winner }) => `${n}·${category}·${winner}`),
+  display: [displaySeconds(remainingMs(s.clock, 'a')), displaySeconds(remainingMs(s.clock, 'b'))],
+  started: [s.clock.banks.a.started, s.clock.banks.b.started],
+  questionIndex: s.questionIndex,
+  hintIndex: s.hintIndex,
+})
+
+interface Played {
+  /** The 1-based index of each script event after which a round had ended. */
+  readonly roundsEndAt: readonly number[]
+  readonly final: RoomState
+}
+
+/** One scripted match through the engine alone, from `readyRoom` with the match's configuration. */
+const playScripted = (m: ScriptedMatch): Played => {
+  let s = readyRoom(m.setup)
+  const roundsEndAt: number[] = []
+  m.script.forEach((event, i) => {
+    const before = s.screen
+    for (const action of engineActions(event)) s = reduce(s, action)
+    if (before === 'play' && (s.screen === 'roundEnd' || s.screen === 'match')) {
+      roundsEndAt.push(i + 1)
+    }
+  })
+  return { roundsEndAt, final: s }
+}
+
+describe('REQ-4.13: Table G — sixteen scripted matches through the engine alone', () => {
+  test("the scripts as encoded hold Table G's event totals — M1 2,255 … M16 443, 15,700 in all — and its 34 round ends", () => {
+    // The scripts are transcribed from the table's "Events" column and the
+    // totals from its "Event totals" line, separately: each checks the other.
+    expect(TABLE_G.map((m) => m.id)).toStrictEqual(Object.keys(TABLE_G_EVENT_TOTALS))
+    expect(Object.fromEntries(TABLE_G.map((m) => [m.id, m.script.length]))).toStrictEqual(
+      TABLE_G_EVENT_TOTALS,
+    )
+    expect(TABLE_G.reduce((n, m) => n + m.script.length, 0)).toBe(TABLE_G_EVENT_TOTAL)
+    expect(TABLE_G_EVENT_TOTAL).toBe(15_700)
+    expect(TABLE_G.reduce((n, m) => n + m.roundsEndAt.length, 0)).toBe(34)
+  })
+
+  // Titled `<#> — <what it pins down>` in full, so a failure names the rule that broke.
+  test.for(TABLE_G.map((m) => [`${m.id} — ${m.pins}`, m] as const))('%s', ([, m]) => {
+    const { roundsEndAt, final } = playScripted(m)
+    expect({
+      roundsEndAt,
+      final: tableGView(final),
+      // No reveal is up at the end of any of them (Table G's heading).
+      revealUp: final.reveal !== null || final.revealedAt !== null,
+      // Where Table G states it: M3's tie.
+      matchWinner: m.matchWinner === undefined ? undefined : matchWinner(final),
+    }).toStrictEqual({
+      roundsEndAt: m.roundsEndAt,
+      final: m.final,
+      revealUp: false,
+      matchWinner: m.matchWinner,
+    })
+  })
+
+  test("the box's measurement: 16 / 16 matches, 34 / 34 rounds at the pre-registered step, 0 final-state mismatches, M3's matchWinner null", () => {
+    const played = TABLE_G.map((m) => ({ m, p: playScripted(m) }))
+    const finalAsTabled = ({ m, p }: { m: ScriptedMatch; p: Played }): boolean =>
+      isDeepStrictEqual(tableGView(p.final), m.final) &&
+      p.final.reveal === null &&
+      p.final.revealedAt === null
+    const m3 = played.find(({ m }) => m.id === 'M3')
+    expect({
+      matches: played.filter(
+        (run) => isDeepStrictEqual(run.p.roundsEndAt, run.m.roundsEndAt) && finalAsTabled(run),
+      ).length,
+      roundsAtStep: played.reduce(
+        (n, { m, p }) => n + m.roundsEndAt.filter((step, k) => p.roundsEndAt[k] === step).length,
+        0,
+      ),
+      roundsEndedBeyondTable: played.reduce(
+        (n, { m, p }) => n + Math.max(0, p.roundsEndAt.length - m.roundsEndAt.length),
+        0,
+      ),
+      finalStateMismatches: played.filter((run) => !finalAsTabled(run)).length,
+      m3MatchWinner: m3 === undefined ? 'M3 missing' : matchWinner(m3.p.final),
+    }).toStrictEqual({
+      matches: 16,
+      roundsAtStep: 34,
+      roundsEndedBeyondTable: 0,
+      finalStateMismatches: 0,
+      m3MatchWinner: null,
+    })
   })
 })
 
