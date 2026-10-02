@@ -20,3 +20,8 @@ export const ROUND_SECONDS_OPTIONS = [
 ] as const
 export const WINS_NEEDED_DEFAULT = 3
 export const WINS_NEEDED_OPTIONS = [2, 3, 4] as const
+
+// Phase 4 — REQ-4.6, REQ-4.12; specs/phase-4/specs.md §2.2. How long the
+// reveal stays up before the turn may pass: the prototype's 1000 ms timer
+// before `passTurn`. Measured in engine time, like everything else here.
+export const REVEAL_HOLD_MS = 1000

@@ -43,10 +43,14 @@ const CONTRACT: readonly (readonly [handoffName: string, path: readonly string[]
   ['winsNeeded', ['config', 'winsNeeded']],
 ]
 
-/** The table's two `+` rows: fields with no handoff counterpart, each with its reason in §2.1. */
+/**
+ * The table's three `+` rows: fields with no handoff counterpart, each with its
+ * reason in §2.1 — the third, `revealedAt`, is Phase 4's (specs/phase-4/specs.md §2.1).
+ */
 const ADDED: readonly (readonly string[])[] = [
   ['clock', 'now'],
   ['clock', 'runningSince'],
+  ['revealedAt'],
 ]
 
 const TOP_LEVEL_KEYS = [
@@ -70,6 +74,7 @@ const TOP_LEVEL_KEYS = [
   'hintIndex',
   'clock',
   'reveal',
+  'revealedAt',
 ]
 const CLOCK_KEYS = ['now', 'active', 'runningSince', 'banks']
 const CONFIG_KEYS = ['roundSeconds', 'winsNeeded']
@@ -106,8 +111,8 @@ describe('REQ-3.1: RoomState covers the handoff contract, field for field', () =
     for (const path of ADDED) expect(hasPath(room, path), path.join('.')).toBe(true)
   })
 
-  test('the key sets are exactly 20 top-level, 4 in clock and 2 in config — no extra keys', () => {
-    expect(TOP_LEVEL_KEYS).toHaveLength(20)
+  test('the key sets are exactly 21 top-level, 4 in clock and 2 in config — no extra keys', () => {
+    expect(TOP_LEVEL_KEYS).toHaveLength(21)
     expect(CLOCK_KEYS).toHaveLength(4)
     expect(CONFIG_KEYS).toHaveLength(2)
 
@@ -154,6 +159,7 @@ describe('REQ-3.2: a room is constructed valid', () => {
         banks: { a: { ms: 45000, started: false }, b: { ms: 45000, started: false } },
       },
       reveal: null,
+      revealedAt: null, // Phase 4 (REQ-4.11; specs/phase-4/specs.md §2.9, correction 2026-10-02)
     } satisfies RoomState
 
     // toStrictEqual: `null` is not `undefined`, and no key may be added or missing.

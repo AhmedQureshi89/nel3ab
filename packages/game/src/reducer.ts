@@ -99,6 +99,7 @@ export function reduce(state: RoomState, action: Action): RoomState {
         questionIndex: 0,
         hintIndex: 0,
         reveal: null,
+        revealedAt: null, // cleared with the reveal (REQ-4.11)
         clock: startClock(state.clock.now, startingTeam, roundMs(state.config)),
       }
     }
@@ -129,6 +130,9 @@ export function reduce(state: RoomState, action: Action): RoomState {
         ...state,
         clock: stopClock(state.clock),
         reveal: { answer: question.a, fact: question.f },
+        // The engine time the reveal went up: the hold before the turn may pass
+        // is measured from here (REQ-4.6, REQ-4.11).
+        revealedAt: state.clock.now,
       }
     }
 

@@ -1,7 +1,8 @@
 // The room's state and the reducer's actions (Phase 3) — REQ-3.1.
 // See specs/phase-3/specs.md §2.1, whose table maps every field of the design
 // handoff's "State Management" contract (design/README.md) onto a path here,
-// with the reason for every difference in name or representation.
+// with the reason for every difference in name or representation. Phase 4
+// adds one field, `revealedAt` — the added row of specs/phase-4/specs.md §2.1.
 //
 // Types only — no runtime code. Every property is `readonly` and every array
 // `readonly T[]`, so that a consumer mutating state is a compile error rather
@@ -84,6 +85,13 @@ export interface RoomState {
   readonly hintIndex: number
   readonly clock: ClockState
   readonly reveal: Reveal | null
+  /**
+   * Engine time at which the current reveal went up; `null` exactly when
+   * `reveal` is (REQ-4.6, REQ-4.11). The engine refuses to pass the turn before
+   * the reveal has been up for the hold. Top-level rather than inside `Reveal`,
+   * so that `reveal` stays exactly `{ answer, fact }` (specs/phase-4/specs.md §2.1).
+   */
+  readonly revealedAt: number | null
 }
 
 export type Action =

@@ -143,30 +143,43 @@ M10 3,157 · M11 23 · M12 902 · M13 38 · M14 483 · M15 452 · M16 443 — **
 
 ## 1. Gate 1 — Phase 3 kept green (blocks every other gate)
 
-- [ ] **REQ-4.11 (The one new field):** `createRoom(…)` has `revealedAt: null`; `correct` sets it to
+- [x] **REQ-4.11 (The one new field):** `createRoom(…)` has `revealedAt: null`; `correct` sets it to
   `clock.now` at that moment; `startRound` (Phase 3's) sets it to `null` with `reveal`. `Object.keys` of
   a created room is **exactly** Phase 3's 20 top-level keys plus `revealedAt`; `clock` still exactly
   its 4; `config` its 2. `room.test.ts` checks Phase 3's 22 handoff names and the now three `+` rows.
-  > Measured: top-level keys ____ / 21 · clock ____ / 4 · config ____ / 2 · handoff names ____ / 22 ·
-  > added rows ____ / 3 · `revealedAt` after createRoom ____ · after correct at now 3,700 ____ ·
-  > after startRound ____
+  > Measured: top-level keys **21** / 21 · clock **4** / 4 · config **2** / 2 · handoff names **22** / 22 ·
+  > added rows **3** / 3 · `revealedAt` after createRoom **null** · after correct at now 3,700 **3,700**
+  > (and at now 0, **0** — not `null`) · after startRound **null**, from a hand-built finished round
+  > still holding 12,000 · 2026-10-02, `room.test.ts` (REQ-3.1, REQ-3.2) and `match.test.ts`
+  > (REQ-4.11, 4 tests)
 
-- [ ] **REQ-4.11 (The sanctioned edits, and no others):** relative to `841981a` (Phase 3 complete),
+- [x] **REQ-4.11 (The sanctioned edits, and no others):** relative to `841981a` (Phase 3 complete),
   `git diff` of `room.test.ts`, `index.test.ts` and `reducer.test.ts` contains exactly the edits of
   [specs.md](specs.md) §2.9 — listed here hunk by hunk — and `git diff 841981a -- ` over
   `clock.test.ts`, `purity.test.ts`, `rules.test.ts`, `prototype-equivalence.test.ts` and
   `src/testing/{prng,sequences,prototype-oracle,harness,invariants,deep-freeze}.ts` is **empty**.
-  > Measured: hunks in the three edited files ____ (each named) · lines outside §2.9 ____ ·
-  > diff over the ten untouched files: ____ lines
+  > Measured: evaluated over STEP 1's edits, per the Gate ordering correction of 2026-10-02 ·
+  > `git diff -U0 841981a`: `room.test.ts` **5** edits (4 hunks at default context) — the comment
+  > above `ADDED` (three `+` rows), `ADDED` gains `['revealedAt']`, `TOP_LEVEL_KEYS` gains
+  > `'revealedAt'`, the title and `toHaveLength` 20 → **21**, the REQ-3.2 literal gains
+  > `revealedAt: null` (the correction's added hunk); `reducer.test.ts` **1** — the REQ-3.8 expected
+  > state gains `revealedAt: 3_700`; `index.test.ts` **0**, its edits being STEP 4's · lines outside
+  > §2.9 **0** · diff over the ten untouched files: **0** lines
 
-- [ ] **REQ-4.11 (Phase 3's suite, green):** `pnpm vitest run packages/game` passes every test in
+- [x] **REQ-4.11 (Phase 3's suite, green):** `pnpm vitest run packages/game` passes every test in
   Phase 3's seven test files — including the assertions of Phase 3's Tables A–D and its REQ-3.11
   verdict test, which runs unchanged inside `pnpm test` as a regression check. Reported per file.
-  > Measured: Phase 3 tests passed ____ / ____ · per file ____ · failures ____
+  > Measured: Phase 3 tests passed **211** / 211 · per file `clock` 27 · `index` 4 ·
+  > `prototype-equivalence` 7 · `purity` 9 · `reducer` 83 · `room` 41 · `rules` 40 · failures **0** —
+  > the same 211 as at `841981a` before any change. The first run with `revealedAt` added failed
+  > **1**: `room.test.ts`'s REQ-3.2 complete initial state, which §2.9 had missed; it passes after the
+  > correction's added hunk. Coverage after `pnpm test`: 100% — lines 73/73, branches 65/65,
+  > functions 16/16, statements 87/87
 
-- [ ] **NFR-4.6 (Six projects):** `pnpm test`'s `[check-collected-tests]` line reports **six**
+- [x] **NFR-4.6 (Six projects):** `pnpm test`'s `[check-collected-tests]` line reports **six**
   workspace projects, each with ≥ 1 collected file.
-  > Measured: ____ file(s) across ____ project(s)
+  > Measured: **21** file(s) across **6** project(s); 322 assertions passed, 0 failed — `pnpm test`
+  > exit 0, `[check-collected-tests] OK`
 
 ---
 

@@ -487,6 +487,7 @@ describe('REQ-3.8: correct raises the reveal and stops the clock', () => {
     expect(c).toStrictEqual({
       ...s,
       reveal: { answer: Q1.a, fact: Q1.f },
+      revealedAt: 3_700, // Phase 4 (REQ-4.6, REQ-4.11): the engine time the reveal went up
       clock: {
         ...s.clock,
         runningSince: null,
