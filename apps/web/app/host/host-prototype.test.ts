@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 
 import { createRoom, currentJudge, reduce } from '@nel3ab/game'
 import type { Action, CategoryId, RoomState, Team } from '@nel3ab/game'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 
 import { CATALOG, catalogEntry } from './_lib/catalog'
@@ -12,6 +14,10 @@ import { createFlash, FLASH_MS } from './_lib/flash'
 import { SEED_JUDGE_INDEX, SEED_PICKED, SEED_PLAYERS, seedRoom } from './_lib/seed'
 import { SHARE_URL_BASE, shareRoom } from './_lib/share'
 import { readyView, roundLabel, setupView, SHARE_LABEL } from './_lib/view'
+import { HostApp } from './HostApp'
+import { metadata } from './page'
+import { ReadyScreen } from './ReadyScreen'
+import { SetupScreen } from './SetupScreen'
 
 // REQ-5.22 — specs/phase-5/verification.md Gate 4, "The words and the driver's numbers, read from
 // the prototype". See specs.md §2.12 (this file's row: extractions W1–W9).
@@ -26,11 +32,15 @@ import { readyView, roundLabel, setupView, SHARE_LABEL } from './_lib/view'
 // (the clock's interval) with the driver, which defines `TICK_MS` (REQ-5.12); W5 (`shareRoom`'s
 // strings and timing) with share.ts and flash.ts (REQ-5.21); W4 (`renderVals`' labels) with
 // view.ts (REQ-5.16 – REQ-5.19). W7 (the categories) checks the catalog, REQ-5.14's, and was
-// added after it, beside W5. REQ-5.22's own box is ticked only when all nine — W1–W9 — are in
-// this file.
+// added after it, beside W5. W1–W3 (the setup and room-ready markup's words and titles) and W9
+// (the `<title>`) land with the screens and page.tsx (REQ-5.15 – REQ-5.20); with them all nine
+// are here, which is what REQ-5.22's own box asks.
 //
 // The reader is Phases 3–5's (packages/game/src/setup-rules.test.ts): small regular expressions
 // over the prototype's one logic script and its component class; no HTML or JavaScript parser.
+// W1–W3 and W9 read the prototype's markup, outside the script, the same way: its text runs —
+// what lies between one tag's `>` and the next `<` — and its `title` attributes, each count
+// asserted, compared with the screens' own static markup (`renderToStaticMarkup`, no DOM).
 // The path resolves from import.meta.url, not the working directory: each Vitest project sets its
 // own `root`. The file name has spaces, which `URL` percent-encodes and fileURLToPath decodes.
 
@@ -229,7 +239,280 @@ const INTERVAL_MS = /\}\s*,\s*(\d+)\s*\)/g
 /** What one callback drains from the active team's time: `cur.time - N`, in seconds. */
 const DRAIN_SECONDS = /\bcur\.time\s*-\s*(\d+(?:\.\d+)?)/g
 
+// --- W1–W3, W9: the markup ------------------------------------------------------------------
+
+/** The 440px column, from its opening to the first screen's `<sc-if`: the header row. */
+const HEADER_BLOCKS = all(PROTOTYPE, /<div style="width:100%;max-width:440px;">([\s\S]*?)<sc-if /g)
+const headerBlock = HEADER_BLOCKS[0]?.[1] ?? ''
+
+/** `<sc-if value="{{ isSetup }}" …>` … `</sc-if>`: the setup screen's markup. */
+const SETUP_BLOCKS = all(PROTOTYPE, /<sc-if value="\{\{ isSetup \}\}"[^>]*>([\s\S]*?)<\/sc-if>/g)
+const setupBlock = SETUP_BLOCKS[0]?.[1] ?? ''
+
+/** `<sc-if value="{{ isReady }}" …>` … `</sc-if>`: the room-ready screen's markup. */
+const READY_BLOCKS = all(PROTOTYPE, /<sc-if value="\{\{ isReady \}\}"[^>]*>([\s\S]*?)<\/sc-if>/g)
+const readyBlock = READY_BLOCKS[0]?.[1] ?? ''
+
+/** Every `<sc-if` — so one nested in a block, which would cut the block short, cannot go unnoticed. */
+const SC_IF = /<sc-if\b/g
+/** `<sc-for list="{{ name }}" …>` … `</sc-for>`: markup the runtime renders once per item of `name`. */
+const SC_FOR = /<sc-for list="\{\{ (\w+) \}\}"[^>]*>([\s\S]*?)<\/sc-for>/g
+
+/** What lies between one tag's `>` and the next `<`. */
+const TEXT_RUN = />([^<]*)</g
+/** A `{{ … }}` placeholder, the value the runtime fills in; captured, so `split` keeps it. */
+const PLACEHOLDER = /(\{\{[^}]*\}\})/
+/** A `<button … title="…" …>glyph</button>`, capturing the title and the button's text. */
+const TITLED_BUTTON = /<button\b[^>]*\stitle="([^"]*)"[^>]*>([^<]*)<\/button>/g
+/** Every `title="…"` — so a titled element the button pattern misses cannot go unnoticed. */
+const TITLE = /\stitle="([^"]*)"/g
+/** A `<button …>` start tag, capturing its attributes. */
+const BUTTON_START = /<button\b([^>]*)>/g
+/** One attribute's value in a start tag's attributes, or `null` when it has none. */
+const attributeOf = (attributes: string, name: string): string | null =>
+  new RegExp(`\\s${name}="([^"]*)"`).exec(attributes)?.[1] ?? null
+/** The document's `<title>`. */
+const PAGE_TITLE = /<title>([^<]*)<\/title>/g
+
+/** Every text run of `markup`, in order, its whitespace collapsed; empty runs dropped. */
+const textRuns = (markup: string): string[] =>
+  all(markup, TEXT_RUN)
+    .map((m) => group(m, 1).replace(/\s+/g, ' ').trim())
+    .filter((run) => run !== '')
+
+/** A literal text node: a run with text of its own, not placeholders alone. */
+const isLiteral = (run: string): boolean =>
+  run.split(PLACEHOLDER).some((part, index) => index % 2 === 0 && part.trim() !== '')
+
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** A run as a pattern for a rendered run: its literal text exactly, each placeholder any text. */
+const runPattern = (run: string): RegExp =>
+  new RegExp(
+    `^${run
+      .split(PLACEHOLDER)
+      .map((part, index) => (index % 2 === 0 ? escapeRegExp(part) : '(.+)'))
+      .join('')}$`,
+    'u',
+  )
+
+/** For each pattern in turn, the first rendered run after the last one matched that it matches. */
+const matchInOrder = (patterns: readonly RegExp[], runs: readonly string[]): (string | null)[] => {
+  let from = 0
+  return patterns.map((pattern) => {
+    const index = runs.findIndex((run, i) => i >= from && pattern.test(run))
+    if (index === -1) return null
+    from = index + 1
+    return runs[index] ?? null
+  })
+}
+
+/**
+ * How many times the runtime renders each literal run of `block`, the lists having the given
+ * lengths: a run outside every `sc-for` once per occurrence, a run inside one once per item.
+ */
+const renderedCounts = (
+  block: string,
+  lengths: Readonly<Record<string, number>>,
+): Map<string, number> => {
+  const counts = new Map<string, number>()
+  const add = (markup: string, times: number): void => {
+    for (const run of textRuns(markup).filter(isLiteral)) {
+      counts.set(run, (counts.get(run) ?? 0) + times)
+    }
+  }
+  add(block.replace(SC_FOR, ''), 1)
+  for (const loop of all(block, SC_FOR)) {
+    const length = lengths[group(loop, 1)]
+    if (length === undefined) throw new Error(`no length given for the list ${group(loop, 1)}`)
+    add(group(loop, 2), length)
+  }
+  return counts
+}
+
+/** How many rendered runs each literal run's pattern matches. */
+const appCounts = (literals: Iterable<string>, runs: readonly string[]): Map<string, number> =>
+  new Map(
+    [...literals].map((run) => [
+      run,
+      runs.filter((rendered) => runPattern(run).test(rendered)).length,
+    ]),
+  )
+
+const noop = (): void => undefined
+
+/** The seed's setup screen, rendered alone. */
+const setupScreenMarkup = (): string =>
+  renderToStaticMarkup(
+    createElement(SetupScreen, {
+      view: setupView(seedRoom('SKZJ62'), CATALOG),
+      onShuffleTeamName: noop,
+      onRenameTeam: noop,
+      onSwapTeam: noop,
+      onRemovePlayer: noop,
+      onSetJudge: noop,
+      onSetRotateJudge: noop,
+      onPickCategory: noop,
+      onOpenRoom: noop,
+    }),
+  )
+
+/** The seed's room-ready screen, on `ready`, with no share outcome flashing, rendered alone. */
+const readyScreenMarkup = (): string =>
+  renderToStaticMarkup(
+    createElement(ReadyScreen, {
+      view: readyView(reduce(seedRoom('SKZJ62'), { type: 'openRoom' })),
+      shareLabel: null,
+      onShare: noop,
+      onStart: noop,
+      onBack: noop,
+    }),
+  )
+
 describe("REQ-5.22: the screens' words and the driver's numbers, read from the prototype", () => {
+  test("W1 — every literal text node of the header and the setup block is HostApp's and SetupScreen's, in order", () => {
+    expect([HEADER_BLOCKS.length, SETUP_BLOCKS.length]).toStrictEqual([1, 1])
+    expect(all(setupBlock, SC_IF)).toHaveLength(0)
+    expect(all(setupBlock, SC_FOR).map((loop) => group(loop, 1))).toStrictEqual([
+      'chips',
+      'judgeOptions',
+      'catGrid',
+    ])
+
+    const header = textRuns(headerBlock).filter(isLiteral)
+    const setup = textRuns(setupBlock).filter(isLiteral)
+    // The texts W1 names, as the prototype writes them; none mixed with a placeholder.
+    expect(header).toStrictEqual(['نلعب'])
+    expect(setup).toStrictEqual([
+      'يلا نلعب',
+      'فريقان، حكم واحد، وأسئلة معلومات — كل شي جاهز، عدّل اللي تبيه بس.',
+      'الفرق',
+      'فريق ١',
+      '↺',
+      'فريق ٢',
+      '↺',
+      '↔',
+      '✕',
+      'الحكم',
+      'الحكم يشوف الإجابة الصحيحة — بقية الشاشات لا.',
+      'الفئات',
+      'ابدأ اللعبة',
+      '▶',
+    ])
+    expect([...header, ...setup].filter((run) => PLACEHOLDER.test(run))).toStrictEqual([])
+
+    // The setup screen, for the seed: each in the prototype's order, and each as many times as
+    // the prototype's template renders it — ↔ and ✕ once per chip, inside its `sc-for`.
+    const screen = textRuns(setupScreenMarkup())
+    expect(matchInOrder(setup.map(runPattern), screen)).toStrictEqual(setup)
+    const view = setupView(seedRoom('SKZJ62'), CATALOG)
+    const expected = renderedCounts(setupBlock, {
+      chips: view.chips.length,
+      judgeOptions: view.judgeOptions.length,
+      catGrid: view.tiles.length,
+    })
+    expect(Object.fromEntries(expected)).toStrictEqual({
+      'يلا نلعب': 1,
+      'فريقان، حكم واحد، وأسئلة معلومات — كل شي جاهز، عدّل اللي تبيه بس.': 1,
+      الفرق: 1,
+      'فريق ١': 1,
+      '↺': 2,
+      'فريق ٢': 1,
+      '↔': 5,
+      '✕': 5,
+      الحكم: 1,
+      'الحكم يشوف الإجابة الصحيحة — بقية الشاشات لا.': 1,
+      الفئات: 1,
+      'ابدأ اللعبة': 1,
+      '▶': 1,
+    })
+    expect(appCounts(expected.keys(), screen)).toStrictEqual(expected)
+
+    // The frame: the header's "نلعب" first, then the setup screen's, in order.
+    const host = textRuns(renderToStaticMarkup(createElement(HostApp)))
+    expect(host[0]).toBe(header[0])
+    expect(matchInOrder([...header, ...setup].map(runPattern), host)).toStrictEqual([
+      ...header,
+      ...setup,
+    ])
+    expect(appCounts(header, host)).toStrictEqual(new Map([[header[0], 1]]))
+  })
+
+  test("W2 — the setup block's title attributes are SetupScreen's, on the same buttons, once per rendering", () => {
+    const titles = all(setupBlock, TITLE).map((m) => group(m, 1))
+    const titled = all(setupBlock, TITLED_BUTTON).map((m) => [group(m, 1), group(m, 2)])
+    expect(titles).toStrictEqual(['اسم ثاني', 'اسم ثاني', 'بدّل الفريق', 'حذف'])
+    expect(titled).toStrictEqual([
+      ['اسم ثاني', '↺'],
+      ['اسم ثاني', '↺'],
+      ['بدّل الفريق', '↔'],
+      ['حذف', '✕'],
+    ])
+    // Two outside every list — the team tiles' ↺ — and two inside the chips' `sc-for`.
+    const loops = all(setupBlock, SC_FOR)
+    expect(all(setupBlock.replace(SC_FOR, ''), TITLED_BUTTON)).toHaveLength(2)
+    expect(
+      loops.map((loop) => [group(loop, 1), all(group(loop, 2), TITLED_BUTTON).length]),
+    ).toStrictEqual([
+      ['chips', 2],
+      ['judgeOptions', 0],
+      ['catGrid', 0],
+    ])
+
+    // The setup screen, for the seed: the two ↺, then ↔ and ✕ on each of the five chips — every
+    // titled element a button with the prototype's glyph, its accessible name its title.
+    const [shuffleA, shuffleB, swap, remove] = titled
+    const markup = setupScreenMarkup()
+    const view = setupView(seedRoom('SKZJ62'), CATALOG)
+    const rendered = all(markup, TITLED_BUTTON).map((m) => [group(m, 1), group(m, 2)])
+    expect(rendered).toStrictEqual([
+      shuffleA,
+      shuffleB,
+      ...view.chips.flatMap(() => [swap, remove]),
+    ])
+    expect(all(markup, TITLE)).toHaveLength(rendered.length)
+    const names = all(markup, BUTTON_START)
+      .map((m) => group(m, 1))
+      .filter((attributes) => attributeOf(attributes, 'title') !== null)
+      .map((attributes) => [
+        attributeOf(attributes, 'title'),
+        attributeOf(attributes, 'aria-label'),
+      ])
+    expect(names).toStrictEqual(rendered.map(([title]) => [title, title]))
+  })
+
+  test("W3 — every literal text node of the room-ready block is ReadyScreen's, in order", () => {
+    expect(READY_BLOCKS).toHaveLength(1)
+    expect(all(readyBlock, SC_IF)).toHaveLength(0)
+    expect(all(readyBlock, SC_FOR).map((loop) => group(loop, 1))).toStrictEqual(['chips'])
+
+    const ready = textRuns(readyBlock).filter(isLiteral)
+    // The texts W3 names, as the prototype writes them: "الحكم: " is the one mixed with a value.
+    expect(ready).toStrictEqual([
+      '🎉',
+      'الغرفة جاهزة!',
+      'كود الانضمام — شاركه مع اللاعبين',
+      '⤴',
+      'في الغرفة',
+      'الحكم: {{ judgeName }}',
+      'ابدأ الجولة الأولى',
+      '▶',
+      'رجوع للإعداد',
+    ])
+
+    // The room-ready screen, for the seed on ready: each in order, the judge's name in its
+    // placeholder's place, each once.
+    const screen = textRuns(readyScreenMarkup())
+    const view = readyView(reduce(seedRoom('SKZJ62'), { type: 'openRoom' }))
+    expect(matchInOrder(ready.map(runPattern), screen)).toStrictEqual(
+      ready.map((run) => run.replace('{{ judgeName }}', view.judgeName)),
+    )
+    expect(view.judgeName).toBe('ماجد')
+    const expected = renderedCounts(readyBlock, { chips: view.chips.length })
+    expect([...expected.values()]).toStrictEqual(ready.map(() => 1))
+    expect(appCounts(expected.keys(), screen)).toStrictEqual(expected)
+  })
+
   test("W4 — renderVals' setup and room-ready labels are view.ts's, for the seed and edited rooms", () => {
     expect(RENDER_VALS_BLOCKS).toHaveLength(1)
     const found = {
@@ -672,5 +955,12 @@ describe("REQ-5.22: the screens' words and the driver's numbers, read from the p
     // The driver's loop is the prototype's: every TICK_MS of the timer, a tick of TICK_MS.
     expect(TICK_MS).toBe(Number(only(interval, 1)))
     expect(TICK_MS).toBe(Number(only(drain, 1)) * 1000)
+  })
+
+  test("W9 — the prototype's <title>, 'نلعب — لعبة المعلومات', is page.tsx's metadata title", () => {
+    const found = all(PROTOTYPE, PAGE_TITLE)
+    expect(found).toHaveLength(1)
+    expect(only(found, 1)).toBe('نلعب — لعبة المعلومات')
+    expect(metadata.title).toBe(only(found, 1))
   })
 })

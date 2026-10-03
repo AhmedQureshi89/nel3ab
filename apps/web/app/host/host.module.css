@@ -1,0 +1,68 @@
+/*
+ * REQ-5.15 — the judge app's frame. See specs/phase-5/specs.md §2.11, "The frame".
+ *
+ * The prototype's screen root, its centred 440px column and its header row
+ * (design/designs/Nel3ab - Arcade.dc.html) — without the debug top bar above
+ * them, which does not exist here in any form (roadmap.md Phase 5).
+ *
+ * `.page` sets `font-family: var(--font)` (Phase 2's finding: nothing else
+ * applies it) and `line-height: normal`: apps/web/app/globals.css sets 1.5 on
+ * `body`, the prototype's body sets none, and every text block below with no
+ * line-height of its own must render at the font's `normal`
+ * (requirements.md §1.1, fact 3).
+ *
+ * Inline axis written logically only (NFR-5.8): the prototype's
+ * `padding: 0 0 60px` is `padding-block-end`.
+ */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: normal;
+  padding-block-end: 60px;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  padding: 6px 14px;
+}
+
+.column {
+  width: 100%;
+  max-width: 440px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 19px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.mark {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--red);
+  border: var(--bd) solid var(--stroke);
+}
+
+.round {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}

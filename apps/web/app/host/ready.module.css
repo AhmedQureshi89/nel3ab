@@ -1,0 +1,174 @@
+/*
+ * REQ-5.20, REQ-5.21 — the room-ready screen. See specs/phase-5/specs.md
+ * §2.11, "ReadyScreen.tsx / ready.module.css", and design/README.md §3.
+ *
+ * Every value is the prototype's (design/designs/Nel3ab - Arcade.dc.html,
+ * verification.md Table Q), mapped onto @nel3ab/ui's tokens where one exists.
+ * Inline axis written logically only (NFR-5.8): the in-room panel's physical
+ * `text-align` is `start` here, the same value in this RTL document.
+ */
+
+.screen {
+  text-align: center;
+  padding: 40px 10px 0;
+}
+
+/*
+ * The 🎉 bobs on base.css's GLOBAL `bob` keyframe. A CSS Module rewrites a
+ * keyframe name written in `animation` to a hashed local one that no keyframe
+ * defines, so the 🎉 would silently not move; a custom property's value is
+ * opaque to CSS Modules, so the global name reaches the browser through
+ * `--bob` (requirements.md §1.1, fact 6).
+ */
+.party {
+  --bob: bob 1s ease-in-out infinite;
+
+  font-size: 54px;
+  animation: var(--bob);
+}
+
+.title {
+  margin: 14px 0 4px;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.caption {
+  margin-block-start: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.code-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-block-start: 10px;
+}
+
+/* The room code; `.ltr-num` beside this class supplies Archivo and the isolation. */
+.code {
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: 0.2em;
+  background: var(--panel);
+  border: var(--bd-thick) solid var(--stroke);
+  border-radius: var(--r-tile);
+  box-shadow: var(--sh-card);
+  padding: 12px 18px;
+  white-space: nowrap;
+}
+
+/*
+ * Share: a raised control with the shared press (`press.press` from
+ * @nel3ab/ui/press.module.css beside this class), `0 4px 0` at rest and 3px of
+ * travel to `0 1px 0` — no Button variant has that pair
+ * (requirements.md §1.1, fact 5). Only the press's two inputs are set here.
+ */
+.share {
+  --press-rest: 4px;
+  --press-travel: 3px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: var(--bd-thick) solid var(--stroke);
+  border-radius: var(--r-tile);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 14px 16px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.share[data-flash='true'] {
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+.share-icon {
+  font-size: 16px;
+}
+
+.room {
+  margin-block-start: 20px;
+  text-align: start;
+}
+
+/* The in-room panel's title row: the setup card head, its title at 14px. */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block-end: 10px;
+}
+
+.head-title {
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.head-note {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/*
+ * The room-ready chip: a third pill shape (`4px 12px`, gap 6px, nothing
+ * inside), screen-local rather than `Pill` (requirements.md §1.1, fact 4).
+ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-pill);
+  padding: 4px 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.chip[data-team='a'] {
+  background: var(--red);
+}
+
+.chip[data-team='b'] {
+  background: var(--sky);
+}
+
+/*
+ * The start CTA is `Button size="md"` — 19px through the primitive, never a
+ * font-size here (a screen class loses to the Button's `[data-variant]`
+ * selector; specs.md §4, R5). `width: 100%` is the prototype's and is not in
+ * specs.md §2.11's row: a <button> keeps its fit-content width whatever its
+ * `display`, and the primary Button sets no width of its own (measured
+ * 2026-10-03; see setup.module.css). Without it the CTA would not be Table
+ * Q14's 420px.
+ */
+.start {
+  margin-block-start: 18px;
+  width: 100%;
+}
+
+/* The secondary Button sets no width of its own. */
+.back {
+  width: 100%;
+  margin-block-start: 12px;
+}

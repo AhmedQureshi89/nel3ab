@@ -27,6 +27,13 @@ import { describe, expect, test } from 'vitest'
 // over the same files as REQ-5.14's grep, and the search is shown live against the engine's own
 // `Action` type, which names it.
 //
+// NFR-5.7 (verification.md Gate 4, "Nothing leaves the page"): no non-test source file under
+// apps/web/app/host contains any of six browser APIs by which a page sends or keeps data — the
+// fetch call, the two socket kinds, the beacon, the XHR object and local storage — so `RoomState`,
+// which holds every answer of the round in play, has no way off the page but the share payload
+// (mission.md §3). A plain, case-sensitive substring, as REQ-5.13's: a mention in a comment counts
+// too. The search is shown live against TypeScript's own DOM declarations, which name all six.
+//
 // "Non-test source" is every file under apps/web with a source extension (.ts, .tsx, .js, .jsx,
 // .mjs, .cjs, .css, .json) that is not a `.test.ts` / `.test.tsx`, outside `node_modules` and any
 // dot-directory (`.next`). The walk reads the disk, not git's index, so a file not yet committed
@@ -190,5 +197,61 @@ describe('REQ-5.13: no non-test source under apps/web names startRound', () => {
     expect(
       SOURCE.filter(([, contents]) => contents.includes('startRound')).map(([path]) => path),
     ).toStrictEqual([])
+  })
+})
+
+describe('NFR-5.7: no non-test source under apps/web/app/host names a way off the page', () => {
+  /** The six names, each searched for as written. */
+  const NETWORK = [
+    'fetch(',
+    'WebSocket',
+    'EventSource',
+    'sendBeacon',
+    'XMLHttpRequest',
+    'localStorage',
+  ] as const
+
+  /** apps/web/app/host's non-test source: the screens, their stylesheets, page.tsx and `_lib`. */
+  const HOST = SOURCE.filter(([path]) => path.startsWith('app/host/'))
+
+  /** TypeScript's DOM declarations, outside apps/web, which declare every one of the six. */
+  const DOM_TYPES = readFileSync(
+    fileURLToPath(new URL('../../../../node_modules/typescript/lib/lib.dom.d.ts', import.meta.url)),
+    'utf8',
+  )
+
+  test('the scan covers every screen, stylesheet and _lib module under app/host, and no test file', () => {
+    const paths = HOST.map(([path]) => path)
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        'app/host/page.tsx',
+        'app/host/HostApp.tsx',
+        'app/host/SetupScreen.tsx',
+        'app/host/ReadyScreen.tsx',
+        'app/host/PendingScreen.tsx',
+        'app/host/host.module.css',
+        'app/host/setup.module.css',
+        'app/host/ready.module.css',
+        'app/host/_lib/catalog.ts',
+        'app/host/_lib/driver.ts',
+        'app/host/_lib/flash.ts',
+        'app/host/_lib/room-code.ts',
+        'app/host/_lib/seed.ts',
+        'app/host/_lib/share.ts',
+        'app/host/_lib/view.ts',
+      ]),
+    )
+    expect(paths.filter((path) => isTestFile(path))).toStrictEqual([])
+  })
+
+  test('the search is live: each of the six is found in the DOM declarations', () => {
+    expect(NETWORK.filter((name) => !DOM_TYPES.includes(name))).toStrictEqual([])
+  })
+
+  test('0 occurrences of fetch(, WebSocket, EventSource, sendBeacon, XMLHttpRequest or localStorage', () => {
+    const found = HOST.flatMap(([path, contents]) =>
+      NETWORK.filter((name) => contents.includes(name)).map((name) => ({ path, name })),
+    )
+    expect(found).toStrictEqual([])
   })
 })
