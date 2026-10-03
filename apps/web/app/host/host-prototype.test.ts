@@ -262,8 +262,13 @@ const SC_FOR = /<sc-for list="\{\{ (\w+) \}\}"[^>]*>([\s\S]*?)<\/sc-for>/g
 const TEXT_RUN = />([^<]*)</g
 /** A `{{ … }}` placeholder, the value the runtime fills in; captured, so `split` keeps it. */
 const PLACEHOLDER = /(\{\{[^}]*\}\})/
-/** A `<button … title="…" …>glyph</button>`, capturing the title and the button's text. */
-const TITLED_BUTTON = /<button\b[^>]*\stitle="([^"]*)"[^>]*>([^<]*)<\/button>/g
+/**
+ * A `<button … title="…" …>glyph</button>`, capturing the title and the button's content. The
+ * rendered glyph sits in a span since Gate 5 (setup.module.css, `.glyph`), so the content may hold
+ * tags; `glyphOf` reads its text.
+ */
+const TITLED_BUTTON = /<button\b[^>]*\stitle="([^"]*)"[^>]*>([\s\S]*?)<\/button>/g
+const glyphOf = (content: string): string => content.replace(/<[^>]*>/g, '').trim()
 /** Every `title="…"` — so a titled element the button pattern misses cannot go unnoticed. */
 const TITLE = /\stitle="([^"]*)"/g
 /** A `<button …>` start tag, capturing its attributes. */
@@ -440,7 +445,7 @@ describe("REQ-5.22: the screens' words and the driver's numbers, read from the p
 
   test("W2 — the setup block's title attributes are SetupScreen's, on the same buttons, once per rendering", () => {
     const titles = all(setupBlock, TITLE).map((m) => group(m, 1))
-    const titled = all(setupBlock, TITLED_BUTTON).map((m) => [group(m, 1), group(m, 2)])
+    const titled = all(setupBlock, TITLED_BUTTON).map((m) => [group(m, 1), glyphOf(group(m, 2))])
     expect(titles).toStrictEqual(['اسم ثاني', 'اسم ثاني', 'بدّل الفريق', 'حذف'])
     expect(titled).toStrictEqual([
       ['اسم ثاني', '↺'],
@@ -464,7 +469,7 @@ describe("REQ-5.22: the screens' words and the driver's numbers, read from the p
     const [shuffleA, shuffleB, swap, remove] = titled
     const markup = setupScreenMarkup()
     const view = setupView(seedRoom('SKZJ62'), CATALOG)
-    const rendered = all(markup, TITLED_BUTTON).map((m) => [group(m, 1), group(m, 2)])
+    const rendered = all(markup, TITLED_BUTTON).map((m) => [group(m, 1), glyphOf(group(m, 2))])
     expect(rendered).toStrictEqual([
       shuffleA,
       shuffleB,

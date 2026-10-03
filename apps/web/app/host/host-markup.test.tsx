@@ -131,6 +131,11 @@ describe('REQ-5.16 – REQ-5.19: SetupScreen, for the seed', () => {
       '▶',
     ]
     expect(inOrder(markup, literals)).toBe(true)
+    expect(
+      buttons(markup)
+        .filter(({ text }) => text.includes('بدّل الحكم كل جولة'))
+        .map(({ text }) => text),
+    ).toStrictEqual([SEED_SETUP.rotateLabel])
     // The heading, the lede, the three titles, the judge line and the CTA's two parts once each;
     // ↺ once per team tile; ↔ and ✕ once per chip.
     for (const text of literals.filter((t) => !['↺', '↔', '✕'].includes(t))) {
@@ -152,7 +157,10 @@ describe('REQ-5.16 – REQ-5.19: SetupScreen, for the seed', () => {
         'خالد',
         'ماجد',
         'العدد فردي — يفضّل التبديل',
-        '○ بدّل الحكم كل جولة',
+        // The toggle's glyph is its own run since Gate 5 (setup.module.css, `.glyph`); the
+        // button's whole text is still the view's label — asserted below.
+        '○',
+        'بدّل الحكم كل جولة',
         '8 من 11 مختارة',
         ...SEED_SETUP.tiles.flatMap(({ emoji, name, tag }) =>
           tag ? [emoji, name, tag] : [emoji, name],
@@ -326,7 +334,9 @@ describe('REQ-5.20, REQ-5.21: ReadyScreen, for the seed on ready', () => {
     expect(textRuns(markup)).toHaveLength(16)
     // The 🎉 and the ⤴ are decoration.
     expect(markup).toMatch(/aria-hidden="true">🎉<\/div>/)
-    expect(markup).toMatch(/aria-hidden="true">⤴<\/span>/)
+    // The ⤴ sits in a system-font span inside the aria-hidden one since Gate 5 (ready.module.css,
+    // `.glyph`); it is still decoration.
+    expect(markup).toMatch(/aria-hidden="true"><span[^>]*>⤴<\/span><\/span>/)
     // With no players, the judge is '—'.
     expect(runCount(readyMarkup({ ...view, judgeName: '—', chips: [] }), 'الحكم: —')).toBe(1)
   })

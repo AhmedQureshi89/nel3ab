@@ -172,3 +172,23 @@
   width: 100%;
   margin-block-start: 12px;
 }
+
+/*
+ * Gate 5 finding, 2026-10-03 (specs/phase-5/verification.md Gate 5). A UI glyph
+ * Baloo Bhaijaan 2 does not draw (↔ ✕ ↺ ▶ ⤴ ○ ✔) must fall through to the system
+ * font, as it does in the prototype, whose stack is `"Baloo Bhaijaan 2",
+ * system-ui, sans-serif`. Here `var(--font)` resolves to `baloo, "baloo
+ * Fallback", system-ui, sans-serif`: next/font's generated, Arial-based
+ * "baloo Fallback" sits between Baloo and the system font and draws the glyph
+ * first — measured: ↔ 10.66px wide at 11px/800 against the prototype's 9.48, ▶
+ * 12.54 against 17.23 at 20px/800, making every chip 1.18px wider. So the glyph
+ * alone is wrapped in this span. Not the whole control: the control keeps its
+ * Baloo line box, which is what sets its height in the prototype too. Where the
+ * glyph is a flex item (the CTAs' ▶, the share ⤴) the span sits INSIDE a plain
+ * span, so the flex item keeps Baloo's box and the glyph its baseline — a
+ * system-font flex item is shorter, is centred differently, and measured 3.66px
+ * low on the setup CTA.
+ */
+.glyph {
+  font-family: system-ui, sans-serif;
+}

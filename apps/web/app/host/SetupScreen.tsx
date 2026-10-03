@@ -60,6 +60,13 @@ export function SetupScreen({
   onPickCategory,
   onOpenRoom,
 }: SetupScreenProps) {
+  // The toggle's label is the view's one string, "✔ …" or "○ …"; its glyph is
+  // split off so that it alone draws in the system font (setup.module.css,
+  // `.glyph`), and the space stays in the Baloo run, as in the prototype.
+  const space = view.rotateLabel.indexOf(' ')
+  const rotateGlyph = view.rotateLabel.slice(0, space)
+  const rotateText = view.rotateLabel.slice(space + 1)
+
   return (
     <div>
       <h1 className={styles.title}>يلا نلعب</h1>
@@ -86,7 +93,7 @@ export function SetupScreen({
                     aria-label="اسم ثاني"
                     onClick={() => onShuffleTeamName(team)}
                   >
-                    ↺
+                    <span className={styles.glyph}>↺</span>
                   </button>
                 </div>
                 <input
@@ -111,7 +118,7 @@ export function SetupScreen({
                 aria-label="بدّل الفريق"
                 onClick={() => onSwapTeam(chip.id)}
               >
-                ↔
+                <span className={styles.glyph}>↔</span>
               </button>
               <button
                 type="button"
@@ -120,7 +127,7 @@ export function SetupScreen({
                 aria-label="حذف"
                 onClick={() => onRemovePlayer(chip.id)}
               >
-                ✕
+                <span className={styles.glyph}>✕</span>
               </button>
             </Pill>
           ))}
@@ -154,7 +161,7 @@ export function SetupScreen({
           aria-pressed={view.rotateOn}
           onClick={() => onSetRotateJudge(!view.rotateOn)}
         >
-          {view.rotateLabel}
+          <span className={styles.glyph}>{rotateGlyph}</span> {rotateText}
         </button>
       </Panel>
 
@@ -187,7 +194,9 @@ export function SetupScreen({
 
       <Button className={styles.start} disabled={!view.canStart} onClick={onOpenRoom}>
         <span>ابدأ اللعبة</span>
-        <span>▶</span>
+        <span>
+          <span className={styles.glyph}>▶</span>
+        </span>
       </Button>
       <p className={styles.note}>{view.setupNote}</p>
     </div>

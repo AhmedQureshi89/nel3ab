@@ -55,7 +55,7 @@ export function ReadyScreen({ view, shareLabel, onShare, onStart, onBack }: Read
           onClick={onShare}
         >
           <span className={styles['share-icon']} aria-hidden="true">
-            ⤴
+            <span className={styles.glyph}>⤴</span>
           </span>
           {shareLabel ?? SHARE_LABEL}
         </button>
@@ -77,7 +77,9 @@ export function ReadyScreen({ view, shareLabel, onShare, onStart, onBack }: Read
 
       <Button size="md" className={styles.start} onClick={onStart}>
         <span>ابدأ الجولة الأولى</span>
-        <span>▶</span>
+        <span>
+          <span className={styles.glyph}>▶</span>
+        </span>
       </Button>
       <Button variant="secondary" className={styles.back} onClick={onBack}>
         رجوع للإعداد
