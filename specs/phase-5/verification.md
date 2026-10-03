@@ -212,9 +212,28 @@ Rooms are `seedRoom('SKZJ62')` after `openRoom` (on `ready`), unless stated.
 
 `SETUP_SEED = 0x20265005` · `SETUP_SEQUENCES = 300` · `SETUP_MAX_STEPS = 2_000` · `SETUP_EDITS = 40` ·
 `SETUP_TICK_MS = 1_000`. Totals are **reported**, not pre-registered; the sample must show every one of
-these at least once: an `openRoom` that fills; an `openRoom` refused by the guard; a `backToSetup`; a
-match reaching `match`; a `resetMatch` back to setup followed by a second `openRoom`; a setup edit
-attempted, and inert, on `ready` and on `roundEnd`.
+these at least once: an `openRoom` that fills; a `backToSetup`; a match reaching `match`; a `resetMatch`
+back to setup followed by a second `openRoom`; a setup edit attempted, and inert, on `ready` and on
+`roundEnd`.
+
+> **Correction 2026-10-03 — made before Gate 2's sample box was ticked, decided by the owner (Ahmed,
+> in session: "A — drop it").** As first written, this list also required "an `openRoom` refused by
+> the guard". The planning session pre-registered that population without measuring it, and the
+> first run of the sample, built exactly as specs.md §2.6 specifies, showed **0** refusals in
+> **1,134** `openRoom` attempts: each of the 11 categories ends up picked about half the time, so an
+> empty selection has probability ≈ 1/2,048 per attempt — ≈ 0.55 refusals expected over the sample,
+> a ≈ 42% chance of seeing one (selection sizes at the attempts measured as {1: 6, 2: 27, 3: 104,
+> 4: 176, 5: 248, 6: 260, 7: 190, 8: 86, 9: 28, 10: 8, 11: 1}). The population is **removed**. What
+> it would have shown is covered directly: Gate 1's REQ-5.6 box (with nothing picked `openRoom`
+> returns its input and `canOpenRoom` is false), its REQ-5.1 box, and E9; and a refused `openRoom` is
+> inert by definition, so the sample's invariants gain nothing from it. **What it costs:** the
+> generator's recovery branch for a refusal (specs.md §2.6, "if it is inert (nothing picked),
+> `pickCategory('c0', true)` then `openRoom`") is not exercised at this seed; it is test support,
+> outside coverage, and its absence is recorded here rather than worked around. The alternatives
+> considered and rejected were changing the generator so empty selections occur (a new sample to
+> measure) and re-running with another seed (the retry-into-green of §10). The seed, the sizes and
+> every other constant of this table are unchanged; no other box changes what it accepts. The halt
+> note of 2026-10-03 (commit `f07d72d`) is cleared by the same commit as this correction.
 
 ---
 
