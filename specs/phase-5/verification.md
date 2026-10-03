@@ -294,10 +294,10 @@ attempted, and inert, on `ready` and on `roundEnd`.
 
 ## 2. Gate 2 — Phases 3–4 kept, purity, and the flow's invariants (same block)
 
-- [ ] **REQ-5.7 (Phases 3–4 green):** `pnpm vitest run packages/game` passes every test of Phases 3 and
+- [x] **REQ-5.7 (Phases 3–4 green):** `pnpm vitest run packages/game` passes every test of Phases 3 and
   4 — their two verdict tests included — with **0** failures and **0** skips; their test count is the
   `7a60dcc` count.
-  > Measured:
+  > Measured: `pnpm vitest run packages/game --reporter=json` — Phases 3–4's **12** test files **384 / 384** passed, **0** failed, **0** skipped, their 🚦 verdict tests among them and green (Phase 3's REQ-3.11 in `prototype-equivalence.test.ts`; Phase 4's REQ-4.14 in `match-equivalence.test.ts` and REQ-4.2 in `draw.test.ts`); the count is `7a60dcc`'s **384**: the ten untouched files show 0 lines of diff, the two §2.10 edits add or remove no test (`index.test.ts` **4 → 4**, one title reworded; `match-purity.test.ts` **5 → 5**), and Phase 4's record at its close is 12 files, 384 tests · the whole project **428 / 428** over 14 files · `pnpm lint`, `pnpm typecheck` exit 0; `pnpm test` 27 files across 6 projects, **535 / 535**, `[check-collected-tests] OK`, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244) · 2026-10-03
 
 - [ ] **REQ-5.7 (The invariants, over the sample):** Table U's 300 sequences run through `reduce` with
   Phase 3's I1–I10, Phase 4's J1–J8 and this phase's K1–K5 asserted after every step: **0** violations.
