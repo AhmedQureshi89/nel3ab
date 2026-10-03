@@ -20,6 +20,13 @@ import { describe, expect, test } from 'vitest'
 // word "Author", nor `١٩٤٥` inside a longer number, nor `جوي` inside `جوية`. The liveness test
 // shows the matcher finds every one of the strings in the prototype's own `CATS` block.
 //
+// REQ-5.13 (verification.md Gate 4, "No startRound"): no non-test source file under apps/web
+// contains the string `startRound` — Phase 3's primitive, whose rounds are unscored and which no
+// driver may dispatch (Phase 4's carried-forward obligation). Here "contains" is a plain,
+// case-sensitive substring — stricter than a whole token, so the name in a comment counts too —
+// over the same files as REQ-5.14's grep, and the search is shown live against the engine's own
+// `Action` type, which names it.
+//
 // "Non-test source" is every file under apps/web with a source extension (.ts, .tsx, .js, .jsx,
 // .mjs, .cjs, .css, .json) that is not a `.test.ts` / `.test.tsx`, outside `node_modules` and any
 // dot-directory (`.next`). The walk reads the disk, not git's index, so a file not yet committed
@@ -162,5 +169,26 @@ describe("REQ-5.14: none of the prototype's question content is in apps/web's no
       })),
     )
     expect(found).toStrictEqual([])
+  })
+})
+
+describe('REQ-5.13: no non-test source under apps/web names startRound', () => {
+  /** The engine's `Action` type, outside apps/web, which names it. */
+  const ENGINE_TYPES = readFileSync(
+    fileURLToPath(new URL('../../../../packages/game/src/types.ts', import.meta.url)),
+    'utf8',
+  )
+
+  test('the scan covers the driver and the room code, and the search finds the name where it is', () => {
+    expect(SOURCE.map(([path]) => path)).toEqual(
+      expect.arrayContaining(['app/host/_lib/driver.ts', 'app/host/_lib/room-code.ts']),
+    )
+    expect(ENGINE_TYPES.includes('startRound')).toBe(true)
+  })
+
+  test('0 files contain the string startRound', () => {
+    expect(
+      SOURCE.filter(([, contents]) => contents.includes('startRound')).map(([path]) => path),
+    ).toStrictEqual([])
   })
 })

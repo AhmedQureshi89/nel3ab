@@ -5,6 +5,7 @@ import { currentJudge } from '@nel3ab/game'
 import { describe, expect, test } from 'vitest'
 
 import { CATALOG } from './_lib/catalog'
+import { TICK_MS } from './_lib/driver'
 import { SEED_JUDGE_INDEX, SEED_PICKED, SEED_PLAYERS, seedRoom } from './_lib/seed'
 
 // REQ-5.22 — specs/phase-5/verification.md Gate 4, "The words and the driver's numbers, read from
@@ -16,7 +17,8 @@ import { SEED_JUDGE_INDEX, SEED_PICKED, SEED_PLAYERS, seedRoom } from './_lib/se
 // invariant 5, NFR-5.1), so this file goes red only when the app drifts from the prototype.
 //
 // The extractions land with the units that build what they are asserted against, each box of
-// Gate 4 that names one asserting it here: W6 (the initial `state`) with the seed, REQ-5.10.
+// Gate 4 that names one asserting it here: W6 (the initial `state`) with the seed, REQ-5.10; W8
+// (the clock's interval) with the driver, which defines `TICK_MS` (REQ-5.12).
 // REQ-5.22's own box is ticked only when all nine — W1–W9 — are in this file.
 //
 // The reader is Phases 3–5's (packages/game/src/setup-rules.test.ts): small regular expressions
@@ -78,6 +80,19 @@ const ROTATE = /\brotateJudge\s*:\s*(true|false)\b/g
 /** `picked:[ … ]`, capturing the list of category indices. */
 const PICKED = /\bpicked\s*:\s*\[([^\]]*)\]/g
 
+// --- W8: the clock's interval ---------------------------------------------------------------
+
+/** The class's `startClock(){ … }` method, capturing its body. */
+const START_CLOCK_BLOCKS = all(classBody, /^ {2}startClock\(\)\s*\{\n([\s\S]*?)^ {2}\}$/gm)
+const startClockBody = START_CLOCK_BLOCKS[0]?.[1] ?? ''
+
+/** Every interval timer the class starts — so a second clock could not go unnoticed. */
+const SET_INTERVAL = /\bsetInterval\s*\(/g
+/** The delay that closes `setInterval(() => { … }, N)`, in ms. */
+const INTERVAL_MS = /\}\s*,\s*(\d+)\s*\)/g
+/** What one callback drains from the active team's time: `cur.time - N`, in seconds. */
+const DRAIN_SECONDS = /\bcur\.time\s*-\s*(\d+(?:\.\d+)?)/g
+
 describe("REQ-5.22: the screens' words and the driver's numbers, read from the prototype", () => {
   test("W6 — the initial state's players, teamA, teamB, judgeIdx, rotateJudge and picked are seed.ts's room", () => {
     expect(STATE_BLOCKS).toHaveLength(1)
@@ -130,5 +145,22 @@ describe("REQ-5.22: the screens' words and the driver's numbers, read from the p
     expect(room.pickedCategories).toStrictEqual(indices.map((i) => CATALOG[i]?.id))
     // The judge it names is the prototype's: players[judgeIdx].
     expect(currentJudge(room)?.name).toBe(prototypePlayers[Number(only(judgeIndex, 1))]?.name)
+  })
+
+  test("W8 — startClock's interval, `}, 100)`, is TICK_MS, and one callback drains TICK_MS", () => {
+    expect(START_CLOCK_BLOCKS).toHaveLength(1)
+    // One interval timer in the whole class, and it is startClock's.
+    expect(all(classBody, SET_INTERVAL)).toHaveLength(1)
+    expect(all(startClockBody, SET_INTERVAL)).toHaveLength(1)
+
+    const interval = all(startClockBody, INTERVAL_MS)
+    const drain = all(startClockBody, DRAIN_SECONDS)
+    expect([interval.length, drain.length]).toStrictEqual([1, 1])
+    expect(Number(only(interval, 1))).toBe(100)
+    expect(only(drain, 1)).toBe('0.1')
+
+    // The driver's loop is the prototype's: every TICK_MS of the timer, a tick of TICK_MS.
+    expect(TICK_MS).toBe(Number(only(interval, 1)))
+    expect(TICK_MS).toBe(Number(only(drain, 1)) * 1000)
   })
 })
