@@ -28,8 +28,21 @@ helpers. Two rules bind every driver (Phase 5's browser, Phase 11's server): sen
 `passTurn` after ticks — the engine refuses it until the 1000 ms reveal has elapsed — and
 draw with `drawableCategories` / `drawCategory` / `shuffleQuestions` and a real random source,
 since the reducer draws nothing. Never dispatch `startRound` from a driver: it is Phase 3's
-primitive, kept for Phase 3's tests, and its rounds are unscored. What Phases 2–4 carried
-forward is listed under "Completed Work" in `specs/roadmap.md`. `@nel3ab/protocol`,
+primitive, kept for Phase 3's tests, and its rounds are unscored. Phase 5 (judge app — setup
+& room-ready) is **complete** as of 2026-10-03 — 46/46 boxes with measured values, its 🚦
+verdict gate PASS (setup and room-ready equal the prototype in 8/8 configurations: 2 screens ×
+480 and 375 px × light and dark) and the owner's own look clean. The engine gained eight setup
+actions (`removePlayer`, `swapTeam`, `renameTeam`, `setJudge`, `setRotateJudge`,
+`pickCategory`, `openRoom`, `backToSetup`), each inert outside `setup`. `apps/web` has the
+`/host` route — setup, room-ready and a placeholder play screen — run by a local driver
+(`apps/web/app/host/_lib/driver.ts`) with the prototype's five demo players and a temporary
+placeholder catalog (`_lib/catalog.ts`, which Phase 8 deletes). Every judge screen's root sets
+`font-family: var(--font)` and `line-height: normal`; reaches a global keyframe through a
+custom property (`--bob: bob 1s ease-in-out infinite; animation: var(--bob)`), because CSS
+Modules rewrite a name written in `animation` to a local one no keyframe defines; and draws a
+UI glyph Baloo Bhaijaan 2 lacks (↺ ↔ ✕ ✔ ○ ▶ ⤴) in a system-font `.glyph` span, because
+`next/font`'s Arial-based fallback otherwise draws it with other metrics. What Phases 2–5
+carried forward is listed under "Completed Work" in `specs/roadmap.md`. `@nel3ab/protocol`,
 `@nel3ab/content` and `apps/game` are still deliberate shells exporting `PLACEHOLDER`:
 protocol, content and the server are owned by later phases and are intentionally absent — do
 not "fill them in" outside their phase.
@@ -192,6 +205,12 @@ This is a spec-driven project. `specs/` holds the constitution (`mission.md`,
 - `verification.md` is the checklist of record; a requirement is done when its gate is
   ticked with measured evidence, not when the code looks right. Gates marked 🚦 are
   **verdict gates: evaluated exactly once, no retry.**
+- **A visual verdict compares the prototype and the app in one browser tab, prototype first,
+  with no screenshot inside the comparison.** The desktop app's built-in browser rasterises a
+  page at 1.5 or 2 depending on how it was loaded, and a screenshot can switch the next load's
+  ratio; two pages drawn at different ratios differ by fractions of a pixel everywhere. Check
+  that a 3 px border paints the same width on both pages (3 px at 2, 2.67 px at 1.5) before
+  trusting a comparison. Phase 5's Gate 7 lost two attempts to this.
 - **A requirement that contradicts `mission.md`, `tech-specs.md` or `roadmap.md` may not
   be adopted without a dated amendment in `mission.md` §8.** Amendments are appended,
   never rewritten, and record what the decision costs. Write the amendment _before_ the
