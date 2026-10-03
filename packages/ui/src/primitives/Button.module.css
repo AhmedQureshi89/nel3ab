@@ -26,6 +26,11 @@
  *   - primary text size: the prototypes use 19px on four primary CTAs and 20px
  *     on two. specs.md §2.7 chose 20px, one of the prototype's own values, and
  *     20px is what ships.
+ *
+ * Phase 5 (specs/phase-5/specs.md §2.8, REQ-5.23): the 19px CTAs get a size
+ * of their own rather than a screen's override. `data-size='md'` adds one rule
+ * after the primary rule; the primary rule's own `font-size: 20px` — the
+ * default, `lg` — is untouched, and the other two variants ignore the size.
  */
 
 .button {
@@ -51,6 +56,10 @@
   color: var(--on-yellow);
   font-size: 20px;
   font-weight: 800;
+}
+
+.button[data-variant='primary'][data-size='md'] {
+  font-size: 19px;
 }
 
 /* A hover, not a press: specs.md §2.5's "no filter" is about :active. */

@@ -1,0 +1,337 @@
+/*
+ * REQ-5.16 – REQ-5.19 — the setup screen. See specs/phase-5/specs.md §2.11,
+ * "SetupScreen.tsx / setup.module.css", and design/README.md §2.
+ *
+ * Every value is the prototype's (design/designs/Nel3ab - Arcade.dc.html,
+ * verification.md Table P), mapped onto @nel3ab/ui's tokens where one exists.
+ * The three cards are `Panel`s and the player chips are `Pill`s; only what the
+ * primitives do not provide is written here.
+ *
+ * Inline axis written logically only (NFR-5.8). The prototype's physical
+ * `text-align` on the rotation toggle is `start` here, and its
+ * `margin: 0 -14px` (the rail) is `margin-inline: -14px` — in this RTL
+ * document, the same values.
+ *
+ * Every screen-local <button> and the <input> set `font-family: inherit`: the
+ * prototype's reset `input, button { font-family: inherit }` is not in
+ * apps/web/app/globals.css, and without it a control renders in the browser's
+ * control font rather than Baloo Bhaijaan 2.
+ */
+
+.title {
+  margin: 0 0 2px;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.lede {
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* The teams and judge cards; the categories card sits 18px above the CTA. */
+.card {
+  margin-block-end: 14px;
+}
+
+.categories {
+  margin-block-end: 18px;
+}
+
+/* A card's title row. The judge card's is 4px above its explanatory line. */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block-end: 10px;
+}
+
+.head-tight {
+  margin-block-end: 4px;
+}
+
+.head-title {
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.head-note {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* --- the teams card ------------------------------------------------------- */
+
+.teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.team {
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-tile);
+  padding: 11px;
+}
+
+.team[data-team='a'] {
+  background: var(--red);
+}
+
+.team[data-team='b'] {
+  background: var(--sky);
+}
+
+.team-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.team-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgb(255 255 255 / 80%);
+}
+
+.shuffle {
+  background: rgb(0 0 0 / 18%);
+  border: none;
+  border-radius: var(--r-xs);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+
+/*
+ * `outline: none` is the prototype's inline style on this field, which beats
+ * its global `:focus-visible` ring; the field's missing ring is Phase 23's
+ * (verification.md §10).
+ */
+.team-name {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 2px 0;
+}
+
+.members {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgb(255 255 255 / 85%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-block-start: 10px;
+}
+
+/* A chip's ↔ and ✕. */
+.chip-button {
+  background: rgb(0 0 0 / 20%);
+  border: none;
+  border-radius: var(--r-pill);
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+
+/* --- the judge card ------------------------------------------------------- */
+
+.judge-line {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/*
+ * The judge choice: a screen-local shape (`6px 14px`), not `Pill`
+ * (requirements.md §1.1, fact 4; REQ-5.17).
+ */
+.choice {
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-pill);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.choice[data-selected='true'] {
+  background: var(--yellow);
+  color: var(--on-yellow);
+  box-shadow: var(--sh-sel);
+}
+
+.rotate {
+  margin-block-start: 11px;
+  width: 100%;
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-input);
+  background: var(--sunken);
+  color: var(--ink);
+  padding: 10px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+
+.rotate[data-on='true'] {
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+/* --- the categories card --------------------------------------------------- */
+
+/*
+ * The rail bleeds to the card's edges and snaps. It sets no `scroll-padding`:
+ * the snap aligns the first tile with the scroll container's own edge, which
+ * scrolls the 14px start padding out of view, and the prototype's first tile
+ * sits flush against the card's border (requirements.md §1.1, fact 2). The
+ * prototype's `-webkit-overflow-scrolling: touch` is omitted: it has no effect
+ * in any browser this app supports.
+ */
+.rail {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-block-end: 6px;
+  margin-inline: -14px;
+  padding-inline: 14px;
+  scrollbar-width: none;
+}
+
+/*
+ * A tile sets no `font-size` of its own: the browser's default, as in the prototype.
+ * A locked tile is `opacity: 0.5`, not a disabled control: it carries neither
+ * `disabled` nor `aria-disabled`, whose global rule (base.css) would make it
+ * 0.45 (requirements.md §1.1, fact 5; REQ-5.18).
+ */
+.tile {
+  position: relative;
+  flex: 0 0 auto;
+  width: 92px;
+  scroll-snap-align: start;
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-tile);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 12px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tile[data-selected='true'] {
+  background: var(--yellow);
+  color: var(--on-yellow);
+  box-shadow: var(--sh-sel);
+}
+
+.tile[data-locked='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tile-emoji {
+  font-size: 22px;
+}
+
+.tile-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.tile-tag {
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.tile[data-locked='true'] .tile-tag {
+  color: var(--red);
+}
+
+/* --- the start button and the footnote --------------------------------------- */
+
+/*
+ * The CTA is the primary `Button` (20px). `width: 100%` is the prototype's
+ * (`width:100%` on its "ابدأ اللعبة"), and is not in specs.md §2.11's row: a
+ * <button> keeps its fit-content width whatever its `display`, and the
+ * primary Button sets no width of its own — a `display: flex` button in a
+ * 400px block measured 58.83px wide in Chromium 152 on 2026-10-03. Without it
+ * the CTA would not be Table P33's 440px.
+ */
+.start {
+  width: 100%;
+}
+
+.note {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/*
+ * Gate 5 finding, 2026-10-03 (specs/phase-5/verification.md Gate 5). A UI glyph
+ * Baloo Bhaijaan 2 does not draw (↔ ✕ ↺ ▶ ⤴ ○ ✔) must fall through to the system
+ * font, as it does in the prototype, whose stack is `"Baloo Bhaijaan 2",
+ * system-ui, sans-serif`. Here `var(--font)` resolves to `baloo, "baloo
+ * Fallback", system-ui, sans-serif`: next/font's generated, Arial-based
+ * "baloo Fallback" sits between Baloo and the system font and draws the glyph
+ * first — measured: ↔ 10.66px wide at 11px/800 against the prototype's 9.48, ▶
+ * 12.54 against 17.23 at 20px/800, making every chip 1.18px wider. So the glyph
+ * alone is wrapped in this span. Not the whole control: the control keeps its
+ * Baloo line box, which is what sets its height in the prototype too. Where the
+ * glyph is a flex item (the CTAs' ▶, the share ⤴) the span sits INSIDE a plain
+ * span, so the flex item keeps Baloo's box and the glyph its baseline — a
+ * system-font flex item is shorter, is centred differently, and measured 3.66px
+ * low on the setup CTA.
+ */
+.glyph {
+  font-family: system-ui, sans-serif;
+}

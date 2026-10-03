@@ -21,6 +21,14 @@
 // override it. `disabled` sets both the native attribute and
 // aria-disabled="true", so base.css's disabled rule and press.module.css's
 // :not() guard apply whichever selector a consumer relies on.
+//
+// Phase 5 (specs/phase-5/specs.md §2.8, REQ-5.23): `size`, emitted as
+// `data-size` on every Button. `lg`, the default, is Phase 2's 20px primary,
+// unchanged; `md` is the prototypes' 19px primary CTA (room-ready's "ابدأ
+// الجولة الأولى", Phase 7's two, Phase 13's "انضم"). A prop rather than a
+// screen's override, because a screen class loses to the `[data-variant]`
+// selector (specs/phase-5/specs.md §4, R5). It has no effect on `secondary`
+// or `action`.
 
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
@@ -33,11 +41,14 @@ export type ButtonProps = ComponentPropsWithoutRef<'button'> & {
   variant?: 'primary' | 'secondary' | 'action'
   /** The 11px line under an `action` label. Ignored by the other variants. */
   subLabel?: ReactNode
+  /** Default `lg` (20px). `md` is the 19px primary. Ignored by the other variants. */
+  size?: 'lg' | 'md'
 }
 
 export function Button({
   variant = 'primary',
   subLabel,
+  size = 'lg',
   disabled,
   className,
   children,
@@ -48,6 +59,7 @@ export function Button({
       type="button"
       className={cx(styles.button, variant !== 'secondary' && press.press, className)}
       data-variant={variant}
+      data-size={size}
       disabled={disabled}
       aria-disabled={disabled ? true : undefined}
       {...rest}

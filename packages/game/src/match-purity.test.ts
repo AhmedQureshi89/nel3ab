@@ -62,7 +62,9 @@ const keep = (list: string[], entry: string): void => {
 /**
  * Every action type the reducer takes. Phase 3's `startRound` is never given
  * by the harness — no driver dispatches it (requirements.md, reading 1) — and
- * is counted all the same, so that each count is over every type.
+ * is counted all the same, so that each count is over every type. Phase 5's
+ * eight setup actions are counted the same way, though the harness never gives
+ * them (specs/phase-5/specs.md §2.10).
  */
 type ActionType = Action['type']
 const perType = (): Record<ActionType, number> => ({
@@ -75,6 +77,14 @@ const perType = (): Record<ActionType, number> => ({
   nextRound: 0,
   resetMatch: 0,
   startRound: 0,
+  removePlayer: 0,
+  swapTeam: 0,
+  renameTeam: 0,
+  setJudge: 0,
+  setRotateJudge: 0,
+  pickCategory: 0,
+  openRoom: 0,
+  backToSetup: 0,
 })
 
 /** The two sets walked, kept apart so each box can name the set it is measured over. */
