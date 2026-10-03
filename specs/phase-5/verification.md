@@ -481,12 +481,12 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
 
 ## 6. Gate 6 — Coverage, mutations and the gate commands (evaluated once, over the finished phase)
 
-- [ ] **REQ-5.9 (Full coverage):** `pnpm test` reports **100%** lines, branches, functions and
+- [x] **REQ-5.9 (Full coverage):** `pnpm test` reports **100%** lines, branches, functions and
   statements over `packages/game/src`, with `setup.ts` listed; the coverage block of
   `vitest.config.ts` is byte-identical to `7a60dcc`'s.
-  > Measured:
+  > Measured: `pnpm test` on a fresh clone of `d3c51a1` and on CI run 37143126118: **100%** — lines **201 / 201**, branches **216 / 216**, functions **48 / 48**, statements **244 / 244**, `setup.ts` listed (38 · 39 · 15 · 51 of 38 · 39 · 15 · 51; `reducer.ts` 79 · 106 · 6 · 98); `git diff 7a60dcc -- vitest.config.ts` **0** lines · 2026-10-03
 
-- [ ] **REQ-5.9 (Assertions that bite):** each mutation below, applied alone and reverted, fails at least
+- [x] **REQ-5.9 (Assertions that bite):** each mutation below, applied alone and reverted, fails at least
   one test; the test that caught it is recorded.
 
   | # | Mutation |
@@ -513,30 +513,30 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
   | D6 | `AbortError` falls through to the clipboard |
   | D7 | `FLASH_MS` 1,000 |
   | D8 | `startMatch()` draws on any screen |
-  > Measured:
+  > Measured: **22 / 22** caught — each applied alone at `d3c51a1`, tested without coverage (`pnpm vitest run packages/game`, 443 tests; `pnpm vitest run apps/web`, 136), reverted, the tree clean before the next — failing tests: N1 **4** · N2 **5** · N3 **3** · N4 **3** · N5 **2** (both `< 2`s of the fill; the first alone is caught by the same 2, the second alone cannot change behaviour) · N6 **2** · N7 **2** (each of the six edits made effective on `ready` alone also 2) · N8 **4** · N9 **2** · N10 **2** · N11 **1** · N12 **2** · N13 **2** (each of the six alone also 2) · N14 **2** · D1 **5** · D2 **6** (the constant; a literal 1,000 in the loop alone also 6) · D3 **3** · D4 **9** · D5 **8** · D6 **4** · D7 **7** · D8 **2** — e.g. N1 by setup.test.ts "judgeAfterRemoval is the prototype's line at its three boundaries", N13 by "each malformed form throws RangeError on all five screens", D1 by driver.test.ts "T5 — correct at 5,000 ms…", D6 by share.test.ts "Table T8 › 2 · share rejects AbortError…", D8 by room-code.test.ts "T7 — startMatch() and nextRound() on setup call it 0 times…"; measured by a subagent of this session, which committed nothing · 2026-10-03
 
-- [ ] **REQ-5.25 (The four gate commands, no escape hatch):** on a fresh clone at a **short path**
+- [x] **REQ-5.25 (The four gate commands, no escape hatch):** on a fresh clone at a **short path**
   (Windows `LongPathsEnabled` is 0 on this machine), `pnpm install --frozen-lockfile`, `pnpm lint`,
   `pnpm typecheck`, `pnpm test`, `pnpm build` all exit 0 on Windows and on this phase's pull request's
   Ubuntu CI (`ci` job); §8's escape-hatch greps return the baseline measured at `7a60dcc` — **5** prose
   lines (`CLAUDE.md` × 3, `press.module.css`, `stylelint.config.mjs`), **0** directives, `skipLibCheck`
   in `tsconfig.base.json` only, and one `prettier-ignore` (`draw.test.ts:561`, Phase 4's) — unchanged.
-  > Measured:
+  > Measured: Windows **5 / 5** · CI run **37143126118** (`ci` **success**) · escape-hatch lines **5** · directives **0**. **Windows** — cloned from GitHub at `d3c51a1` into `C:\Users\aalsh\AppData\Local\Temp\claude\p5g`, Node v24.14.0, pnpm 11.22.0, on mains power (`Win32_Battery` `BatteryStatus` 2, charge 100%): `pnpm install --frozen-lockfile` exit **0** ("Lockfile is up to date") · `pnpm lint` **0** (7.21 s) · `pnpm typecheck` **0** (2.17 s) · `pnpm test` **0** (13.59 s; 41 files across 6 projects, **685 / 685**, `[check-collected-tests] OK`, coverage 100%) · `pnpm build` **0** (10.38 s). **Ubuntu CI** — PR #32's `ci` job, run 37143126118 at `d3c51a1`, `ubuntu-24.04` `20260927.320.1`, 18:09:07–18:10:31 UTC, conclusion **success**; its `pnpm test` 41 files, 685 / 685, Vitest Duration 33.65 s, `All files 100 | 100 | 100 | 100`. **Escape hatches** — §8's greps in the clone: the **5** prose lines (`CLAUDE.md:67`, `:127`, `:132`, `press.module.css:48`, `stylelint.config.mjs:19`), **0** directives, `skipLibCheck` in `tsconfig.base.json` only, the one `prettier-ignore` at `draw.test.ts:561` — identical to `7a60dcc` · 2026-10-03
 
-- [ ] **NFR-5.6 (Six projects, and fast enough):** `[check-collected-tests]` reports **six** projects;
+- [x] **NFR-5.6 (Six projects, and fast enough):** `[check-collected-tests]` reports **six** projects;
   the `@nel3ab/game` project's test duration on Windows on mains power is under **20 s** (three runs);
   CI's is recorded. If over, it is a finding — no sample is shrunk.
-  > Measured:
+  > Measured: `[check-collected-tests] 41 test file(s) across 6 workspace project(s)` — **six** projects; the `@nel3ab/game` project alone with coverage (`pnpm vitest run --project @nel3ab/game --coverage`, 16 files, 443 / 443) in the fresh clone on Windows on mains power (`BatteryStatus` 2, 100%; CPU 27% before): **11.54 · 11.38 · 11.06 s**, under 20 s; the whole six-project `pnpm test` there 11.09 s (Vitest Duration); CI: the six-project Vitest Duration **33.65 s** (Phase 4: 28.43 s) — recorded, no budget applies on CI · 2026-10-03
 
-- [ ] **NFR-5.1 / NFR-5.5 (Configuration and records):** `git diff --stat 7a60dcc HEAD` lists files under
+- [x] **NFR-5.1 / NFR-5.5 (Configuration and records):** `git diff --stat 7a60dcc HEAD` lists files under
   `packages/game/src/`, `packages/ui/` (specs.md §3's five), `apps/web/app/host/` and
   `specs/phase-5/verification.md` only (and, at close, `specs/roadmap.md` and `CLAUDE.md`) — no `design/`
   file, no other `specs/` file, no lockfile, no other manifest or configuration file of NFR-5.5's list.
-  > Measured:
+  > Measured: `git diff --stat 7a60dcc HEAD` (HEAD `d3c51a1`): **47** files, 10,115 insertions, 9 deletions — **13** under `packages/game/src/`, **5** under `packages/ui/` (`package.json`, `Button.tsx`, `Button.module.css`, `button-size.test.tsx`, `press-export.test.ts`), **25** under `apps/web/app/host/`, the **3** of `specs/phase-5/` and `specs/roadmap.md`; **0** files anywhere else. The range includes the plan commit `d54b726`, which created `requirements.md` and `specs.md` and set the roadmap's status to 🛠️; over the implementation range `d54b726..d3c51a1` the files outside `packages/game/src/` and `apps/web/app/host/` are exactly the five of `packages/ui/` and `specs/phase-5/verification.md` (ticks, measured values, and the owner-approved dated correction `77fc1eb`). No `design/` file, no lockfile, no other manifest or configuration file; `vitest.config.ts` 0 lines · 2026-10-03
 
-- [ ] **REQ-5.7 (Re-checked over the finished phase):** Gate 1's sanctioned-edits box, repeated at the
+- [x] **REQ-5.7 (Re-checked over the finished phase):** Gate 1's sanctioned-edits box, repeated at the
   phase's final commit.
-  > Measured:
+  > Measured: at `d3c51a1`, `git diff 7a60dcc` — `index.test.ts` **+17 −1** and `match-purity.test.ts` **+11 −1**, the same hunks as Gate 1's box (specs.md §2.10's, and only those); **0** lines over the ten other Phase 3–4 test files and the eleven files under `src/testing/` that existed at `7a60dcc`; **0** lines over Phase 2's seven test files · 2026-10-03
 
 ## 7. Gate 7 — The exit verdict (once, on the commit at which Gate 6 passed)
 
