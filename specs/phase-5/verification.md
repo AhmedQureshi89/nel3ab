@@ -560,7 +560,7 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
 
 ## 7. Gate 7 — The exit verdict (once, on the commit at which Gate 6 passed)
 
-- [ ] 🚦 **REQ-5.24 (Setup and room-ready match the prototype in both themes) (VERDICT GATE — no
+- [x] 🚦 **REQ-5.24 (Setup and room-ready match the prototype in both themes) (VERDICT GATE — no
   retry):** Procedure M, on the production build of the commit at which Gate 6 passed, beside the
   prototype, in one browser session: at 480 × 1000 and 375 × 900, in light and in dark, every row of
   Tables P–R and Table S's colours on the app equal the prototype's as measured in the same session —
@@ -569,7 +569,7 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
   prototype is measured first and must reproduce Tables P–R; if it does not (R7), the comparison is made
   page to page and the drift is recorded. **PASS** = 0 deviations over 2 screens × 2 widths × 2 themes.
   **A FAIL here halts the phase** and returns to the owner, with every deviation listed.
-  > Measured:
+  > Measured: **PASS — 0 deviations over 2 screens × 2 widths × 2 themes.** Performed by Claude (`claude-opus-5-5`) at the owner's direction, by Procedure M as amended by the correction of 2026-10-03 above, on the production build of `d3c51a1` (the commit Gate 6 passed at; later commits change only verification.md) served by `next start` from a fresh clone of GitHub, in one tab of the desktop app's built-in Chromium — the prototype, then the app, each freshly loaded after the configuration was set, with no screenshot inside a comparison. Every comparison ran at a true 2-ratio raster, emulated at 480 × 1100 and 375 × 1100, the 3 px border painted **3 px** on both pages of every configuration (parity (b) held): setup 480 light and dark — **0** and **0** differences over 103 roles × 17 properties, columns 921.89 = 921.89; room-ready 480 light and dark — **0** and **0** over 24 roles, 628 = 628; setup 375 light and dark — **0** and **0**, 347 × 989.89 on both; room-ready 375 light and dark — **0** and **0**, 347 × 628 on both; every glyph baseline equal (5 on setup, 3 on room-ready, in each). At that raster neither page reproduces Tables P–R, which were measured at 1.5; by step R7 the comparison is page against page and the drift from the tables is recorded — fields beyond 0.5 px: setup 480 prototype **68** / app **69** (one field straddling the threshold; the two pages equal to each other within 0.5), room-ready 480 **20** / **20**, setup 375 **29** / **29**, room-ready 375 **10** / **10**. The 1.5 raster's comparison is Gate 5's: 0 differences, the tables reproduced. Void before this evaluation, as the correction records: attempt 1 (a 0 px viewport) and attempt 2 (two tabs at different rasters, a faulty comparison); and, inside this one, the 480-light group's first comparison, void by its own rule (b) — a screenshot had switched the tab to a 1.5 raster for the prototype's load while the app loaded at 2 (borders 2.66667 against 3 px) — re-measured, prototype first, with no screenshot in the sequence · 2026-10-03
 
 - [ ] 👁 **REQ-5.24 (A designer's eye):** full-column screenshots of both pages, both screens, both
   widths, both themes — eight pairs — placed side by side; the owner finds no spacing, radius or
