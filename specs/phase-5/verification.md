@@ -437,47 +437,47 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
 
 ## 5. Gate 5 — Fidelity in the browser (needs Gate 4; fix freely)
 
-- [ ] 👁 **REQ-5.16, REQ-5.17, REQ-5.18, REQ-5.19 (Setup against Table P):** Procedure M at 480 × 1000, light: every row of
+- [x] 👁 **REQ-5.16, REQ-5.17, REQ-5.18, REQ-5.19 (Setup against Table P):** Procedure M at 480 × 1000, light: every row of
   Table P within tolerance. Every deviation found is written down here, with its fix.
-  > Measured:
+  > Measured: performed by Claude (`claude-opus-5-5`) at the owner's direction (DECIDED 2026-10-02), in the desktop app's built-in Chromium, /host's production build (`next start`, rebuilt at each fix) beside the prototype, both at DPR **1.5** — the pane's natural ratio, viewports 497 and 533 px (any width ≥ 468 gives the 440 px column; viewport emulation forced DPR 2 in this session, so the wide pass ran without it). The prototype, re-measured first, reproduces Table P (P1 915.55, P8 263.67, P10 198.33 × 107.33, P17 104.69, P26 47.33, P29 2.67 / 434.67, P30 92 × 106.46, P33 440 × 73.33, P34 21.33) — no R7 drift. Procedure M's walk, matched by role, **103** roles × 17 properties per page: at `7230ef6` **25** differences, all one cause — **deviation 1, FIXED in `1f3a406`**: UI glyphs Baloo lacks were drawn by next/font's Arial-based "baloo Fallback" instead of the system font (↔ 10.66 px against 9.48 at 11px/800, each chip 1.18 px wider; ▶ 12.54 against 17.23); after the fix, with a nested span for flex-item glyphs (the CTA ▶ had sat 3.66 px low): **0** geometry or style differences, every glyph baseline equal (↺ 210.43, ↔ and ✕ 318.09, ○ 560.43, ▶ 851.89). **Deviation 2, FIXED in `7230ef6`** (found by Gate 4's screens unit; recorded here as the halt note asked): both primary CTAs need `width: 100%`, which specs.md §2.11 omits — a `<button>` keeps its content width (58.83 px measured in a 400 px box); P33 is 440 px. **Not a deviation:** the rotation toggle's computed `text-align` is `start` against the prototype's physical `right` — identical in this RTL document, and NFR-5.8's logical form. Method note: a baseline probe beside bare text in a flex box measures the box's centre, so the chip names were compared by their text boxes — identical (ريم 26.67 / 303.76 / 20.21 × 23.33) · 2026-10-03
 
-- [ ] 👁 **REQ-5.20 (Room-ready against Table Q):** as above, Table Q (Q16 by pressing share).
-  > Measured:
+- [x] 👁 **REQ-5.20 (Room-ready against Table Q):** as above, Table Q (Q16 by pressing share).
+  > Measured: same session and method, at DPR 1.5, the app's code text set to `SKZJ62` (Procedure M step 6) after `document.fonts.ready` — Archivo loads only when room-ready first shows; measured before it loaded the code box read 167.6 px, a timing artefact of the measurement, not a deviation. The prototype reproduces Table Q (Q1 626, Q4 92, Q8 77.35 / 287 / 177.03 × 57.33, Q9 264.39 / 98.25 × 60.67, Q10 102.67, Q13 48.21 × 35.33, Q14 420 × 72, Q15 420 × 55.33). **24** roles × 17 properties: **0** geometry or style differences besides the computed `text-align` keyword on the in-room panel and its nine descendants (`start` against `right`, identical in RTL); the ▶ and the ⤴ sit on the prototype's baselines (527, 319.33); the share icon's box 283.05 / 302 / 11.73 × 27.33, the prototype's. Q16: with the clipboard refusing, the share flashes "الكود: <code>" on rgb(61, 190, 110) with rgb(13, 43, 27), 60.67 px tall, as the prototype; the width carries the code's glyphs — **141.27** px for this room's `GTUTF9` on both pages (the prototype's flashed label set to the same code), 137.09 for the prototype's own `SKZJ62` · 2026-10-03
 
-- [ ] 👁 **REQ-5.15 – REQ-5.20 (Phone width and dark):** Table R at 375 × 900, light; Tables P–R's
+- [x] 👁 **REQ-5.15 – REQ-5.20 (Phone width and dark):** Table R at 375 × 900, light; Tables P–R's
   geometry and Table S's colours in dark, both widths.
-  > Measured:
+  > Measured: Table R at 375 px (viewport emulation; the pane reported DPR 2, yet the prototype reproduced every row of Table R exactly — R1 347.33 × 982.55, R2 49.33, R3 306, R4 152 × 107.33, R5 120 (three chip rows), R7 314 × 47.33, R8 rail 2.67 / 342, R10 877.89, R11 626, R12 31.02 / 218.05, R14 486.67 / 570.67): /host **0** differences on both screens. Dark (the prototype's ليلي; the app's `prefers-color-scheme: dark` emulated): setup and room-ready at 480 px × DPR 1.5 and at 375 px — **0** differences over 103 + 24 roles × 17 properties, so every Table S colour equal (page rgb(28, 26, 37), panel rgb(39, 36, 51), sunken rgb(23, 21, 33), ink rgb(255, 243, 223), muted rgb(167, 155, 181), red rgb(255, 90, 60), every border and shadow rgb(13, 12, 19); the selected choice and tiles keep rgb(36, 28, 23) on yellow) and geometry identical to light; glyph baselines equal · **8 / 8** screen × width × theme combinations match · 2026-10-03
 
-- [ ] 👁 **REQ-5.16, REQ-5.17, REQ-5.18, REQ-5.19 (Every control does what it says):** on `/host`, from the seed:
+- [x] 👁 **REQ-5.16, REQ-5.17, REQ-5.18, REQ-5.19 (Every control does what it says):** on `/host`, from the seed:
   ↔ on ريم makes her chip sky and the members "نورة، ماجد" / "ريم، سعد، خالد"; ✕ on سعد gives
   "4 لاعبين", "ثابت طول المباراة" and ماجد still selected; choosing ريم selects her; the toggle reads
   "✔ بدّل الحكم كل جولة" on `--leaf`; ↺ changes team A's name to another of the four; typing renames;
   unpicking صناعة gives "7 من 11 مختارة" and re-picking it moves it to the end of the selection; pressing
   ثقافة changes nothing; unpicking all eight gives "0 من 11 مختارة" and a CTA at opacity 0.45 that does
   not move when pressed; the rail scrolls sideways with no scrollbar.
-  > Measured:
+  > Measured: on a fresh /host, by clicks on the page's own controls and real keystrokes: ↔ on ريم → her chip rgb(47, 163, 232), members "نورة، ماجد" / "ريم، سعد، خالد"; ✕ on سعد → "4 لاعبين", "ثابت طول المباراة", ماجد still the selected choice; choosing ريم → selected, `judgeIndex` 0; the toggle → "✔ بدّل الحكم كل جولة" on rgb(61, 190, 110) with rgb(13, 43, 27); ↺ → النمور became الذئاب; typing "فريق النخبة" (11 keystrokes) → the field and `teamA`; unpicking صناعة → "7 من 11 مختارة", the tile on the panel, its tag empty; re-picking → "8 من 11 مختارة", selection `animals nature society proverbs history religion science industry` — industry last (read from the page's room through React's fiber tree, inspection only); pressing ثقافة → nothing (opacity 0.5, `cursor: not-allowed`, no `disabled`, no `aria-disabled`); all eight unpicked → "0 من 11 مختارة", the CTA `disabled`, opacity 0.45, `cursor: not-allowed`, a click leaves the screen on `setup`; the rail scrolls (scrollWidth 1,130 against 435), snaps (`x mandatory`; −150 px settles at −114.67), `scrollbar-width: none`, no `scroll-padding` · 2026-10-03
 
-- [ ] 👁 **REQ-5.6 / REQ-5.20 / REQ-5.21 (Room-ready behaves):** "ابدأ اللعبة" opens room-ready with
+- [x] 👁 **REQ-5.6 / REQ-5.20 / REQ-5.21 (Room-ready behaves):** "ابدأ اللعبة" opens room-ready with
   five chips and "الحكم: ماجد"; "رجوع للإعداد" returns to setup with every edit intact; opening again
   shows the **same** room code; share flashes a label on `--leaf` for 1.8 s by whichever path this
   browser takes; the 🎉's computed `animation-name` is `bob`, duration 1s, infinite, and it runs.
-  > Measured:
+  > Measured: after a swap of ريم, "ابدأ اللعبة" → room-ready with chips ريم:b, سعد:b, نورة:a, خالد:b, ماجد:a and "الحكم: ماجد"; the code in Archivo, letter-spacing 5.2 px (.2em), `direction: ltr`, `unicode-bidi: isolate`; "رجوع للإعداد" → setup with ريم still on b; reopening → the **same** code (`C6KK06` both times); the 🎉: `animation-name: bob`, 1s, ease-in-out, infinite, its one animation running; share (this browser has no `navigator.share`; the page's clipboard was replaced so the owner's real clipboard was not written) → the link `https://nel3ab.game/j/C6KK06` copied, "نُسخ الرابط ✔" on rgb(61, 190, 110) at 200 ms and at 1,700 ms, back to "مشاركة" on the panel by 1,950 ms · 2026-10-03
 
-- [ ] 👁 **REQ-5.20 / REQ-5.21 (The presses):** applying the served `:active` rules (as Phase 2's Gate 6
+- [x] 👁 **REQ-5.20 / REQ-5.21 (The presses):** applying the served `:active` rules (as Phase 2's Gate 6
   did): share moves **3 px**, `0 4px 0` → `0 1px 0`; "ابدأ الجولة الأولى" **4 px**, `0 6px 0` →
   `0 2px 0`; no scale, no opacity change, no blur.
-  > Measured:
+  > Measured: the served rule, `.press_press__…:active:not(:disabled, [aria-disabled="true"]) { transform: translateY(var(--press-travel)); box-shadow: 0 calc(var(--press-rest) - var(--press-travel)) 0 var(--stroke) }`, copied onto a `[data-sim-active]` selector and applied in turn, as Phase 2's Gate 6 did: share moves **3 px**, `0 4px 0` → `0 1px 0`; "ابدأ الجولة الأولى" **4 px**, `0 6px 0` → `0 2px 0` — the prototype's own `style-active` pairs; width and height unchanged, opacity 1, `filter: none`; "رجوع للإعداد" 0 px, no shadow at rest or pressed; the rule excludes disabled controls. Limit, as in Phase 2: the press was produced by the page's own rule under a copied selector, not by a held pointer · 2026-10-03
 
-- [ ] 👁 **REQ-5.12 / REQ-5.15 (The match starts):** "ابدأ الجولة الأولى" shows the placeholder on
+- [x] 👁 **REQ-5.12 / REQ-5.15 (The match starts):** "ابدأ الجولة الأولى" shows the placeholder on
   `play`, the header "جولة 1 — أول 3 جولات", and team A's clock counting down from 45; about 45 s later
   the placeholder shows `roundEnd`, tallies 0–1.
-  > Measured:
+  > Measured: "ابدأ الجولة الأولى" → the placeholder on `play`, header "جولة 1 — أول 3 جولات"; team A's clock **35** at 10.2 s and **32** at 13.2 s after the click, **1** at 44.4 s, team B 45 throughout; at 51.5 s `roundEnd`, team A 0, team B 45 with **1** round, unchanged 3 s later (the loop stopped) — one silent round, the tab fronted · 2026-10-03
 
-- [ ] 👁 **NFR-5.7 / REQ-5.10 (Network, console, focus):** after the page loads, through all of the
+- [x] 👁 **NFR-5.7 / REQ-5.10 (Network, console, focus):** after the page loads, through all of the
   above: **0** network requests; **0** console errors, no hydration warning. Tabbing through setup shows
   the 3 px red ring on every control except the two team-name fields (the prototype's `outline: none`),
   and no default ring anywhere.
-  > Measured:
+  > Measured: a fresh load with nothing injected: requests = the page, 2 stylesheets, 5 scripts and 3 font files, all from `localhost:3000` — **0** other requests (the 127.0.0.1:8766 entries in the browser's log belong to earlier loads, where this pass's measuring script ran); console errors **0**, no hydration warning. 36 real Tab presses: **32** stops per cycle, then it wraps — **30 / 30** buttons show the 3 px `--red` ring (painted 2.66667 px at DPR 1.5, rgb(236, 48, 19)) at offset 3 px, `:focus-visible` matching on the focused one; the **2** team-name fields show none (the prototype's `outline: none`, recorded for Phase 23); **0** default browser rings · 2026-10-03
 
 ## 6. Gate 6 — Coverage, mutations and the gate commands (evaluated once, over the finished phase)
 
