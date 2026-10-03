@@ -95,6 +95,26 @@ const measure = (root, col) => {
    prototype's runtime wraps each `{{ }}` value in a `<span>`), so rows are matched by role — the
    element the row names — not by walk position.
 
+> **Correction 2026-10-03 — made before the verdict's evaluation, decided by the owner (Ahmed, in
+> session: "A — void attempt 2, run the verdict in one tab").** Two attempts at Gate 7 were made and
+> are **void**, both recorded in full in commit `f895a65`'s RUN-HALTED.md and its diagnostic
+> (`6f057f8`): attempt 1 measured a prototype laid out in a 0 px viewport (the pane was hidden);
+> attempt 2 measured the two pages in two tabs that, it was then shown, rasterise at different
+> effective ratios — one tab painted a 3 px border as 2.66667 px, the other as 3 px — so the pages
+> were not compared on one instrument (and that attempt's property comparison was also broken by a
+> fault in the session's measuring script, since fixed and proven: 0 differences on identical
+> measurements, 2 of 2 planted differences found). The diagnostic then measured both pages in one tab
+> at a true 2-ratio raster: **0** differences on setup and on room-ready. **Procedure M is amended for
+> Gate 7 as follows, and nothing else in it changes:** (a) both pages are measured **in one tab, one
+> after the other**, each loaded after that configuration's viewport and colour scheme are set, so
+> every configuration compares the two at one raster; (b) the painted width of the teams card's 3 px
+> border is recorded for both pages of each configuration and must be equal; (c) the prototype is
+> measured first and checked against Tables P–R; where the raster reproduces them, both pages must;
+> where it does not, step R7's rule applies — the comparison is page against page and the drift from
+> the tables is recorded; (d) the measuring script's comparison is the fixed one. The tolerance
+> (0.5 px; every other property exactly), the eight configurations and "evaluated once" are
+> unchanged.
+
 ### Table P — setup, 480 × 1000, light (column 440 px)
 
 The seed room: five players, ماجد judging, rotation off, the eight free categories picked.
