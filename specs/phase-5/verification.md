@@ -263,7 +263,7 @@ attempted, and inert, on `ready` and on `roundEnd`.
   `categoryId` 3 — throws `RangeError` on **all five** screens.
   > Measured: `setup.test.ts` "REQ-5.1: …", **3 / 3**, over the five screens built through the engine itself (and asserted to be the screens they are named) — each of the 6 effective edits changes the seed; each returns its input on `ready`, `play`, `roundEnd` and `match`: **24 / 24**; the 10 malformed forms (`playerId` 7, `{}`, `undefined` across `removePlayer` / `swapTeam` / `setJudge`; `team` `'c'`; `name` `null`; `rotate` `'yes'`; `categoryId` 3; `picked` 1) throw `RangeError` on every screen: **50 / 50** · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.8 (The setup rules, read from the prototype):** each extraction below is read from
+- [x] **REQ-5.8 (The setup rules, read from the prototype):** each extraction below is read from
   `design/designs/Nel3ab - Arcade.dc.html` at run time, its match count asserted, its value equal to the
   engine's, and each drives the engine.
 
@@ -278,7 +278,7 @@ attempted, and inert, on `ready` and on `roundEnd`.
   | E7 | `startGame` sets `screen:'ready'`; `backToSetup` sets `{screen:'setup'}` and nothing else | 1 each | `openRoom`'s and `backToSetup`'s changed keys |
   | E8 | `swapTeam`'s `idx === i ? {...p, team: p.team === 'a' ? 'b' : 'a'} : p` | 1 | `swapTeam` |
   | E9 | `startGame`'s default `this.state.picked.length ? this.state.picked : [0,1,2]` — the line the guard replaces (reading 1) | 1 | `openRoom` with nothing picked returns its input |
-  > Measured:
+  > Measured: `setup-rules.test.ts` **10 / 10** — the reader finds **1** logic script, **1** component class and all **7** members read; every extraction's count **1** (E1 `NAMES_A` 1 · `NAMES_B` 1; E3 replacement 1 · team pass 1 · append 1; E5 redraw 1 · list choice 1; E6 1 · 1; E7 1 · 1) and its value the table's: E1 the two four-name lists = `TEAM_NAMES`, a room's defaults their first; E2 `>=`, floor 0, step 1 — evaluated against `judgeAfterRemoval` and driving `removePlayer` at **100 / 100** (judge 0–9 × removed 0–9); E3 threshold 2, لاعب ١ a / لاعب ٢ b, order a, b — `openRoom`'s fill equal to the prototype's at every team assignment of 0–3 players (**15** rooms); E4 `...s.picked,i` (append) — `pickCategory` equal to the prototype's toggle after each of **12** toggles; E5 `===`, `NAMES_A` / `NAMES_B` — every other name reached, the current never (8 names × 5 values); E6 fallback `p[0]` — `currentJudge` equal to the getter at 0–6 players × index 0–9 (**70**); E7 startGame's keys `players, picked, screen, copied`, `'ready'` — `openRoom` changes `screen` only on a full room; `backToSetup` `{screen:'setup'}` — the reducer changes `screen` only; E8 a→b, else a — `swapTeam` over a mixed room of 5; E9 `[0,1,2]` — with nothing picked `openRoom` returns its input · three mutations applied alone and reverted, each failing its own extraction only: `>=`→`>` in `judgeAfterRemoval` (E2), a prepended pick (E4), the fill's `< 2`→`< 1` (E3) · `pnpm test` 27 files across 6 projects, **535 / 535**, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244) · 2026-10-03
 
 - [x] **NFR-5.4 (The engine's surface):** `@nel3ab/game`'s runtime exports are exactly the twenty-one of
   specs.md §2.5, with `TEAM_NAMES` an object and the three new names functions; `FILL_NAMES`,
