@@ -363,11 +363,11 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
 
 ## 4. Gate 4 — The driver, the stand-ins and the screens (needs Gates 1–3)
 
-- [ ] **REQ-5.14 (The catalog):** eleven entries in the prototype's order with specs.md §2.9's ids,
+- [x] **REQ-5.14 (The catalog):** eleven entries in the prototype's order with specs.md §2.9's ids,
   names, emoji and locks; three placeholder questions each, with two hints, of exactly the placeholder
   text. `host-source.test.ts`: **0** of the prototype's question, answer, variant, hint and fact strings
   occur in any non-test source under `apps/web`.
-  > Measured:
+  > Measured: `pnpm vitest run apps/web/app/host --reporter=verbose` **9 / 9** — `_lib/catalog.test.ts` **5 / 5**: **11** entries equal specs.md §2.9's table row for row (ids, names, emoji — 🏛️ as U+1F3DB U+FE0F — and locks, locked exactly ثقافة، فن، أفلام), ids and names unique; every entry **3** questions equal to the placeholder text with `d` = ١، ٢، ٣ — `alts` `[]`, **2** hints, the fact "معلومة تجريبية — الأسئلة الحقيقية في المرحلة ٨" — **33** distinct `q`, all **165** texts carrying تجريبي; `catalogEntry` finds all 11 (`toBe`) and throws `RangeError` for 4 unknown ids · `host-source.test.ts` **4 / 4**: the prototype's `CATS` read at run time — **1** block, **33** `{q:` openings, **33** questions · **33** answers · **34** variants · **66** hints · **33** facts (**199** strings, all distinct), every one found by the whole-token matcher in the prototype's own block; **11** non-test source files under `apps/web` scanned (the catalog among them; no test file, nothing under `node_modules` or `.next`): **0** of the 199 occur (whole-token; plain substring also **0**, measured ad hoc) · eight mutations applied alone and reverted, each caught: a prototype hint as a placeholder hint, a prototype question in a comment, the answer `'Au'` as a literal, the variant `Joey` in a template literal in a new file outside `host` (host-source); ثقافة unlocked, two tiles swapped, 🏛️'s U+FE0F dropped, the fact's ٨ → ٩ (catalog) · `pnpm lint`, `pnpm typecheck` exit 0; `pnpm test` 33 files across 6 projects, **578 / 578**, `[check-collected-tests] OK`, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244); `pnpm build` exit 0 · 2026-10-03
 
 - [ ] **REQ-5.10 (The seed):** `seedRoom('SKZJ62')` equals `createRoom`'s room with specs.md §2.9's
   players, judge 4, rotation off, `SEED_PICKED`, `النمور` / `الصقور`, 45 s and 3 wins — and the
