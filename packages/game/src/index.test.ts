@@ -5,6 +5,7 @@ import * as draw from './draw.js'
 import * as game from './index.js'
 import * as match from './match.js'
 import * as room from './room.js'
+import * as setup from './setup.js'
 
 // specs/phase-3/specs.md §2.6–§2.7, NFR-3.5. This file used to assert the
 // Phase 1 shell's `PLACEHOLDER`; it is updated rather than deleted, because
@@ -16,17 +17,20 @@ import * as room from './room.js'
 // contract as a rule going missing. The list is written out here, not derived
 // from the modules, so an export added to index.ts fails this test until the
 // list — and specs.md §2.6 — say so too.
-test('@nel3ab/game exports exactly the seventeen names of specs.md §2.6 and specs/phase-4/specs.md §2.8', () => {
+test('@nel3ab/game exports exactly the twenty-one names of specs.md §2.6, specs/phase-4/specs.md §2.8 and specs/phase-5/specs.md §2.5', () => {
   expect(Object.keys(game).sort()).toStrictEqual([
     'HINT_COST_MS',
     'REVEAL_HOLD_MS',
     'ROUND_SECONDS_DEFAULT',
     'ROUND_SECONDS_OPTIONS',
     'SKIP_COST_MS',
+    'TEAM_NAMES',
     'WINS_NEEDED_DEFAULT',
     'WINS_NEEDED_OPTIONS',
     'acceptsJudgeActions',
+    'canOpenRoom',
     'createRoom',
+    'currentJudge',
     'currentQuestion',
     'displaySeconds',
     'drawCategory',
@@ -35,6 +39,7 @@ test('@nel3ab/game exports exactly the seventeen names of specs.md §2.6 and spe
     'reduce',
     'remainingMs',
     'shuffleQuestions',
+    'shuffleTeamName',
   ])
 })
 
@@ -48,10 +53,13 @@ test('each function export is a function, and each rule constant is a value', ()
     ROUND_SECONDS_DEFAULT: 'number',
     ROUND_SECONDS_OPTIONS: 'object',
     SKIP_COST_MS: 'number',
+    TEAM_NAMES: 'object',
     WINS_NEEDED_DEFAULT: 'number',
     WINS_NEEDED_OPTIONS: 'object',
     acceptsJudgeActions: 'function',
+    canOpenRoom: 'function',
     createRoom: 'function',
+    currentJudge: 'function',
     currentQuestion: 'function',
     displaySeconds: 'function',
     drawCategory: 'function',
@@ -60,6 +68,7 @@ test('each function export is a function, and each rule constant is a value', ()
     reduce: 'function',
     remainingMs: 'function',
     shuffleQuestions: 'function',
+    shuffleTeamName: 'function',
   })
 })
 
@@ -75,6 +84,8 @@ test('the Phase 1 shell export is gone', () => {
 // title (specs/phase-4/specs.md §2.8): clock.ts's `otherTeam` and `passClock`,
 // draw.ts's `unusedCategories` and `nextRoundChoices`, and match.ts's
 // `startingTeam`, `nextJudgeIndex`, `assertRoundPayload`, `beginRound` and `scoreRound`.
+// Phase 5 adds setup.ts's five (specs/phase-5/specs.md §2.5): `FILL_NAMES`,
+// `playerIndex`, `judgeAfterRemoval`, `fillPlayers` and `assertSetupAction`.
 test('the clock transitions and liveQuestion stay internal to the package', () => {
   const internal = [
     ['roundMs', clock],
@@ -92,6 +103,11 @@ test('the clock transitions and liveQuestion stay internal to the package', () =
     ['assertRoundPayload', match],
     ['beginRound', match],
     ['scoreRound', match],
+    ['FILL_NAMES', setup],
+    ['playerIndex', setup],
+    ['judgeAfterRemoval', setup],
+    ['fillPlayers', setup],
+    ['assertSetupAction', setup],
   ] as const
   for (const [name, source] of internal) {
     expect(name in source, `${name} in its module`).toBe(true)

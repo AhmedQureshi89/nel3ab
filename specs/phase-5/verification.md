@@ -220,48 +220,48 @@ attempted, and inert, on `ready` and on `roundEnd`.
 
 ## 1. Gate 1 — The setup rules (Gates 1–2 are one block; the block blocks Gates 4–7)
 
-- [ ] **REQ-5.2 (Removing a player):** on `seedRoom`: removing `seed-5` (ماجد, the judge at 4) gives
+- [x] **REQ-5.2 (Removing a player):** on `seedRoom`: removing `seed-5` (ماجد, the judge at 4) gives
   four players and `judgeIndex` **3** (خالد); removing `seed-1` gives `judgeIndex` **3**, still ماجد. On
   a room judged by index 0, removing index 0 keeps `judgeIndex` **0** — the next player. Removing the
   only player, judged at 0, gives `[]` and **0**. An absent id returns the input (`===`).
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.2: removing a player keeps the right judge", **6 / 6** — `seed-5` removed → 4 players, judge **3** (خالد); `seed-1` removed → judge **3**, still ماجد; judged by 0, index 0 removed → judge **0**, سعد; a player after the judge removed → judge unchanged (1); the only player removed → `[]`, **0**; `'ghost'` → the input (`toBe`) · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.2 (Swapping a player):** swapping `seed-1` puts ريم on team `b`; the other four player
+- [x] **REQ-5.2 (Swapping a player):** swapping `seed-1` puts ريم on team `b`; the other four player
   objects are the input's (`===`); nothing else changes. An absent id returns the input.
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.2: swapping a player…", **3 / 3** — ريم to `b`, the other four player objects `toBe` the input's, the rest `toStrictEqual`; a `b` player to `a`; `'ghost'` → the input · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.3 (Renaming and the names):** `renameTeam` sets `teamA` or `teamB` to the text — `'x'`
+- [x] **REQ-5.3 (Renaming and the names):** `renameTeam` sets `teamA` or `teamB` to the text — `'x'`
   and `''` both accepted — and returns the input when the name is unchanged. `TEAM_NAMES` equals the
   prototype's lists (E1). `shuffleTeamName('النمور', TEAM_NAMES.a, () => 0)` = **الأسود**; with
   `() => 0.999` = **النسور**; `('الصقور', TEAM_NAMES.b, () => 0.5)` = **الأبطال**;
   `('custom', TEAM_NAMES.a, () => 0)` = **النمور**; exactly one call each; a value of 1, −0.1 or `NaN`,
   or a list holding only the current name, throws `RangeError`.
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.3: …", **6 / 6** — `'x'` (team a) and `''` (team b) set; the current name → the input, both teams; `TEAM_NAMES` the two four-name lists, a new room's defaults النمور / الصقور; `shuffleTeamName` → **الأسود · النسور · الأبطال · النمور**, **1** call each; never the current name over 8 names × 5 values (40 draws); `RangeError` for 1, −0.1, `NaN` and a one-name list. (E1, the lists read from the prototype, is REQ-5.8's box, STEP 2.) · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.4 (The judge):** `setJudge('seed-1')` gives `judgeIndex` 0; `setJudge('seed-5')` on the
+- [x] **REQ-5.4 (The judge):** `setJudge('seed-1')` gives `judgeIndex` 0; `setJudge('seed-5')` on the
   seed (already judge) and an absent id return the input. `setRotateJudge(true)` sets it;
   `setRotateJudge(false)` on `false` returns the input. `currentJudge(seed)` is ماجد; with no players,
   `null`; on a hand-built room of five with `judgeIndex` 7, نورة (index 2).
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.4: the judge", **4 / 4** — `setJudge('seed-1')` → judge 0; `'seed-5'` and `'ghost'` → the input; `setRotateJudge(true)` sets it, `false` after it gives back the seed, `false` on `false` → the input; `currentJudge`: ماجد on the seed · `null` with no players · نورة at index 7 of 5 · ريم at index −1 (the prototype's `|| p[0]`) · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.5 (Selection order):** from `SEED_PICKED`-shaped ids, unpicking then re-picking the first
+- [x] **REQ-5.5 (Selection order):** from `SEED_PICKED`-shaped ids, unpicking then re-picking the first
   gives the other seven in order and it **last**; picking a locked-in-the-UI id is recorded (the engine
   has no locks); picking a picked id or unpicking an unpicked one returns the input.
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.5: …", **3 / 3** — `industry` unpicked, then picked → the other seven in order and `industry` **last**; `culture` (locked on the screen) recorded; picking a picked id and unpicking an unpicked one → the input · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.6 (Open, guard, fill, back):** `openRoom` on the seed gives `ready` with the **same**
+- [x] **REQ-5.6 (Open, guard, fill, back):** `openRoom` on the seed gives `ready` with the **same**
   `players` array (`===`). With nothing picked it returns the input, and `canOpenRoom` is `false`. The
   fill, four cases: 0 players → `[fill-1 لاعب ١ a, fill-2 لاعب ٢ b]`; 1 player (p1, a) →
   `[fill-1 a, fill-2 b]`, p1 **dropped**; three on `a` → the three, then `fill-1 لاعب ٢ b`; `fill-1` and
   `fill-2` both on `a` → then `fill-3 لاعب ٢ b`. `backToSetup` on `ready` changes `screen` only; on
   every other screen it returns the input.
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.6: …", **7 / 7** — the seed → `ready`, `players` `toBe` the seed's; nothing picked → the input, `canOpenRoom` **false** (true on the seed, false on `ready`); the fill: 0 players → `[fill-1 لاعب ١ a, fill-2 لاعب ٢ b]`; 1 (p1, a) → the same, p1 **dropped**; three on `a` → + `fill-1 لاعب ٢ b`; `fill-1`, `fill-2` on `a` → + `fill-3 لاعب ٢ b`; and two on `b` → + `fill-1 لاعب ١ a`; `backToSetup` on `ready` → the screen only, the input on the other four; `openRoom` → the input on the four screens but setup · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.1 (Setup only, and validation first):** each of the six editing actions, in an effective
+- [x] **REQ-5.1 (Setup only, and validation first):** each of the six editing actions, in an effective
   form, returns its input (`===`) on `ready`, `play`, `roundEnd` and `match`. Each malformed form —
   `playerId` 7, `{}` or `undefined`; `team` `'c'`; `name` `null`; `rotate` `'yes'`; `picked` 1;
   `categoryId` 3 — throws `RangeError` on **all five** screens.
-  > Measured:
+  > Measured: `setup.test.ts` "REQ-5.1: …", **3 / 3**, over the five screens built through the engine itself (and asserted to be the screens they are named) — each of the 6 effective edits changes the seed; each returns its input on `ready`, `play`, `roundEnd` and `match`: **24 / 24**; the 10 malformed forms (`playerId` 7, `{}`, `undefined` across `removePlayer` / `swapTeam` / `setJudge`; `team` `'c'`; `name` `null`; `rotate` `'yes'`; `categoryId` 3; `picked` 1) throw `RangeError` on every screen: **50 / 50** · STEP 1 commit, 2026-10-03
 
 - [ ] **REQ-5.8 (The setup rules, read from the prototype):** each extraction below is read from
   `design/designs/Nel3ab - Arcade.dc.html` at run time, its match count asserted, its value equal to the
@@ -280,17 +280,17 @@ attempted, and inert, on `ready` and on `roundEnd`.
   | E9 | `startGame`'s default `this.state.picked.length ? this.state.picked : [0,1,2]` — the line the guard replaces (reading 1) | 1 | `openRoom` with nothing picked returns its input |
   > Measured:
 
-- [ ] **NFR-5.4 (The engine's surface):** `@nel3ab/game`'s runtime exports are exactly the twenty-one of
+- [x] **NFR-5.4 (The engine's surface):** `@nel3ab/game`'s runtime exports are exactly the twenty-one of
   specs.md §2.5, with `TEAM_NAMES` an object and the three new names functions; `FILL_NAMES`,
   `playerIndex`, `judgeAfterRemoval`, `fillPlayers` and `assertSetupAction` exist in `setup.ts` and are
   absent from the package.
-  > Measured:
+  > Measured: `index.test.ts` **4 / 4** — the runtime exports are exactly the **21** names; `kinds`: `TEAM_NAMES` `'object'`, `canOpenRoom` / `currentJudge` / `shuffleTeamName` `'function'`; `FILL_NAMES`, `playerIndex`, `judgeAfterRemoval`, `fillPlayers`, `assertSetupAction` present in `setup.ts` and absent from the package · `pnpm typecheck` exit 0 · STEP 1 commit, 2026-10-03
 
-- [ ] **REQ-5.7 (The sanctioned edits, and no others):** relative to `7a60dcc`, the only changed files
+- [x] **REQ-5.7 (The sanctioned edits, and no others):** relative to `7a60dcc`, the only changed files
   Phases 3–4 wrote under `packages/game/src` are `match-purity.test.ts` and `index.test.ts`, and every
   hunk in them is one of specs.md §2.10's; every other Phase 3 and Phase 4 test file and every file under
   `src/testing/` that existed at `7a60dcc` shows **0** lines of diff.
-  > Measured:
+  > Measured: `git diff -U0 7a60dcc` — `match-purity.test.ts` **+11 −1**: the comment's one sentence and `perType()`'s eight keys at 0; `index.test.ts` **+17 −1**: the `./setup.js` import, the title (seventeen → twenty-one, naming phase-5 §2.5), the sorted list's four names, `kinds`' four entries, the comment's sentence, the internal list's five — every hunk one of specs.md §2.10's · `git diff --stat 7a60dcc` over `clock`, `purity`, `rules`, `prototype-equivalence`, `room`, `reducer`, `draw`, `match`, `match-rules`, `match-equivalence` `.test.ts` and `src/testing/`: **0** lines · `pnpm vitest run packages/game` **384 / 384** with the edits and before `setup.test.ts` existed · STEP 1 commit, 2026-10-03
 
 ## 2. Gate 2 — Phases 3–4 kept, purity, and the flow's invariants (same block)
 

@@ -25,3 +25,12 @@ export const WINS_NEEDED_OPTIONS = [2, 3, 4] as const
 // reveal stays up before the turn may pass: the prototype's 1000 ms timer
 // before `passTurn`. Measured in engine time, like everything else here.
 export const REVEAL_HOLD_MS = 1000
+
+// Phase 5 — REQ-5.3; specs/phase-5/specs.md §2.2. The names the setup screen's
+// ↺ shuffles through, per team: the prototype's NAMES_A and NAMES_B. A new
+// room's default names are the first of each — the caller passes them to
+// `createRoom`, which takes the names as input and is unchanged.
+export const TEAM_NAMES = {
+  a: ['النمور', 'الأسود', 'الذئاب', 'النسور'],
+  b: ['الصقور', 'الفهود', 'الأبطال', 'النجوم'],
+} as const

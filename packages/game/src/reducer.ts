@@ -27,10 +27,31 @@
 // screen (REQ-4.1); a round of a match is scored in the same step it ends
 // (REQ-4.7); and the turn passes only once the reveal has been up
 // `REVEAL_HOLD_MS` of engine time (REQ-4.6).
+//
+// Phase 5 adds setup (specs/phase-5/specs.md §2.4), built from setup.ts: six
+// edits that take effect on `setup` only, `openRoom` (setup → ready, behind the
+// zero-category guard and after the prototype's player fill) and `backToSetup`
+// (ready → setup). The same two rules hold: each edit is validated first, on
+// every screen, and an edit that changes nothing returns `state` itself.
 
-import { passClock, remainingMs, roundMs, startClock, stopClock, zeroActive } from './clock.js'
+import {
+  otherTeam,
+  passClock,
+  remainingMs,
+  roundMs,
+  startClock,
+  stopClock,
+  zeroActive,
+} from './clock.js'
 import { assertRoundPayload, beginRound, nextJudgeIndex, scoreRound } from './match.js'
 import { liveQuestion } from './room.js'
+import {
+  assertSetupAction,
+  canOpenRoom,
+  fillPlayers,
+  judgeAfterRemoval,
+  playerIndex,
+} from './setup.js'
 import { HINT_COST_MS, REVEAL_HOLD_MS, SKIP_COST_MS } from './rules.js'
 import type { Action, ClockState, RoomState } from './types.js'
 
@@ -217,6 +238,90 @@ export function reduce(state: RoomState, action: Action): RoomState {
         reveal: null,
         revealedAt: null,
       }
+    }
+
+    case 'removePlayer': {
+      // REQ-5.2 — the prototype's `removePlayer`: the player leaves, and the
+      // judge index moves by its rule so the right person still judges.
+      assertSetupAction(action)
+      const removed = playerIndex(state, action.playerId)
+      if (state.screen !== 'setup' || removed === -1) return state
+      return {
+        ...state,
+        players: state.players.filter((_, index) => index !== removed),
+        judgeIndex: judgeAfterRemoval(state.judgeIndex, removed),
+      }
+    }
+
+    case 'swapTeam': {
+      // REQ-5.2 — the prototype's `swapTeam`: one player to the other team;
+      // every other player object is kept as it was.
+      assertSetupAction(action)
+      const swapped = playerIndex(state, action.playerId)
+      if (state.screen !== 'setup' || swapped === -1) return state
+      return {
+        ...state,
+        players: state.players.map((player, index) =>
+          index === swapped ? { ...player, team: otherTeam(player.team) } : player,
+        ),
+      }
+    }
+
+    case 'renameTeam': {
+      // REQ-5.3 — any text, empty included, as the prototype's field accepts it
+      // on every keystroke (requirements.md, reading 7).
+      assertSetupAction(action)
+      const current = action.team === 'a' ? state.teamA : state.teamB
+      if (state.screen !== 'setup' || action.name === current) return state
+      return action.team === 'a'
+        ? { ...state, teamA: action.name }
+        : { ...state, teamB: action.name }
+    }
+
+    case 'setJudge': {
+      // REQ-5.4 — the judge is chosen from the players; the index is theirs.
+      assertSetupAction(action)
+      const chosen = playerIndex(state, action.playerId)
+      if (state.screen !== 'setup' || chosen === -1 || chosen === state.judgeIndex) return state
+      return { ...state, judgeIndex: chosen }
+    }
+
+    case 'setRotateJudge': {
+      // REQ-5.4 — "بدّل الحكم كل جولة": the flag Phase 4's `nextRound` reads.
+      assertSetupAction(action)
+      if (state.screen !== 'setup' || action.rotate === state.rotateJudge) return state
+      return { ...state, rotateJudge: action.rotate }
+    }
+
+    case 'pickCategory': {
+      // REQ-5.5 — the prototype's `toggleCat`: a pick is appended, so the
+      // selection keeps the order it was made in, which the draw keeps too
+      // (REQ-4.3). The engine knows nothing of locks (reading 6).
+      assertSetupAction(action)
+      const { categoryId, picked } = action
+      if (state.screen !== 'setup' || state.pickedCategories.includes(categoryId) === picked) {
+        return state
+      }
+      return {
+        ...state,
+        pickedCategories: picked
+          ? [...state.pickedCategories, categoryId]
+          : state.pickedCategories.filter((id) => id !== categoryId),
+      }
+    }
+
+    case 'openRoom': {
+      // REQ-5.6 — "ابدأ اللعبة", the prototype's `startGame`: the player fill,
+      // then room-ready. Inert without a category (the guard, reading 1).
+      if (!canOpenRoom(state)) return state
+      return { ...state, players: fillPlayers(state.players), screen: 'ready' }
+    }
+
+    case 'backToSetup': {
+      // REQ-5.6 — "رجوع للإعداد" on room-ready, the prototype's `backToSetup`:
+      // the screen, and nothing else.
+      if (state.screen !== 'ready') return state
+      return { ...state, screen: 'setup' }
     }
 
     default: {

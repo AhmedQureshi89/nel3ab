@@ -131,6 +131,18 @@ export type Action =
   // (REQ-4.6, DECIDED 2026-10-02).
   | { readonly type: 'passTurn' }
   | { readonly type: 'resetMatch' }
+  // Phase 5 — setup (specs/phase-5/specs.md §2.1, §2.4). The six edits take
+  // effect on `setup` only; `openRoom` and `backToSetup` move between `setup`
+  // and `ready`. `setRotateJudge` and `pickCategory` carry the target value
+  // rather than toggling, so a message delivered twice cannot undo itself.
+  | { readonly type: 'removePlayer'; readonly playerId: PlayerId }
+  | { readonly type: 'swapTeam'; readonly playerId: PlayerId }
+  | { readonly type: 'renameTeam'; readonly team: Team; readonly name: string }
+  | { readonly type: 'setJudge'; readonly playerId: PlayerId }
+  | { readonly type: 'setRotateJudge'; readonly rotate: boolean }
+  | { readonly type: 'pickCategory'; readonly categoryId: CategoryId; readonly picked: boolean }
+  | { readonly type: 'openRoom' }
+  | { readonly type: 'backToSetup' }
 
 export interface CreateRoomInput {
   readonly roomCode: string
