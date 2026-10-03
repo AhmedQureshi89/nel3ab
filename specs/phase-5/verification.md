@@ -344,22 +344,22 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
 
 ## 3. Gate 3 — The UI kit (independent; blocks Gate 4's screen boxes)
 
-- [ ] **REQ-5.23 (The press, importable):** `packages/ui/package.json`'s `exports` holds exactly the
+- [x] **REQ-5.23 (The press, importable):** `packages/ui/package.json`'s `exports` holds exactly the
   four entries `"."`, `"./tokens.css"`, `"./base.css"`, `"./press.module.css"`, the last pointing at
   `./src/styles/press.module.css`; a module importing `@nel3ab/ui/press.module.css` gets the **same**
   `press` class `Button` applies.
-  > Measured:
+  > Measured: `pnpm vitest run packages/ui` — `press-export.test.ts` **3 / 3**: the `exports` keys exactly `"."`, `"./tokens.css"`, `"./base.css"`, `"./press.module.css"`, in that order, the last `./src/styles/press.module.css` (the file exists and is the one `Button.tsx` imports); `import … from '@nel3ab/ui/press.module.css'`, resolved through the manifest's `exports`, gives a `press` class **equal** to `press.module.css`'s own and present in `<Button>`'s class list · mutation: the subpath pointed at a byte-identical copy → **2 / 3** fail, the copy's class differing (one rule, not two) · a throwaway probe in `apps/web` (deleted, never committed): the same import under the web project's Vitest **1 / 1**, `pnpm typecheck` exit 0 · the manifest's diff against `7a60dcc` **+2 −1** — the one entry and the comma it needs after `"./base.css"`; no dependency, no version · 2026-10-03
 
-- [ ] **REQ-5.23 (A 19 px primary):** `<Button size="md">` renders `data-size="md"`; the default renders
+- [x] **REQ-5.23 (A 19 px primary):** `<Button size="md">` renders `data-size="md"`; the default renders
   `data-size="lg"`; `Button.module.css` holds the one rule
   `.button[data-variant='primary'][data-size='md'] { font-size: 19px }`, and the primary rule still
   declares `font-size: 20px`.
-  > Measured:
+  > Measured: `button-size.test.tsx` **16 / 16** — `<Button size="md">` → `data-size="md"`; no `size` → `data-size="lg"`; all **9** variant × size combinations (primary / secondary / action × omitted / `lg` / `md`) emit it; `Button.module.css` holds `.button[data-variant='primary'][data-size='md']` declaring exactly `font-size: 19px`, directly after the primary rule and directly before its hover, and it is the only rule naming `data-size`; the primary rule still declares `font-size: 20px` (Phase 2's `primitives.test.tsx`, unedited, still asserts that rule's declarations exactly); 19px is the prototype's one "ابدأ الجولة الأولى" CTA (count **1**), read at run time, whose padding `17px 20px`, weight 800 and `0 6px 0` are the primary's · three mutations applied alone and reverted, each caught: `data-size` not emitted (**11** fail), the md rule at 20px (**2**), the rule on every variant (**4**) · 2026-10-03
 
-- [ ] **NFR-5.4 (Phase 2 untouched):** `@nel3ab/ui`'s runtime exports are still exactly `Button`,
+- [x] **NFR-5.4 (Phase 2 untouched):** `@nel3ab/ui`'s runtime exports are still exactly `Button`,
   `Card`, `Dot`, `Panel`, `Pill`; every Phase 2 test passes; `git diff 7a60dcc` over `packages/ui`
   touches `package.json`, `Button.tsx`, `Button.module.css` and the two new test files only.
-  > Measured:
+  > Measured: `pnpm vitest run packages/ui --reporter=json` — Phase 2's **7** test files **83 / 83** passed, 0 failed, 0 skipped (83 before the change too); `index.test.ts` **2 / 2**: the runtime exports exactly `Button`, `Card`, `Dot`, `Panel`, `Pill`; the project **102 / 102** over 9 files · `git diff --stat 7a60dcc` over Phase 2's seven test files: **0** lines; over `packages/ui`: **5** files — `package.json` +2 −1, `Button.tsx` +12, `Button.module.css` +9, and the new `button-size.test.tsx` and `press-export.test.ts` · `pnpm lint`, `pnpm typecheck` exit 0; `pnpm test` 31 files across 6 projects, **569 / 569**, `[check-collected-tests] OK`, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244); `pnpm build` exit 0 · 2026-10-03
 
 ## 4. Gate 4 — The driver, the stand-ins and the screens (needs Gates 1–3)
 
