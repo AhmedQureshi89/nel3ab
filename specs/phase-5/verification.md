@@ -318,17 +318,17 @@ back to setup followed by a second `openRoom`; a setup edit attempted, and inert
   `7a60dcc` count.
   > Measured: `pnpm vitest run packages/game --reporter=json` — Phases 3–4's **12** test files **384 / 384** passed, **0** failed, **0** skipped, their 🚦 verdict tests among them and green (Phase 3's REQ-3.11 in `prototype-equivalence.test.ts`; Phase 4's REQ-4.14 in `match-equivalence.test.ts` and REQ-4.2 in `draw.test.ts`); the count is `7a60dcc`'s **384**: the ten untouched files show 0 lines of diff, the two §2.10 edits add or remove no test (`index.test.ts` **4 → 4**, one title reworded; `match-purity.test.ts` **5 → 5**), and Phase 4's record at its close is 12 files, 384 tests · the whole project **428 / 428** over 14 files · `pnpm lint`, `pnpm typecheck` exit 0; `pnpm test` 27 files across 6 projects, **535 / 535**, `[check-collected-tests] OK`, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244) · 2026-10-03
 
-- [ ] **REQ-5.7 (The invariants, over the sample):** Table U's 300 sequences run through `reduce` with
+- [x] **REQ-5.7 (The invariants, over the sample):** Table U's 300 sequences run through `reduce` with
   Phase 3's I1–I10, Phase 4's J1–J8 and this phase's K1–K5 asserted after every step: **0** violations.
   The totals — sequences, events, actions, `openRoom`s effective and refused, fills, `backToSetup`s,
   matches ended, second `openRoom`s, inert setup edits per screen — are recorded, and every population
   Table U requires is non-zero.
-  > Measured:
+  > Measured: `pnpm vitest run packages/game/src/setup-flow.test.ts --reporter=verbose` **9 / 9** — Table U's sample (`SETUP_SEED` 0x20265005, **300** sequences) through `reduce`, Phase 4's `assertMatchInvariants` (I1–I10 through Phase 3's `invariantViolations`, and J1–J8) and K1–K5 after every step: **0** violations over **404,734** states (300 rooms + **404,434** actions in **241,976** events; setup 46,494 · ready 1,431 · play 351,400 · roundEnd 4,313 · match 1,096); all 300 ended on their second `match`, none at 2,000 events · `openRoom` **1,134** effective, **0** refused (reported, not required — Table U's Correction of 2026-10-03); fills **1,045**; `backToSetup` **288**; matches ended **600**; second `openRoom`s **834**, **546** of them after a `resetMatch`; setup edits on `ready` **297 / 297** inert, on `roundEnd` **478 / 478** inert, on `setup` 45,360 (24,474 inert), on `play` and `match` 0 — every population Table U requires non-zero · K1–K5 each flag a state built to break it, and only it (6 tests) · `pnpm lint`, `pnpm typecheck` exit 0; `pnpm test` 28 files across 6 projects, **544 / 544**, `[check-collected-tests] OK`, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244) · 2026-10-03
 
-- [ ] **REQ-5.7 (No path to the fallback):** over the same sample, J6 (`usedCategories.length ===
+- [x] **REQ-5.7 (No path to the fallback):** over the same sample, J6 (`usedCategories.length ===
   round`) never fails and `nextRoundChoices` never returns the whole selection because the unused list is
   empty — Phase 4's fallback is reached **0** times. Recorded in the roadmap at close (Phase 4, R6).
-  > Measured:
+  > Measured: `setup-flow.test.ts`, the same run — J6 **0** violations over the 404,734 states (J4, a round end's unused list non-empty, **0**); **1,861** `nextRound` draws, each from a round end whose unused list was non-empty: Phase 4's fallback reached **0** times, `nextRoundChoices` equal to the unused list at **1,861 / 1,861** · the roadmap record is the phase close's · 2026-10-03
 
 - [ ] **NFR-5.3 (Pure):** over the sample, with every state and action deep-frozen: **0** `TypeError`s;
   every step reduced twice gives deep-equal results; every inert step returns its input (`===`) —
