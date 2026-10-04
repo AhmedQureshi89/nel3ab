@@ -20,7 +20,7 @@ FOUNDATIONS          REALTIME             PLAYER & RESILIENCE    MONEY          
 | 3     | Rules engine — state & clock              | 1 day    | ✅ Completed    |
 | 4     | Rules engine — round & match flow          | 1 day    | ✅ Completed    |
 | 5     | Judge app — setup & room-ready            | 1 day    | ✅ Completed    |
-| 6     | Judge app — the play screen               | 1 day    | 🔲 Not Started |
+| 6     | Judge app — the play screen               | 1 day    | 🛠️ In Progress |
 | 7     | Judge app — round end & match end         | 1 day    | 🔲 Not Started |
 | 8     | Content schema & pipeline                 | 1 day    | 🔲 Not Started |
 | 9     | Azure foundation & first deploy           | 1 day    | 🔲 Not Started |
