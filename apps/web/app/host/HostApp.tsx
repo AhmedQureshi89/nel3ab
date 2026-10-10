@@ -26,16 +26,25 @@
 // Every action a screen sends goes through the driver: the setup edits and `openRoom` /
 // `backToSetup` through `dispatch`, the shuffle through `shuffleTeamName`, and the match's start
 // through `startMatch`, which draws the round first (REQ-5.11, REQ-5.13).
+//
+// Phase 6 (REQ-6.13 — specs/phase-6/specs.md §2.4): on `play` the column shows the play screen,
+// `PlayScreen`, given `playView`'s values for the room and the catalog, under the same header and
+// round label. Its three buttons are three dispatches through the driver and nothing else — تخطي
+// `skip`, تلميح `hint`, صحيح `correct` — and the engine decides whether each counts: while the
+// reveal is up, none does. No driver path is added. `PendingScreen` remains the placeholder on
+// `roundEnd` and `match` until Phase 7 replaces it.
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import { CATALOG } from './_lib/catalog'
 import { createLocalRoom } from './_lib/driver'
 import { createFlash } from './_lib/flash'
+import { playView } from './_lib/play-view'
 import { shareRoom } from './_lib/share'
 import { readyView, roundLabel, setupView } from './_lib/view'
 import styles from './host.module.css'
 import { PendingScreen } from './PendingScreen'
+import { PlayScreen } from './PlayScreen'
 import { ReadyScreen } from './ReadyScreen'
 import { SetupScreen } from './SetupScreen'
 
@@ -86,6 +95,13 @@ export function HostApp() {
               onShare={share}
               onStart={room.startMatch}
               onBack={() => room.dispatch({ type: 'backToSetup' })}
+            />
+          ) : state.screen === 'play' ? (
+            <PlayScreen
+              view={playView(state, CATALOG)}
+              onSkip={() => room.dispatch({ type: 'skip' })}
+              onHint={() => room.dispatch({ type: 'hint' })}
+              onCorrect={() => room.dispatch({ type: 'correct' })}
             />
           ) : (
             <PendingScreen state={state} />

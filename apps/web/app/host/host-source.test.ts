@@ -220,7 +220,7 @@ describe('NFR-5.7: no non-test source under apps/web/app/host names a way off th
     'utf8',
   )
 
-  test('the scan covers every screen, stylesheet and _lib module under app/host, and no test file', () => {
+  test("the scan covers every screen, stylesheet and _lib module under app/host — and Phase 6's play screen — and no test file", () => {
     const paths = HOST.map(([path]) => path)
     expect(paths).toEqual(
       expect.arrayContaining([
@@ -229,12 +229,15 @@ describe('NFR-5.7: no non-test source under apps/web/app/host names a way off th
         'app/host/SetupScreen.tsx',
         'app/host/ReadyScreen.tsx',
         'app/host/PendingScreen.tsx',
+        'app/host/PlayScreen.tsx',
         'app/host/host.module.css',
         'app/host/setup.module.css',
         'app/host/ready.module.css',
+        'app/host/play.module.css',
         'app/host/_lib/catalog.ts',
         'app/host/_lib/driver.ts',
         'app/host/_lib/flash.ts',
+        'app/host/_lib/play-view.ts',
         'app/host/_lib/room-code.ts',
         'app/host/_lib/seed.ts',
         'app/host/_lib/share.ts',
