@@ -1,0 +1,350 @@
+/*
+ * REQ-6.6 – REQ-6.12, NFR-6.6 — the play screen. See specs/phase-6/specs.md
+ * §2.3, `play.module.css`, and design/README.md §4.
+ *
+ * Every value is the prototype's (design/designs/Nel3ab - Arcade.dc.html, the
+ * `isPlay` block; verification.md Tables A–D), mapped onto @nel3ab/ui's tokens
+ * where one exists. The action row is `Button variant="action"` and the tally
+ * dots are `Dot size="sm"`; only what the primitives do not provide is written
+ * here. The timer card and the question card are built on this screen, not in
+ * the kit (REQ-6.6, DECIDED 2026-10-03; Phase 14 decides whether they move).
+ *
+ * Written logically only (NFR-6.6): the prototype's physical block-axis
+ * margins and the hint strip's top border are `margin-block-start`,
+ * `margin-block-end` and `border-block-start` here — in this RTL document, the
+ * same values.
+ */
+
+/* --- the timer cards --------------------------------------------------------- */
+
+.timers {
+  display: flex;
+  gap: 8px;
+  margin-block-end: 10px;
+}
+
+.timer {
+  flex: 1;
+  min-width: 0;
+  border: var(--bd) solid var(--stroke);
+  border-radius: var(--r-input);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 9px 11px;
+}
+
+/* The active card: its team's colour, white text, the selected shadow. */
+.timer[data-active='true'] {
+  color: #fff;
+  box-shadow: var(--sh-sel);
+}
+
+.timer[data-active='true'][data-team='a'] {
+  background: var(--red);
+}
+
+.timer[data-active='true'][data-team='b'] {
+  background: var(--sky);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.row-2 {
+  margin-block-start: 3px;
+}
+
+.name {
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The clock; `.ltr-num` beside this class supplies Archivo and the isolation. */
+.clock {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.dots {
+  display: flex;
+  gap: 4px;
+}
+
+.status {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* --- the category pill and the time-bank bar ------------------------------------ */
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-block-end: 10px;
+}
+
+.category {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--r-pill);
+  border: var(--bd) solid var(--stroke);
+  background: var(--panel);
+  font-weight: 700;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.track {
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+  border-radius: var(--r-pill);
+  border: var(--bd) solid var(--stroke);
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+/* The active team's bank; the screen sets its width as a percentage. */
+.fill {
+  height: 100%;
+  background: var(--red);
+  transition: width 0.1s linear;
+}
+
+.fill[data-team='b'] {
+  background: var(--sky);
+}
+
+/* --- the question card ------------------------------------------------------- */
+
+.question {
+  position: relative;
+  border-radius: var(--r-lg);
+  border: var(--bd-thick) solid var(--stroke);
+  box-shadow: var(--sh-cta);
+  background: var(--panel);
+  overflow: hidden;
+  margin-block-end: 12px;
+}
+
+.question-head {
+  background: var(--red);
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.question-head[data-team='b'] {
+  background: var(--sky);
+}
+
+.turn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.number {
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+.question-body {
+  padding: 26px 20px;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.question-text {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.hint-strip {
+  border-block-start: var(--bd) solid var(--stroke);
+  background: var(--sunken);
+  padding: 12px 16px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.bulb {
+  flex: none;
+  font-size: 18px;
+}
+
+/* The muted placeholder until a hint of the question is spent. */
+.hint-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/*
+ * A spent hint: ink, entering on base.css's GLOBAL `slidein` keyframe. A CSS
+ * Module rewrites a keyframe name written in `animation` to a hashed local one
+ * that no keyframe defines, so the hint would silently not move; a custom
+ * property's value is opaque to CSS Modules, so the global name reaches the
+ * browser through `--slidein` (Phase 5, fact 6 of its §1.1). Only the first
+ * hint of a question slides in: the element stays and this rule keeps
+ * applying through the second (REQ-6.8, DECIDED 2026-10-03).
+ */
+.hint-text[data-spent='true'] {
+  --slidein: slidein 0.22s ease-out;
+
+  color: var(--ink);
+  animation: var(--slidein);
+}
+
+/*
+ * The reveal covers the card inside its border, above its content, entering on
+ * base.css's GLOBAL `pop` keyframe — reached through `--pop` for the reason
+ * given above `.hint-text[data-spent='true']`.
+ */
+.reveal {
+  --pop: pop 0.18s ease-out;
+
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--leaf);
+  color: var(--on-leaf);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 22px;
+  animation: var(--pop);
+}
+
+.reveal-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+.reveal-answer {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.reveal-fact {
+  font-size: 13.5px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* --- the judge-only answer box ------------------------------------------------- */
+
+.answer-box {
+  background: var(--panel);
+  border: var(--bd-thick) dashed var(--red);
+  border-radius: var(--r-btn);
+  padding: 12px 14px;
+  margin-block-end: 12px;
+}
+
+.answer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block-end: 4px;
+}
+
+.judge-only {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--red);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.judge-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.answer {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.alts {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-block-start: 2px;
+}
+
+/* --- the action row ------------------------------------------------------------ */
+
+.actions {
+  display: flex;
+  gap: 9px;
+}
+
+/* Three equal Buttons; the fills are Button's own `data-tone`. */
+.action {
+  flex: 1;
+}
+
+/*
+ * The spent تلميح: `--panel` (no `data-tone`) with muted text, on top of
+ * base.css's disabled state (opacity 0.45, `cursor: not-allowed`). Written at
+ * specificity 0,3,0 so that it outranks Button's
+ * `.button[data-variant='action']` (0,2,0) whichever of the two stylesheets
+ * loads first (Phase 5's R5).
+ */
+.actions .action[aria-disabled='true'] {
+  color: var(--muted);
+}
+
+/*
+ * REQ-6.12 (DECIDED 2026-10-03) — Phase 5's Gate 5 finding. A UI glyph Baloo
+ * Bhaijaan 2 does not draw (⏭ 💡 ✔ 👁) must fall through to the system font,
+ * as it does in the prototype, whose stack is `"Baloo Bhaijaan 2", system-ui,
+ * sans-serif`. Here `var(--font)` puts next/font's Arial-based "baloo
+ * Fallback" between Baloo and the system font, so the glyph alone is wrapped in
+ * this span — not the whole control, which keeps its Baloo line box. Where the
+ * glyph is a flex item (the strip's 💡) the span sits inside a plain span, so
+ * the flex item keeps Baloo's box and the glyph its baseline.
+ */
+.glyph {
+  font-family: system-ui, sans-serif;
+}

@@ -437,7 +437,7 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
 
 ## 2. Gate 2 — The screen, the route and Phase 5's files (needs Gate 1; blocks Gates 3–6)
 
-- [ ] **REQ-6.6 – REQ-6.11 (The markup):** `PlayScreen`'s static markup for Table X1–X5's views holds
+- [x] **REQ-6.6 – REQ-6.11 (The markup):** `PlayScreen`'s static markup for Table X1–X5's views holds
   the tree of specs.md §2.2 — the root's five children; each card's two rows; the question card's
   three children, four on S4 only — with `data-team` a / b on the cards, `data-active` true on
   exactly the active one, `data-team` on the fill and the header strip equal to the active team,
@@ -445,6 +445,7 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
   fill's `style` `width:100%` / `width:95.55555555555556%` …, `data-tone="yellow"` on تلميح on S1,
   S2 and S5 and none on S3–S4, `disabled=""` with `aria-disabled="true"` on تلميح on S3–S4 and on
   nothing else, `data-tone="leaf"` on صحيح, and the texts of Y1 and the view's in order.
+  > Measured: `pnpm vitest run apps/web/app/host/play-markup.test.tsx --reporter=verbose` — "REQ-6.6 – REQ-6.11" **11 / 11**: the five views Table X's (clock A **45 · 43 · 41 · 41 · 41**, B 45; hints left **2 · 1 · 0 · 0 · 2**; the reveal on S4 only; turn a, a, a, a, **b**); `PlayScreen`'s static markup read into a tree and compared whole with specs.md §2.2's tree built from the view — every element, its order and nesting, its play.module.css classes (each checked against the **34** classes the stylesheet defines: under Vitest a CSS Module is a proxy that names any key), every attribute and every text — equal on S1–S5, X6 and X7; the root no class and **5** children (timers, category-row, question, answer-box, actions) on all five; each card **2** rows; the question card **3** children on S1–S3 and S5, **4** on S4 (`.reveal` count 0 · 0 · 0 · 1 · 0); the cards `data-team` a / b, `data-active` true / false on S1–S4 and false / true on S5; `data-team` on the fill and the header strip a · a · a · a · **b**; `data-spent` **false · true · true · true · false** — true on S2–S4 only, as the corrected box asks (Correction 2026-10-11, `917d77e`), S4 being X4, which carries X3's `hintSpent`; every dot `data-size="sm"` `data-won="false"` (**3** per card) on S1–S5, and on X6 a [true, true, false] · b [true, false, false]; `.ltr-num` on the two clocks and on nothing else; the fill's `style` `width:100%` · `width:95.55555555555556%` · `width:91.11111111111111%` · `width:91.11111111111111%` · `width:100%`; تلميح `data-tone="yellow"` on S1, S2, S5 and none on S3–S4, `disabled=""` with `aria-disabled="true"` on S3–S4 (and on X7, a question with no hints) and on nothing else — `disabled=""` count **0 · 0 · 1 · 1 · 0**; صحيح `data-tone="leaf"` on all five; each Button's last child its sub-label (Procedure M6's `lastElementChild`); the text runs, the `.glyph` span tags removed, exactly the view's values and Y1's **11** literals in the prototype's order (**10** without the reveal) — React 19's static markup writes "دور النمور", "سؤال 1" and "يُقبل أيضاً: …" as one run each — and S4's **26** runs written out literally; every one of the 34 classes used by the screen and no other · mutations applied alone and reverted, the file's SHA-256 checked equal after each, each caught: Gate 5's M11 تلميح never disabled (**3** fail), M13 the reveal always rendered (**3**), M14 `.ltr-num` dropped (**2**); a class the stylesheet does not define (**3**); `data-spent` false under the reveal (**2**) · the file **20 / 20**, its grep of `Date`, `performance`, `setTimeout`, `setInterval`, `Math.random`, `startRound` over `PlayScreen.tsx` and `_lib/play-view.ts` **0** (2 / 2, the search shown live; NFR-6.5's box is the next step's) · STEP 2 commit, 2026-10-11
 
   > **Correction 2026-10-11 — made before this box was evaluated, decided by the owner (Ahmed, in
   > session: "yes, make the correction and continue the run").** As first written, this box said
@@ -460,15 +461,17 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
   > session. Found by the subagent building specs.md §1's STEP 2; the halt note of commit `7e9e347`
   > is cleared by the same commit as this correction.
 
-- [ ] **REQ-6.12 (The glyphs):** exactly **five** `.glyph` spans — ⏭, 💡 and ✔ inside their Buttons,
+- [x] **REQ-6.12 (The glyphs):** exactly **five** `.glyph` spans — ⏭, 💡 and ✔ inside their Buttons,
   👁 inside "للحكم فقط", and 💡 as the only child of `span.bulb`; the category's emoji in no
   `.glyph` span; `play.module.css`'s `.glyph` declares exactly `font-family: system-ui, sans-serif`;
   `git diff 77ed5a4 -- apps/web/app/fonts.ts` is empty.
+  > Measured: the same run — "REQ-6.12" **3 / 3**: exactly **5** `.glyph` spans on each of S1–S5, in document order 💡 · 👁 · ⏭ · 💡 · ✔, each holding its glyph alone (U+1F4A1, U+1F441, U+23ED, U+2714 — the prototype's code points, no variation selector); the first the only child of `span.bulb`, the second inside `span.judge-only` after "للحكم فقط ", the other three inside their Buttons (label, glyph, `<br>`, sub-label); the category's 💬 in a plain span with no attribute, in no `.glyph` span; play.module.css's `.glyph` exactly **1** rule, declaring exactly `font-family: system-ui, sans-serif`; `git diff 77ed5a4 -- apps/web/app/fonts.ts` **0** lines · mutations applied alone and reverted, each caught: Gate 5's M18 the `.glyph` span dropped from ⏭ (**2** fail), the category's emoji wrapped in `.glyph` (**3**), `.glyph` declaring `system-ui` alone (**1**) · STEP 2 commit, 2026-10-11
 
-- [ ] **REQ-6.11 / REQ-6.13 (The buttons call what they say):** in the React element tree
+- [x] **REQ-6.11 / REQ-6.13 (The buttons call what they say):** in the React element tree
   `PlayScreen(props)` returns, the three `variant="action"` Buttons are, in order, the ones whose
   `onClick` is `props.onSkip`, `props.onHint` and `props.onCorrect` (`toBe`); the hint Button's
   `disabled` is `true` exactly when `view.hintsLeft === 0`.
+  > Measured: the same run — "REQ-6.11 / REQ-6.13" **3 / 3**: `PlayScreen(props)` called as a function and its React element tree walked — no DOM, nothing rendered: exactly **3** `Button` elements, all `variant="action"`, whose `onClick` are `toBe` `props.onSkip`, `props.onHint` and `props.onCorrect`, in that order, on S1–S5 and X7, three distinct functions each time; the hint Button's `disabled` false · false · **true · true** · false on S1–S5 (`hintsLeft` 2 · 1 · 0 · 0 · 2) and **true** on X7 (0), the skip and correct Buttons carrying no `disabled`; the hint text one element, its `key` `null` · mutations applied alone and reverted, each caught: Gate 5's M12 `onSkip` and `onHint` swapped (**1** fail), the skip Button given `onHint` alone (**1**), a `key={view.hintText}` on the hint text (**1**) · STEP 2 commit, 2026-10-11
 
 - [ ] **REQ-6.13 (The route):** `play-routing.test.tsx`, with the driver replaced by a stub room: on
   `play` `HostApp`'s markup is the frame, the header "نلعب" / "جولة 1 — أول 3 جولات", then exactly
@@ -490,9 +493,10 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
   `setTimeout`, `setInterval`, `Math.random`; and `apps/web/app` has no route but `/`, `/host` and
   `/styleguide`.
 
-- [ ] **NFR-6.6 (RTL):** `pnpm lint:css` passes over `play.module.css` with **0** disable comments; it
+- [x] **NFR-6.6 (RTL):** `pnpm lint:css` passes over `play.module.css` with **0** disable comments; it
   contains no `left` / `right` property or value and no `margin-top`, `margin-bottom`, `border-top`
   physical forms — written `margin-block-*` and `border-block-start`.
+  > Measured: `pnpm lint:css` exit 0; `stylelint apps/web/app/host/play.module.css` **0** problems over **41** rules and **163** declarations — every rule and declaration equal, in order, to specs.md §2.3's table (compared by script: 41 / 41 rules, 0 differences); `stylelint-disable` **0**; `grep -ciE 'left|right'` **0**, comments included; `margin-top`, `margin-bottom`, `border-top` **0** — written `margin-block-end` ×**5**, `margin-block-start` ×**2**, `border-block-start` ×**1**; the clocks `.ltr-num` (the markup box); `play-markup.test.tsx` "NFR-6.6" **1 / 1** asserts the same over the file · mutations applied alone and reverted: `margin-bottom` on `.timers` — caught by that test only (Stylelint allows the block axis, `CLAUDE.md` invariant 3); `text-align: left` on `.question-body` — caught by the test and by Stylelint's `declaration-property-value-disallowed-list` · on HEAD `917d77e` with this step's three files: `pnpm lint` exit 0; `pnpm typecheck` exit 0; `pnpm test` 44 files across 6 projects (apps/web 16), **728 / 728** (+1 file, +20 tests), `[check-collected-tests] OK`, coverage 100% (lines 201 · branches 216 · functions 48 · statements 244); `pnpm build` exit 0 — `/host` 8.26 kB; play.module.css is not yet in the built CSS (`PlayScreen` is routed by the next step); `git diff 77ed5a4 -- packages/ apps/web/app/fonts.ts` empty · STEP 2 commit, 2026-10-11
 
 ## 3. Gate 3 — Read from the prototype (needs Gates 1–2)
 
