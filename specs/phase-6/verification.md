@@ -226,7 +226,18 @@ named.
 
 ### Table B — S2–S5, 480 × 800, light: what changes from S1
 
-Every role not named here is as in Table A. The column stays **638.69** in every state.
+Every role a state does not name is as in the state before it — S2 from S1 (Table A), S3 from S2,
+S4 from S3, S5 from S4. The column stays **638.69** in every state.
+
+> **Correction 2026-10-11 — made before any box that reads this table was evaluated, decided by the
+> owner (Ahmed, in session: "yes, make the correction and continue the run").** As first written,
+> this line read "Every role not named here is as in Table A." The table is cumulative, and the
+> planning session's measurements were taken state after state on one load: read literally, the
+> first wording would put clock A back at Table A's 45 on S4 (it is S3's 41) and S4's hint text back
+> at Table A's placeholder (it is S3's spent hint, under the reveal). The line is corrected to say
+> what the rows were measured as. **No measured value in any table changes.** Found by the subagent
+> building specs.md §1's STEP 2 and recorded in the halt note of commit `7e9e347`, which this
+> correction clears.
 
 | State | Role | x | y | w | h | Other properties |
 |---|---|---|---|---|---|---|
@@ -430,10 +441,24 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
   the tree of specs.md §2.2 — the root's five children; each card's two rows; the question card's
   three children, four on S4 only — with `data-team` a / b on the cards, `data-active` true on
   exactly the active one, `data-team` on the fill and the header strip equal to the active team,
-  `data-spent` true on S2–S3 only, `data-won` false on every dot, `.ltr-num` on both clocks, the
+  `data-spent` true on S2–S4 only, `data-won` false on every dot, `.ltr-num` on both clocks, the
   fill's `style` `width:100%` / `width:95.55555555555556%` …, `data-tone="yellow"` on تلميح on S1,
   S2 and S5 and none on S3–S4, `disabled=""` with `aria-disabled="true"` on تلميح on S3–S4 and on
   nothing else, `data-tone="leaf"` on صحيح, and the texts of Y1 and the view's in order.
+
+  > **Correction 2026-10-11 — made before this box was evaluated, decided by the owner (Ahmed, in
+  > session: "yes, make the correction and continue the run").** As first written, this box said
+  > "`data-spent` true on S2–S3 only". Every other part of the plan makes it S2–S4: specs.md §2.2 and
+  > §2.3 key `data-spent` on the view's `hintSpent` (`hintIndex > 0`, the prototype's `hintColor` /
+  > `hintAnim`); Table X4 gives S4 every field of X3, so `hintSpent` is true there, as Gate 1 already
+  > pins (commit `21ca043`); and the prototype's `markCorrect` does not reset `hintIdx`, so under the
+  > reveal its hint text stays ink with `slidein` (measured in planning: S4 changes only the reveal's
+  > roles from S3). A screen that showed S4's hint as unspent would fail S4's comparison under
+  > REQ-6.17. The box is corrected to S2–S4. What it accepts otherwise is unchanged; no measured
+  > value changes. The alternatives considered and rejected were ruling that the hint shows as
+  > unspent under the reveal (a departure from the prototype) and returning the plan to a planning
+  > session. Found by the subagent building specs.md §1's STEP 2; the halt note of commit `7e9e347`
+  > is cleared by the same commit as this correction.
 
 - [ ] **REQ-6.12 (The glyphs):** exactly **five** `.glyph` spans — ⏭, 💡 and ✔ inside their Buttons,
   👁 inside "للحكم فقط", and 💡 as the only child of `span.bulb`; the category's emoji in no
