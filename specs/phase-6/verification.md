@@ -518,9 +518,10 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
 
 ## 4. Gate 4 — The browser pass (needs Gates 1–3; fix freely)
 
-- [ ] 👁 **REQ-6.6 – REQ-6.11 (S1–S5 against Tables A and B):** Procedure M6 at 480 × 800, light:
+- [x] 👁 **REQ-6.6 – REQ-6.11 (S1–S5 against Tables A and B):** Procedure M6 at 480 × 800, light:
   every role of every state within tolerance, the column 638.69 in each. Every deviation found is
   written down here, with its fix.
+  > Measured: performed by Claude (`claude-opus-5-5`) at the owner's direction (DECIDED 2026-10-03), in the desktop app's built-in Chromium, on `/host`'s production build of `5fb26ff` (`pnpm build`, `next start`, port 3000) beside the prototype (`python -m http.server 8765`), both pages in one tab, the prototype first, each freshly loaded at an emulated 480 × 800, light, no screenshot in the sequence. Procedure M6's five functions verbatim, run by a harness that posted each page's measurements to a local collector (127.0.0.1:8899) and compared them in Node. Instrument checks: `innerWidth` 480 on both; the raster probe **3px** on both (a true 2; `devicePixelRatio` 2) — parity held; the prototype's Baloo Bhaijaan 2 500 / 600 / 700 / 800 and Archivo 800 `loaded`, the app's `baloo` and `archivo` 800 `loaded`. The prototype reproduces the tables: **45 / 45** rows of Tables A and B checked within 0.5 px (A1 column 638.69, A6 card 216 × 67, A21 the question card 440 × 250, A26 the question 352.92 × 34.8, S2's fill 333.2, S3's fill 317.7 and sub-label 72.41, S4's reveal 434 × 244, S5's two-line question 394 × 69.59 …), S3's spent تلميح panel / muted / 0.45 / not-allowed, S4's reveal leaf with `pop 0.18s ease-out`, S2's hint ink with `slidein 0.22s ease-out`. The comparison: **229** roles × **6,412** fields over S1–S5 — **0** differences (geometry within 0.5 px, every other field exactly, the app's family names mapped as step 8 says); the column **638.69** on both pages in all five states. Deviations found: none in any role. Two findings about the procedure itself were made in this pass and are recorded in the boxes they bear on (the category draw — "Phone width and dark"; the glyph box height — "The glyphs"); in this configuration the app's own draw happened to be أمثال, so the content compared was the procedure's · 2026-10-11
 
 - [ ] 👁 **REQ-6.6 – REQ-6.11 (Phone width and dark):** Table C at 375 × 800, light; Tables A–C's
   geometry and Table D's colours in dark, at both widths — **4 / 4** configurations.
@@ -529,29 +530,33 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
   font-family on the app is `system-ui` (its `.glyph` span); the category's emoji box equals the
   prototype's (A18).
 
-- [ ] 👁 **REQ-6.11, REQ-6.13 (Every button does what it says):** on `/host`'s production build, from
+- [x] 👁 **REQ-6.11, REQ-6.13 (Every button does what it says):** on `/host`'s production build, from
   S1 with the stepper: تلميح lowers A by 2 and shows the first hint; تخطي lowers A by 3 and moves to
   "سؤال 2"; صحيح raises the reveal; under the reveal تخطي, تلميح and صحيح each change nothing; the
   spent تلميح changes nothing and its `click` reaches no handler; after `step(10)` the turn is B's.
+  > Measured: performed by Claude (`claude-opus-5-5`) at the owner's direction, the same build and tab, 480 × 800 light, Procedure M6's stepper installed, each press the page's own button's `click()`, the screen read after it: from S1 (A **45**, B 45, "سؤال 1", the placeholder, "−٢ ثانية · باقي 2") — تلميح → A **43**, "تلميح تجريبي ١", `data-spent` true, "−٢ ثانية · باقي 1"; تلميح → A **41**, "تلميح تجريبي ٢", "انتهت التلميحات", the button `disabled`; the spent تلميح → nothing changes, and a capturing `click` listener on `document` counts **0** clicks reaching the page; تخطي → A **38**, **"سؤال 2"**, the placeholder, "باقي 2"; تلميح → A 36, the first hint; صحيح → the reveal up, its answer "إجابة تجريبية ١" equal to the answer box's; under the reveal تخطي, تلميح and صحيح → each changes nothing (A 36, "سؤال 2", the same reveal element); `step(9)` → the reveal still up; `step(1)` (the tenth) → card B `data-active` true, B "دورهم الآن" at **45**, A **"مجمّد"** at 36, **"سؤال 3"**, the reveal gone; صحيح on B's turn → a new reveal element. Since `HostApp` passes each callback to its button, this is the check of `HostApp`'s wiring that no CI test makes (verification §9) — each press did what its label says · 2026-10-11
 
-- [ ] 👁 **REQ-6.8, REQ-6.9 (The motion):** `document.getAnimations()` immediately after each press:
+- [x] 👁 **REQ-6.8, REQ-6.9 (The motion):** `document.getAnimations()` immediately after each press:
   the first تلميح of a question starts one `slidein` (0.22 s, ease-out) on the hint text; the second
   تلميح starts **none** (requirements §1.1, fact 3; REQ-6.8, DECIDED); after تخطي the next question's
   first تلميح starts one again; every صحيح starts one `pop` (0.18 s, ease-out) on a new reveal
   element; every change of the bar starts one `width` transition (0.1 s, linear). And the 🎉-style
   trap is absent: the computed `animation-name` of the hint text and the reveal is the global
   `slidein` / `pop`, not a hashed name.
+  > Measured: performed by Claude (`claude-opus-5-5`) at the owner's direction, the same build and tab, 480 × 800 light, the stepper installed. Because the pane was hidden (`document.visibilityState` "hidden"), the document timeline does not advance and finished animations stay "running", so each press's animations were counted as those **created** by it — `document.getAnimations()` after the click and two microtasks, less the set before it — and every animation was finished before the next press: the first تلميح → **`slidein 0.22s ease-out` on the hint text** and `width 0.1s linear` on the fill; the second تلميح → the fill's transition **only, no `slidein`** (REQ-6.8, DECIDED); تخطي → the fill's transition only; the next question's first تلميح → `slidein` again, with the fill's; صحيح → **`pop 0.18s ease-out` on the reveal**; the turn passing (`step(10)`) → the fill's transition; صحيح on B's turn → `pop` on a new reveal element. The animations' names are **`slidein`** and **`pop`** — the global keyframes, not hashed names (the built CSS's only keyframes are `bob`, `pop`, `ring`, `slidein`, `f679597`'s record) · 2026-10-11
 
-- [ ] 👁 **REQ-6.11 (The presses):** applying the served `:active` rule (as Phase 2's Gate 6 and Phase
+- [x] 👁 **REQ-6.11 (The presses):** applying the served `:active` rule (as Phase 2's Gate 6 and Phase
   5's Gate 5 did): تخطي, تلميح and صحيح each move **3 px**, `0 5px 0` → `0 2px 0`; the spent تلميح
   does not move; no scale, no opacity change, no blur.
+  > Measured: performed by Claude (`claude-opus-5-5`) at the owner's direction, the same build and tab: the served rule `.press_press__clP_k:active:not(:disabled, [aria-disabled="true"]) { transform: translateY(var(--press-travel)); box-shadow: 0 calc(var(--press-rest) - var(--press-travel)) 0 var(--stroke); }` copied onto a `[data-sim-active]` selector with the same `:not()` guard and applied to each button in turn: تخطي, تلميح and صحيح each move **3 px** (`matrix(1, 0, 0, 1, 0, 3)`), shadow `rgb(36, 28, 23) 0px 5px 0px 0px` → **`0px 2px 0px 0px`**, opacity 1, `filter: none`, `scale: none`; the spent تلميح **0 px**, its shadow unchanged at `0px 5px 0px 0px` (opacity 0.45 is the disabled state at rest, not the press). Limit, as in Phases 2 and 5: the press was produced by the page's own rule under a copied selector, not by a held pointer · 2026-10-11
 
 - [ ] 👁 **REQ-6.16 (b) rehearsed (The round in real time):** Table W, W0–W7, on the production build
   with the browser's own timers. Any bound missed is a fault to fix here, before the verdict.
 
-- [ ] 👁 **NFR-6.5 (Network, console, focus):** through the passes above: **0** network requests beyond
+- [x] 👁 **NFR-6.5 (Network, console, focus):** through the passes above: **0** network requests beyond
   the page's origin; **0** console errors; tabbing reaches the three buttons with the 3 px `--red`
   ring at offset 3 px (the spent تلميح skipped while disabled); no default ring anywhere.
+  > Measured: performed by Claude (`claude-opus-5-5`) at the owner's direction, the same build and tab. Network: a fresh load of `/host` with nothing injected, then "ابدأ اللعبة", "ابدأ الجولة الأولى", تلميح, تخطي, صحيح by the buttons' own `click()` — the requests are the page, **2** stylesheets, **5** scripts and the font files, all from `localhost:3000`; **0** other requests (the `127.0.0.1:8899` entries in the browser's log belong to the earlier loads where this pass's measuring harness ran, as Phase 5 recorded for its own). Console: **0** messages — no error, no hydration warning. Focus, by real Tab key presses: on S1 the focus visits تخطي → تلميح → صحيح and wraps, **3** stops; with تلميح spent (two hints, the button `disabled`) it visits تخطي → صحيح → تخطي — the spent button skipped; every stop `:focus-visible`, outline **solid rgb(236, 48, 19)** at offset 3 px (painted 2.66667 px, this load having rastered at 1.5 — the ring's width is the token's 3 px; no comparison is made across rasters here); no default ring anywhere · 2026-10-11
 
 ## 5. Gate 5 — Mutations, the gate commands, the record (evaluated once, over the finished phase)
 
