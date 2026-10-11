@@ -82,9 +82,30 @@ The five states, reached in this order on both pages (Procedure M6, step 4):
    by a 30 ms wait before measuring.
 5. **The app's texts.** On the app only, before measuring each state, the `textContent` of these roles
    is set to the prototype's for the same state, as recorded in step 4: `qtext`, `hintText`,
-   `answer`, `alts`, and on S4 `revealAnswer` and `revealFact` (requirements, reading 8). Nothing
-   else is staged: team names, the judge, the category, the clocks, the numbers and every label are
-   the app's own.
+   `answer`, `alts`, `pillEmoji`, `pillName`, and on S4 `revealAnswer` and `revealFact`
+   (requirements, reading 8). Nothing else is staged: team names, the judge, the clocks, the numbers
+   and every label are the app's own.
+
+   > **Correction 2026-10-11 (A) — made during Gate 4, before any box it governs was ticked, decided
+   > by the owner (Ahmed, in session: "approve A and B").** As first written, this step staged six
+   > roles and said the category was the app's own, relying on step 4's `Math.random = () => 0.5`
+   > to make the app draw أمثال. It cannot: the driver binds its random source when the page creates
+   > its room (`createLocalRoom`'s `options.random ?? Math.random`, read once at hydration), so a
+   > replacement made after load never reaches the app's draw. Measured in Gate 4's first pass: the
+   > app drew أمثال at 480 light (by chance, one in eight) and حيوانات, حيوانات and إنسان ومجتمع at
+   > 375 light, 480 dark and 375 dark — every one of the 60 non-glyph differences in those three
+   > configurations was the pill's emoji, its name and the widths that follow from them (the pill,
+   > the track, the fill, and the texts that contain them). The step now also stages the category
+   > pill's emoji and name (`pillEmoji`, `pillName`), copied from the prototype as the question texts
+   > are; the comparison then measures the screen's CSS on identical text, as reading 8 intends. The
+   > same holds for Gate 6. **For REQ-6.16 (a)**: no cell of Table V depends on the category (every
+   > catalog entry has three questions of two hints), and V17's round log is not shown on the app's
+   > screen in this phase (Phase 5's placeholder shows the screen, the round, the clocks and the
+   > tallies), so on the app V17 compares the screen and the tallies; the log, its category included,
+   > is asserted in CI by `play-round.test.ts` (Gate 1, REQ-6.15). No measured value in any table
+   > changes. The alternatives considered and rejected were changing the driver to read
+   > `Math.random` at each draw (a change to a Phase 5 file NFR-6.4 does not sanction) and reloading
+   > the app until its draw is أمثال.
 6. **Animations.** `document.getAnimations().forEach(a => a.finish())` before measuring, so the hint's
    `slidein`, the reveal's `pop` and the bar's width transition are at their end state; their
    computed `animation-*` / `transition-*` values are compared as properties.
@@ -526,9 +547,24 @@ Table T2) — then the actions named, with no tick unless stated. Placeholder te
 - [ ] 👁 **REQ-6.6 – REQ-6.11 (Phone width and dark):** Table C at 375 × 800, light; Tables A–C's
   geometry and Table D's colours in dark, at both widths — **4 / 4** configurations.
 
-- [ ] 👁 **REQ-6.12 (The glyphs):** Table E on both pages within 0.5 px; each glyph's computed
-  font-family on the app is `system-ui` (its `.glyph` span); the category's emoji box equals the
-  prototype's (A18).
+- [ ] 👁 **REQ-6.12 (The glyphs):** Table E's x, y and w on both pages within 0.5 px, and each
+  glyph's baseline equal within 0.5 px; each glyph's computed font-family on the app is `system-ui`
+  (its `.glyph` span); the category's emoji box equals the prototype's (A18).
+
+  > **Correction 2026-10-11 (B) — made before this box was ticked, decided by the owner (Ahmed, in
+  > session: "approve A and B").** As first written, this box compared all four of Table E's numbers.
+  > Gate 4's first pass measured the glyphs' x, y and w equal on both pages in every state and
+  > configuration (within 0.02 px) and their h shorter on the app — ⏭ 💡 ✔ in the buttons 21 against
+  > 27, 👁 15 against 19, the strip's 💡 24 against 30. A `Range` box's height is the content area of
+  > the inline box holding the text, which on the app is the `.glyph` span set to `system-ui`
+  > (REQ-6.12, DECIDED) and on the prototype the surrounding Baloo run; it is not the glyph's
+  > drawing. A zero-size inline-block probe placed right after each glyph measured every baseline
+  > equal on both pages (583.69 in the three buttons, 463 for 👁, 398 for the strip's 💡, in S1 and
+  > S3), its inline end equal within 0.02 px, so the glyphs paint in the same place at the same size.
+  > The box now compares x, y, w and the baseline, and not h. Table E's measured values are
+  > unchanged. The alternative considered and rejected was changing `.glyph`'s font stack to keep
+  > Baloo's metrics, which would change REQ-6.12's decided rule and would let the self-hosted Baloo
+  > draw ▶ in Phase 7 (requirements §1.1, fact 4).
 
 - [x] 👁 **REQ-6.11, REQ-6.13 (Every button does what it says):** on `/host`'s production build, from
   S1 with the stepper: تلميح lowers A by 2 and shows the first hint; تخطي lowers A by 3 and moves to
